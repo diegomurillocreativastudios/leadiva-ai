@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-heading: var(--font-general-sans), system-ui, sans-serif;
+}
+
+@theme {
+  /* Surfaces — Flat Institutional (mint pastel) */
+  --color-surface-base: #f4faf6;
+  --color-surface-raised: #ffffff;
+  --color-surface-border: #d5e8e0;
+  --color-surface-pressed: #e8f3ec;
+
+  /* Brand strip: peach · mint · aqua · teal CTA */
+  --color-accent-peach: #fbcab9;
+  --color-accent-mint: #d9eedb;
+  --color-accent-aqua: #9ce5de;
+  --color-accent: #05aba9;
+  --color-accent-dark: #048f8d;
+  --color-accent-coral: #f9a79b;
+
+  /* Semantic status (mint-harmonized) */
+  --color-status-open: #05aba9;
+  --color-status-evaluating: #c47a5a;
+  --color-status-won: #048f8d;
+  --color-status-lost: #dc2626;
+  --color-status-expiring: #e07a66;
+  --color-status-inactive: #a8a29e;
+
+  --color-success: #048f8d;
+  --color-warning: #c47a5a;
+  --color-danger: #dc2626;
+
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #5f6b66;
+
+  /* Compat: legacy CSS var */
+  --leadiva-accent: #05aba9;
+
+  /* Compat: shadcn/ui semantic tokens → Leadiva palette */
+  --color-background: #ffffff;
+  --color-foreground: #1c1917;
+  --color-card: #ffffff;
+  --color-card-foreground: #1c1917;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1c1917;
+  --color-primary: #05aba9;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #d9eedb;
+  --color-secondary-foreground: #1c1917;
+  --color-muted: #e8f3ec;
+  --color-muted-foreground: #5f6b66;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-border: #d5e8e0;
+  --color-input: #d5e8e0;
+  --color-ring: #05aba9;
+
+  /* Radius — flat moderate (6–8px). Keep skeu aliases for gradual migration. */
+  --radius-skeu: 0.5rem;
+  --radius-skeu-sm: 0.375rem;
+  --radius-skeu-lg: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /*
+   * Flat elevation: no dual-shadow relief.
+   * Legacy skeu shadow names map to none / subtle float only.
+   */
+  --shadow-skeu-raised: 0 0 #0000;
+  --shadow-skeu-float: 0 4px 16px rgba(28, 25, 23, 0.08);
+  --shadow-skeu-inset: 0 0 #0000;
+  --shadow-skeu-pressed: 0 0 #0000;
+  --inset-shadow-skeu: 0 0 #0000;
+  --inset-shadow-skeu-pressed: 0 0 #0000;
+
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.06);
+  --shadow-md: 0 4px 16px rgba(28, 25, 23, 0.08);
+}
+
+/* Deprecated decorative utilities — no-ops for flat system */
+@utility bg-skeu-metal {
+  background-image: none;
+}
+
+@utility bg-skeu-glass {
+  background-image: none;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-surface-border);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--color-surface-base);
+    color: var(--color-text-primary);
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

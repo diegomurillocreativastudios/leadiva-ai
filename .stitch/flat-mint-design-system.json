@@ -1,0 +1,16 @@
+{
+  "name": "assets/8031487489663830885",
+  "designSystem": {
+    "displayName": "Leadiva Mint Pastel",
+    "theme": {
+      "colorMode": "LIGHT",
+      "customColor": "#05aba9",
+      "headlineFont": "IBM_PLEX_SANS",
+      "bodyFont": "IBM_PLEX_SANS",
+      "labelFont": "IBM_PLEX_SANS",
+      "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+      "colorVariant": "TONAL_SPOT"
+    }
+  },
+  "version": "1"
+}

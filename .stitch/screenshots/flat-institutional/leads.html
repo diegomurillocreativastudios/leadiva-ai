@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva - Leads/Licitaciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-secondary-container": "#5a6374",
+                        "app-bg": "#f4f6f8",
+                        "error-container": "#ffdad6",
+                        "status-evaluating": "#d97706",
+                        "status-open": "#2563eb",
+                        "inverse-primary": "#b7c4ff",
+                        "tertiary-fixed-dim": "#ffb59c",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#dce9ff",
+                        "status-lost": "#dc2626",
+                        "surface-tint": "#2151da",
+                        "primary-fixed": "#dce1ff",
+                        "status-expiring": "#ea580c",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-surface": "#0b1c30",
+                        "primary-container": "#1d4ed8",
+                        "surface": "#ffffff",
+                        "background": "#f8f9ff",
+                        "surface-variant": "#d3e4fe",
+                        "border": "#e2e6ea",
+                        "tertiary": "#7f2500",
+                        "surface-bright": "#f8f9ff",
+                        "hover-accent": "#1e3a8a",
+                        "on-secondary-fixed-variant": "#3e4758",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "outline": "#747686",
+                        "on-background": "#0b1c30",
+                        "on-tertiary-fixed-variant": "#832700",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#d3e4fe",
+                        "status-inactive": "#94a3b8",
+                        "on-secondary-fixed": "#131c2a",
+                        "on-primary-fixed": "#001551",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#bec7db",
+                        "secondary-fixed": "#dae3f7",
+                        "inverse-surface": "#213145",
+                        "secondary-container": "#d7e0f4",
+                        "tertiary-container": "#a73400",
+                        "secondary": "#565f70",
+                        "status-won": "#16a34a",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-tertiary-container": "#ffc9b7",
+                        "surface-container-low": "#eff4ff",
+                        "outline-variant": "#c4c5d7",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary-fixed": "#390c00",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed-variant": "#0039b5",
+                        "on-primary-container": "#cad3ff",
+                        "primary": "#0037b0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "gutter": "16px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "container-margin": "24px",
+                        "table-cell-padding": "12px 8px",
+                        "panel-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "table-data": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "table-data": ["13px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "display": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-size: 20px;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        .table-sticky-header th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar -->
+<aside class="w-[240px] h-screen fixed left-0 top-0 bg-surface border-r border-border flex flex-col p-stack-md gap-stack-sm z-20">
+<div class="flex items-center gap-3 mb-8 px-2">
+<img class="h-8 w-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLuslR3oTPI4FdpaVkG9lktQqUJwwFbB7jDGJGQL69RJDovBRXzyv641zuLZ5pRst7_nRaBDyMNlyw_OWxsEuaQJ4YtOsrxVdWa53At5h26D3TqwDb0SV2bDuhKP_0z-SGZ2n3z1pEv3ov_ETjPWoYfXqAOOLUuYtzYzSEbD757Uwojo9x0DRgTDfaB3COQ65GH7UVDz0LpcAN3wiw180T81m9EMwtIUWFHsVyGscd6wp8syH26h-iyk2g"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary">Leadiva</span>
+<span class="font-label-sm text-label-sm text-secondary">Intelligence Commercial</span>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 ease-in-out hover:bg-surface-container-low text-secondary font-label-md text-label-md rounded" href="#">
+<span class="material-symbols-outlined">home</span>
+                Inicio
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 ease-in-out hover:bg-surface-container-low text-secondary font-label-md text-label-md rounded" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                Proyectos
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 ease-in-out bg-surface-container-low text-primary font-bold font-label-md text-label-md rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+                Leads/Licitaciones
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 transition-colors duration-150 ease-in-out hover:bg-surface-container-low text-secondary font-label-md text-label-md rounded" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Configuración
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-border px-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-xs">JD</div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-on-surface font-label-md text-label-md truncate">Juan Delgado</span>
+<span class="text-secondary font-label-sm text-label-sm truncate">Admin Central</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Simplified for Content Area) -->
+<header class="h-16 fixed top-0 right-0 left-[240px] z-10 bg-surface border-b border-border flex justify-between items-center px-gutter w-full">
+<div class="flex items-center">
+<h1 class="font-headline-sm text-headline-sm text-on-surface">Panel de Control</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-px bg-border mx-1"></div>
+<button class="bg-[#1d4ed8] hover:bg-hover-accent text-white font-label-md text-label-md py-2 px-4 rounded transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Convertir proyecto
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-[240px] pt-24 pb-12 px-stack-lg min-h-screen max-w-[1400px] mx-auto">
+<!-- Header & Description -->
+<div class="mb-stack-lg">
+<h2 class="font-display text-display text-on-surface mb-1">Leads</h2>
+<p class="font-body-md text-body-md text-secondary">Pipeline comercial con estados, responsables y plazos.</p>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface border border-border rounded p-4 mb-stack-md flex flex-wrap items-end gap-4">
+<div class="flex flex-col gap-1.5 min-w-[200px] flex-1">
+<label class="font-label-md text-label-md text-secondary px-0.5">Buscar</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white border border-border rounded font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Proyecto, empresa..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 w-40">
+<label class="font-label-md text-label-md text-secondary px-0.5">Estado</label>
+<select class="w-full px-3 py-2 bg-white border border-border rounded font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer">
+<option>Todos</option>
+<option>Abierta</option>
+<option>En evaluación</option>
+<option>Adjudicada</option>
+<option>Perdida</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5 w-40">
+<label class="font-label-md text-label-md text-secondary px-0.5">Fuente</label>
+<select class="w-full px-3 py-2 bg-white border border-border rounded font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer">
+<option>Todas</option>
+<option>Licitación Pública</option>
+<option>Referido</option>
+<option>Directo</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5 w-44">
+<label class="font-label-md text-label-md text-secondary px-0.5">Plazo</label>
+<select class="w-full px-3 py-2 bg-white border border-border rounded font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none cursor-pointer">
+<option>Cualquier fecha</option>
+<option>Esta semana</option>
+<option>Próximos 30 días</option>
+</select>
+</div>
+<button class="px-4 py-2 border border-border text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-low transition-colors">
+                Limpiar
+            </button>
+</div>
+<!-- Data Table Panel -->
+<div class="bg-surface border border-border rounded overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left">
+<thead class="table-sticky-header">
+<tr class="border-b border-border">
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider">Título</th>
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider">Organización</th>
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider">Estado</th>
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider text-center">Score</th>
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider">Deadline</th>
+<th class="px-4 py-3 font-label-md text-label-md text-secondary uppercase tracking-wider">Responsable</th>
+<th class="px-4 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border">
+<!-- Row 1 -->
+<tr class="hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Suministro Hospital Rosales</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">MINSAL - El Salvador</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-open/10 text-status-open text-[11px] font-bold uppercase">Abierta</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">92</span>
+<span class="material-symbols-outlined text-[14px] text-status-won" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">15 Oct, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] text-blue-700 font-bold">AL</div>
+<span class="font-table-data text-table-data">A. Lemus</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-[#f4f6f8] hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">RFP Red Vial FOVIAL</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">FOVIAL</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-evaluating/10 text-status-evaluating text-[11px] font-bold uppercase">En evaluación</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">78</span>
+<span class="material-symbols-outlined text-[14px] text-outline" style="font-variation-settings: 'FILL' 1;">horizontal_rule</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">28 Sep, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] text-amber-700 font-bold">RM</div>
+<span class="font-table-data text-table-data">R. Martínez</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Mantenimiento Red Eléctrica ETESAL</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">ETESAL</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-expiring/10 text-status-expiring text-[11px] font-bold uppercase">Por vencer</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">64</span>
+<span class="material-symbols-outlined text-[14px] text-status-lost" style="font-variation-settings: 'FILL' 1;">trending_down</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data text-status-lost font-bold">Hoy</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-700 font-bold">GC</div>
+<span class="font-table-data text-table-data">G. Castillo</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="bg-[#f4f6f8] hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Consultoría IT - Banco Agrícola</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">Grupo Bancolombia</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-won/10 text-status-won text-[11px] font-bold uppercase">Adjudicada</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">95</span>
+<span class="material-symbols-outlined text-[14px] text-status-won" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">Cerrado</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] text-emerald-700 font-bold">AL</div>
+<span class="font-table-data text-table-data">A. Lemus</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Modernización Aduanas Terrestres</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">Ministerio de Hacienda</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-lost/10 text-status-lost text-[11px] font-bold uppercase">Perdida</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">42</span>
+<span class="material-symbols-outlined text-[14px] text-status-lost" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">10 Ago, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-[10px] text-red-700 font-bold">EV</div>
+<span class="font-table-data text-table-data">E. Valencia</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="bg-[#f4f6f8] hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Saneamiento Lago Coatepeque</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">MARN</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-open/10 text-status-open text-[11px] font-bold uppercase">Abierta</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">81</span>
+<span class="material-symbols-outlined text-[14px] text-status-won" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">05 Nov, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-[10px] text-sky-700 font-bold">RM</div>
+<span class="font-table-data text-table-data">R. Martínez</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Equipamiento Ciudad Mujer</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">ISDEMU</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-evaluating/10 text-status-evaluating text-[11px] font-bold uppercase">En evaluación</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">59</span>
+<span class="material-symbols-outlined text-[14px] text-outline">trending_flat</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">12 Oct, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-[10px] text-purple-700 font-bold">GC</div>
+<span class="font-table-data text-table-data">G. Castillo</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="bg-[#f4f6f8] hover:bg-[#f8fafc] transition-colors group">
+<td class="px-4 py-3 font-table-data text-table-data font-medium text-primary">Sistema Core Bancario FEDECACES</td>
+<td class="px-4 py-3 font-table-data text-table-data text-on-surface-variant">FEDECACES</td>
+<td class="px-4 py-3">
+<span class="px-2.5 py-0.5 rounded-full bg-status-open/10 text-status-open text-[11px] font-bold uppercase">Abierta</span>
+</td>
+<td class="px-4 py-3 text-center">
+<div class="flex items-center justify-center gap-1">
+<span class="font-table-data text-table-data font-bold">88</span>
+<span class="material-symbols-outlined text-[14px] text-status-won" style="font-variation-settings: 'FILL' 1;">keyboard_double_arrow_up</span>
+</div>
+</td>
+<td class="px-4 py-3 font-table-data text-table-data">30 Oct, 2023</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-700 font-bold">EV</div>
+<span class="font-table-data text-table-data">E. Valencia</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Pagination -->
+<div class="px-4 py-3 border-t border-border flex items-center justify-between bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm text-secondary">Mostrando 1–8 de 48 leads</span>
+<div class="flex gap-2">
+<button class="p-1.5 border border-border rounded text-outline hover:bg-surface-container-low transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded bg-primary text-white font-label-md text-label-md">1</button>
+<button class="w-8 h-8 rounded hover:bg-surface-container-low text-secondary font-label-md text-label-md">2</button>
+<button class="w-8 h-8 rounded hover:bg-surface-container-low text-secondary font-label-md text-label-md">3</button>
+<span class="text-secondary">...</span>
+<button class="w-8 h-8 rounded hover:bg-surface-container-low text-secondary font-label-md text-label-md">6</button>
+</div>
+<button class="p-1.5 border border-border rounded text-outline hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for active row highlight
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-surface-container-low', 'ring-1', 'ring-primary/20'));
+                row.classList.add('bg-surface-container-low', 'ring-1', 'ring-primary/20');
+            });
+        });
+    </script>
+</body></html>

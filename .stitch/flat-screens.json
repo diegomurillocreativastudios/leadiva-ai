@@ -1,0 +1,59 @@
+{
+  "projectId": "929484233158471895",
+  "projectUrl": "https://stitch.withgoogle.com/projects/929484233158471895",
+  "designSystem": "assets/1c8a6f2dbd1a46498408be88d87e6bc6",
+  "designSystemName": "Leadiva Coral Flat",
+  "screens": {
+    "dashboard": {
+      "screenId": "0c7f16883303434dad116f88b137ea1d",
+      "name": "projects/929484233158471895/screens/0c7f16883303434dad116f88b137ea1d",
+      "title": "Dashboard Resumen - Leadiva",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvTXPvtvYiZ-6UuZGSth-Co4o5UTlNYZxbupWeFN4U1rtgdBIQ9EFJqtXPID_hccm-kFHRrIawD9BBq4zsFuV7rYFRFG8Y4vZXLOccUUHgNE2IAnTE2FkYI3JvF-6GYtJjyyesLF4Rj8-3dNNUjLtLTDrlMA9jnNy-hlloKOh40fKLotjtea1HKw2hP1EJ3fOLP4X9Dnzruk5MeXsQXdZ3nXt3ZxRlpWF5UiuymI7g-ZQUAYgcjOm4dDA",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/dashboard.png"
+    },
+    "leads": {
+      "screenId": "94b428e6942249ac87a1ef40a513afef",
+      "name": "projects/929484233158471895/screens/94b428e6942249ac87a1ef40a513afef",
+      "title": "Leads y Licitaciones - Leadiva",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtGct9CPt4nQ9tbtYsiKpZBqrsYrMqqRebuOfGqw4C3jOYDf7fQRx7h0WMDRlsTHaA4vOECWonpH5t2cUHiKkWesBFRoikX-diKEkbQdBF6Qe9BKO-KCnbHLXpD92umJh2nCoYhdEWfX5Bh4UNl0eJuPUwFH1jBUX2ZQHDib1Q0xiRY3Y7bkRvhLPTQoFqn5j8ilLTIlGioM9L6-IOs_aDD8cdKC-MOhQpm4bUO4nc4rIQDNg2RZCWV",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/leads.png"
+    },
+    "dashboard_coral": {
+      "screenId": "89f6cce9dc474a8dba37ff681015c194",
+      "name": "projects/929484233158471895/screens/89f6cce9dc474a8dba37ff681015c194",
+      "title": "Resumen del Dashboard - Leadiva",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsuDdYQ-3yY6w_Re4jSlIDJ3PSgk7xqhjVwP0sFTULRb8geG6pWU6LlLM5moHgH-Nb6IzdcpVKbPAl1KtsYjCHjxlW9-S5WgQgG58J-6XgS-4VmvVXw0z9YiC1CLF7SKTeSS-GQ3Ver__LNjaey6yROs8Wv7hZBBhCs-aPHFmsdXVA-4X8N3ZzJl4qYChVKCQ8G2xL728o2BVtRewBQRZTfVeo89pI6w4OXX85OGPVLVf6nPa7Uq0kC0w",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/dashboard-coral.png"
+    },
+    "leads_coral": {
+      "screenId": "09f9790fb5a74467b5eaac51e6a7973a",
+      "name": "projects/929484233158471895/screens/09f9790fb5a74467b5eaac51e6a7973a",
+      "title": "Leads y Licitaciones - Leadiva (Coral)",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLs-u_v19mjB6sJtg4WEtMvdpdbnpBXvpANkcWPHDyfHY2jGbLHjY5S3qcHvU59KxO9SOTHOdaDgkOru3l_j7vR63dtfmBGOlBwo3rcYeyxDA-9saMchjRohjIS-djQ047M8VEiGOgampXQZDRULTtxgCIcrCTQjipug_ARjx1gEwJkegvLS5loqaB6Cikz5pvJdzkq_q8_uYxg_2Vzx6FVAGiRcrx-sMmCWLkKefm9BY01GlJtBP79t6w",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/leads-coral.png"
+    },
+    "dashboard_mint": {
+      "screenId": "43ad10c87a2444a4b33a6e97becf2e06",
+      "name": "projects/929484233158471895/screens/43ad10c87a2444a4b33a6e97becf2e06",
+      "title": "Dashboard Resumen - Leadiva (Mint)",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsrz_LF4w04E-ApMlw5wwhEa7EZZBwVPxmgacgvU9NcfXfZ_IPa9SIjeSq6EzC9iKw8V4gsc9wcSJ2HxjDOacg0f5qXvrsh8OZVzYHJBphGuC48bQHYrNLvr7dppkZ7nUtRwnLQmDv4GEGMLvJzQe1JOiC5dEjUsAQplphFkoU2Gv425RdKUGLtfd7PFXmUqq8yIep5ES2IZieZf9VzBMzDZbF7L5xrGKmP_VKCXa_Hap6_pU6P-Jqy",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/dashboard-mint.png"
+    },
+    "leads_mint": {
+      "screenId": "83d2653bd32e4ac4adaa50ac0983662c",
+      "name": "projects/929484233158471895/screens/83d2653bd32e4ac4adaa50ac0983662c",
+      "title": "Leads y Licitaciones - Leadiva (Mint)",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtQCMZXbfp4mCc3PV1U6FdkBw_KX_hHRWSbeXF9nH30vflAY-w5tN12c1BRFq7ZIUKvSwYQMS7aT0vTpfy6FhX-jtTJhkyOpnf80m5I4GfV7GHp90g91hejBaJuaSWiy-cduONa2LDdw_E7LTuqEoUMbjrArfxDraoOLqkAn0k-U6nvZR00yDNzef1vBHbLvuuXl9qcsr0RolLk_o0ULALLcJnOe6o-kYWmBrgBO9sj2fnoSbGcjq3Q",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/leads-mint.png"
+    }
+  },
+  "designSystemCoral": "assets/9317367745445035381",
+  "designSystemMint": "assets/8031487489663830885",
+  "palette": {
+    "coral_soft": "#f9a79b",
+    "peach": "#fbcab9",
+    "mint_center": "#d9eedb",
+    "aqua": "#9ce5de",
+    "teal_cta": "#05aba9"
+  }
+}

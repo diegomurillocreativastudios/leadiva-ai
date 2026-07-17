@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva | Leads y Licitaciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            coral: "#f9a79b",
+                            peach: "#fbcab9",
+                            mint: "#d9eedb",
+                            aqua: "#9ce5de",
+                            teal: "#05aba9",
+                            "teal-dark": "#048f8d"
+                        },
+                        surface: {
+                            base: "#f4faf6",
+                            raised: "#ffffff",
+                            border: "#d5e8e0"
+                        },
+                        text: {
+                            primary: "#1c1917",
+                            secondary: "#5f6b66"
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Ibm Plex Sans"],
+                        display: ["Ibm Plex Sans"],
+                        body: ["Ibm Plex Sans"],
+                        label: ["Ibm Plex Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Ibm Plex Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d5e8e0; border-radius: 10px; }
+        .zebra-peach:nth-child(even) { background-color: #fbcab922; }
+    </style>
+</head>
+<body class="bg-surface-base text-text-primary min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-raised border-r border-surface-border flex flex-col py-4 z-50">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-2 mb-1">
+<div class="w-8 h-8 bg-brand-teal rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+</div>
+<span class="text-lg font-headline font-black text-brand-teal">Leadiva</span>
+</div>
+<p class="text-xs text-text-secondary font-medium">Lead Management</p>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-brand-mint hover:text-brand-teal transition-all duration-200 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Inicio
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-brand-mint text-brand-teal border-l-4 border-brand-teal transition-all duration-200 font-medium text-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+                Prospectos
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-brand-mint hover:text-brand-teal transition-all duration-200 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">campaign</span>
+                Campañas
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-brand-mint hover:text-brand-teal transition-all duration-200 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">assessment</span>
+                Reportes
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-text-secondary hover:bg-brand-mint hover:text-brand-teal transition-all duration-200 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Configuración
+            </a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-brand-teal hover:bg-brand-teal-dark text-white py-2.5 rounded font-bold text-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                Nuevo Lead
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex flex-col min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="w-full h-16 sticky top-0 bg-[#f4faf6] border-b border-surface-border flex justify-between items-center px-8 z-40">
+<div class="flex items-center bg-white border border-surface-border rounded-lg px-3 py-1.5 w-96">
+<span class="material-symbols-outlined text-text-secondary text-lg">search</span>
+<input class="border-none focus:ring-0 text-sm w-full bg-transparent text-text-primary placeholder:text-text-secondary" placeholder="Buscar por licitación, empresa o ID..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-text-secondary hover:text-brand-teal transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-text-secondary hover:text-brand-teal transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full border border-brand-teal p-0.5 overflow-hidden">
+<img class="w-full h-full object-cover rounded-full" data-alt="Professional studio portrait of a business executive in a high-key setting with a subtle mint background gradient. The person has a friendly but professional expression, wearing minimalist attire that complements the modern, flat design aesthetic of Leadiva. The lighting is soft and even, highlighting premium details without harsh shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhguZBpwZOxC57bDj-QnaswGxugaZkOI05HkHfSsb9wqAGhLRlGfM5_xiBT_nE2JJO95bMZTjbaAEY5n6ZoaDu60SGzbRIJpwRZrYIviYfnSh403u-LQsCa2vz_rYT5CT4pmQ65PAAeRKwh3Xf40o4W4gFCQY4QSnWDxS-KooTpaWfTCAYmiKBXXog2p5LUBOdboaF5cPeiXLvmc1Xqu5PbUulNOy1UYjqyLz5tcjNnRZARy9mIaHPR6VQ-SauOb9f3EukKjWfnA"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-8 flex-1">
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-3xl font-headline font-bold text-text-primary mb-1">Leads</h1>
+<p class="text-text-secondary text-sm">Pipeline comercial con estados, responsables y plazos</p>
+</div>
+<button class="bg-brand-teal hover:bg-brand-teal-dark text-white px-6 py-2.5 rounded font-bold transition-all flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">transform</span>
+                    Convertir proyecto
+                </button>
+</div>
+<!-- Bento Filters Section -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6 bg-surface-raised p-4 rounded-xl border border-surface-border shadow-sm">
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] uppercase tracking-wider font-bold text-text-secondary">Palabra clave</label>
+<input class="border border-surface-border rounded px-3 py-1.5 text-xs focus:ring-1 focus:ring-brand-teal outline-none" placeholder="ID o título..." type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] uppercase tracking-wider font-bold text-text-secondary">Estado</label>
+<select class="border border-surface-border rounded px-3 py-1.5 text-xs focus:ring-1 focus:ring-brand-teal outline-none appearance-none">
+<option>Todos los estados</option>
+<option>Abierto</option>
+<option>En evaluación</option>
+<option>Ganado</option>
+<option>Perdido</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] uppercase tracking-wider font-bold text-text-secondary">Fuente</label>
+<select class="border border-surface-border rounded px-3 py-1.5 text-xs focus:ring-1 focus:ring-brand-teal outline-none appearance-none">
+<option>Cualquier fuente</option>
+<option>Licitación Pública</option>
+<option>Referido</option>
+<option>Inbound</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] uppercase tracking-wider font-bold text-text-secondary">Responsable</label>
+<select class="border border-surface-border rounded px-3 py-1.5 text-xs focus:ring-1 focus:ring-brand-teal outline-none appearance-none">
+<option>Todos</option>
+<option>Ana García</option>
+<option>Marcos Ruiz</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] uppercase tracking-wider font-bold text-text-secondary">Plazo</label>
+<div class="flex items-center border border-surface-border rounded px-3 py-1.5 text-xs">
+<input class="border-none p-0 focus:ring-0 w-full text-xs bg-transparent" type="date"/>
+</div>
+</div>
+</div>
+<!-- Leads Table Container -->
+<div class="bg-surface-raised border border-surface-border rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-brand-mint text-brand-teal border-b border-surface-border">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider w-12">
+<input class="rounded border-brand-teal text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Título &amp; ID</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Organización</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Estado</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Fuente</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Score</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Plazo</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider"></th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-surface-border">
+<!-- Row 1 -->
+<tr class="zebra-peach hover:bg-brand-mint/20 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-surface-border text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="font-bold text-text-primary group-hover:text-brand-teal transition-colors">Sistema de Gestión Hospitalaria</div>
+<div class="text-[10px] font-mono text-text-secondary mt-0.5">ID: L-2024-001</div>
+</td>
+<td class="px-6 py-4 text-text-secondary">Ministerio de Salud Pública</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-brand-mint text-brand-teal border border-brand-teal/20">ABIERTO</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold bg-brand-aqua/30 text-brand-teal-dark">
+<span class="material-symbols-outlined text-[12px]">gavel</span>
+                                        Licitación
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-teal h-full w-[85%]"></div>
+</div>
+<span class="text-[11px] font-bold text-brand-teal">85</span>
+</div>
+</td>
+<td class="px-6 py-4 text-text-secondary text-xs">
+                                    15 Mayo, 2024
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-brand-teal"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="zebra-peach hover:bg-brand-mint/20 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-surface-border text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="font-bold text-text-primary group-hover:text-brand-teal transition-colors">Implementación ERP Cloud</div>
+<div class="text-[10px] font-mono text-text-secondary mt-0.5">ID: L-2024-042</div>
+</td>
+<td class="px-6 py-4 text-text-secondary">Artemis Logistics S.A.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-brand-peach text-orange-800 border border-brand-peach">EVALUANDO</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold bg-brand-aqua/30 text-brand-teal-dark">
+<span class="material-symbols-outlined text-[12px]">handshake</span>
+                                        Referido
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-teal h-full w-[62%]"></div>
+</div>
+<span class="text-[11px] font-bold text-brand-teal">62</span>
+</div>
+</td>
+<td class="px-6 py-4 text-text-secondary text-xs">
+                                    02 Jun, 2024
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-brand-teal"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="zebra-peach hover:bg-brand-mint/20 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-surface-border text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="font-bold text-text-primary group-hover:text-brand-teal transition-colors">App Móvil Fidelización</div>
+<div class="text-[10px] font-mono text-text-secondary mt-0.5">ID: L-2024-089</div>
+</td>
+<td class="px-6 py-4 text-text-secondary">Retail Group Latam</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-brand-teal text-white border border-brand-teal">GANADO</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold bg-brand-aqua/30 text-brand-teal-dark">
+<span class="material-symbols-outlined text-[12px]">hub</span>
+                                        Inbound
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-teal h-full w-[98%]"></div>
+</div>
+<span class="text-[11px] font-bold text-brand-teal">98</span>
+</div>
+</td>
+<td class="px-6 py-4 text-text-secondary text-xs">
+                                    Concluido
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-brand-teal"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="zebra-peach hover:bg-brand-mint/20 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-surface-border text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="font-bold text-text-primary group-hover:text-brand-teal transition-colors">Seguridad Perimetral CCTV</div>
+<div class="text-[10px] font-mono text-text-secondary mt-0.5">ID: L-2023-954</div>
+</td>
+<td class="px-6 py-4 text-text-secondary">Aduanas Nacionales</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-red-100 text-red-600 border border-red-200">PERDIDA</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold bg-brand-aqua/30 text-brand-teal-dark">
+<span class="material-symbols-outlined text-[12px]">gavel</span>
+                                        Licitación
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-teal h-full w-[25%]"></div>
+</div>
+<span class="text-[11px] font-bold text-brand-teal">25</span>
+</div>
+</td>
+<td class="px-6 py-4 text-text-secondary text-xs">
+                                    Vencido
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-brand-teal"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="zebra-peach hover:bg-brand-mint/20 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-surface-border text-brand-teal focus:ring-brand-teal" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="font-bold text-text-primary group-hover:text-brand-teal transition-colors">Renovación Licencias MS</div>
+<div class="text-[10px] font-mono text-text-secondary mt-0.5">ID: L-2024-112</div>
+</td>
+<td class="px-6 py-4 text-text-secondary">Banca Privada S.A.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-brand-mint text-brand-teal border border-brand-teal/20">ABIERTO</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold bg-brand-aqua/30 text-brand-teal-dark">
+<span class="material-symbols-outlined text-[12px]">group</span>
+                                        Referido
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-brand-teal h-full w-[40%]"></div>
+</div>
+<span class="text-[11px] font-bold text-brand-teal">40</span>
+</div>
+</td>
+<td class="px-6 py-4 text-text-secondary text-xs">
+                                    30 Mayo, 2024
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-brand-teal"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between px-6 py-4 border-t border-surface-border">
+<span class="text-xs text-text-secondary font-medium">Mostrando 1-10 de 124 prospectos</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-brand-mint transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-brand-teal text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-brand-mint text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-brand-mint text-xs">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-brand-mint transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Dashboard Stats Summary -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-raised border border-surface-border p-4 rounded-xl flex items-center gap-4">
+<div class="w-10 h-10 rounded bg-brand-mint flex items-center justify-center text-brand-teal">
+<span class="material-symbols-outlined">assignment_late</span>
+</div>
+<div>
+<div class="text-xs text-text-secondary font-medium uppercase tracking-tighter">Próximos a vencer</div>
+<div class="text-xl font-bold text-brand-teal">14</div>
+</div>
+</div>
+<div class="bg-surface-raised border border-surface-border p-4 rounded-xl flex items-center gap-4">
+<div class="w-10 h-10 rounded bg-brand-aqua/30 flex items-center justify-center text-brand-teal-dark">
+<span class="material-symbols-outlined">attach_money</span>
+</div>
+<div>
+<div class="text-xs text-text-secondary font-medium uppercase tracking-tighter">Valor estimado</div>
+<div class="text-xl font-bold text-brand-teal">$1.2M</div>
+</div>
+</div>
+<div class="bg-surface-raised border border-surface-border p-4 rounded-xl flex items-center gap-4">
+<div class="w-10 h-10 rounded bg-brand-peach flex items-center justify-center text-orange-700">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<div>
+<div class="text-xs text-text-secondary font-medium uppercase tracking-tighter">Tasa de conversión</div>
+<div class="text-xl font-bold text-brand-teal">24.5%</div>
+</div>
+</div>
+<div class="bg-brand-teal p-4 rounded-xl flex items-center gap-4 text-white">
+<div class="w-10 h-10 rounded bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div>
+<div class="text-xs opacity-80 font-medium uppercase tracking-tighter">Leads Ganados</div>
+<div class="text-xl font-bold">42</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple interactivity for demonstration
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox' && !e.target.closest('button')) {
+                    // Logic for opening detail sidebar or modal could go here
+                    console.log('Row clicked');
+                }
+            });
+        });
+    </script>
+</body></html>

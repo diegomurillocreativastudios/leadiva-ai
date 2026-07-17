@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#05aba9",
+                        "primary-dark": "#048f8d",
+                        mint: "#d9eedb",
+                        peach: "#fbcab9",
+                        aqua: "#9ce5de",
+                        coral: "#f9a79b",
+                        surface: {
+                            base: "#f4faf6",
+                            raised: "#ffffff",
+                            border: "#d5e8e0"
+                        },
+                        text: {
+                            primary: "#1c1917",
+                            secondary: "#5f6b66"
+                        }
+                    },
+                    fontFamily: {
+                        headline: ["Ibm Plex Sans"],
+                        display: ["Ibm Plex Sans"],
+                        body: ["Ibm Plex Sans"],
+                        label: ["Ibm Plex Sans"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Ibm Plex Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-active {
+            background-color: #d9eedb;
+            color: #05aba9;
+            border-left: 4px solid #05aba9;
+        }
+        /* Custom scrollbar for better integration */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f4faf6; }
+        ::-webkit-scrollbar-thumb { background: #d5e8e0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#f4faf6] text-[#1c1917] antialiased">
+<!-- SideNavBar (Authority: Shared Components JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#ffffff] border-r border-[#d5e8e0] flex flex-col py-4 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 bg-[#05aba9] rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+</div>
+<div>
+<h1 class="text-lg font-headline font-black text-[#05aba9]">Leadiva</h1>
+<p class="text-[10px] text-[#5f6b66] uppercase tracking-wider font-bold">Lead Management</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-[#05aba9] text-white py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-[#048f8d] transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>Nuevo Lead</span>
+</button>
+</div>
+<nav class="flex-1 flex flex-col font-body text-sm font-medium">
+<!-- Active State: Inicio -->
+<a class="sidebar-active flex items-center gap-3 px-6 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Inicio</span>
+</a>
+<a class="text-[#5f6b66] hover:bg-[#f4faf6] hover:text-[#05aba9] flex items-center gap-3 px-6 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span>Prospectos</span>
+</a>
+<a class="text-[#5f6b66] hover:bg-[#f4faf6] hover:text-[#05aba9] flex items-center gap-3 px-6 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span>Campañas</span>
+</a>
+<a class="text-[#5f6b66] hover:bg-[#f4faf6] hover:text-[#05aba9] flex items-center gap-3 px-6 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span>Reportes</span>
+</a>
+<a class="text-[#5f6b66] hover:bg-[#f4faf6] hover:text-[#05aba9] flex items-center gap-3 px-6 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configuración</span>
+</a>
+</nav>
+<div class="mt-auto px-6 pt-4 border-t border-[#d5e8e0]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#fbcab9] overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional close-up studio portrait of a business professional with a warm smile, set against a clean and minimalist pastel green background that matches the Leadiva dashboard aesthetic. The lighting is soft and flat, emphasizing clarity and friendliness. The style is institutional yet approachable." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJggictGGxIhT-0HZ7qUZaT8y2L2CfAAQUR-w6qMVrkhK03ixySURTVR7okb-huvCt98-QhzbrTNpJ19RSSjPY5_zuzBXMKw6xdlkvghPd8tqSjnEIIS2DkWMhXcR74wSTFzTfpFzLDkOUbalWB9o3SCAqXOUvt3hF9FFnM8F_g4VJn-bgHAN0gSVG5UtJKyXVbsRRNveIEEHqyY_dnRJ60yyvAjlobaaczFBwfDDCRg53LWS6EssRwappnbzHxkpWdJh9kkTNEw"/>
+</div>
+<div class="truncate">
+<p class="text-xs font-bold truncate">Diego Ramírez</p>
+<p class="text-[10px] text-[#5f6b66] truncate">Admin Account</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Authority: Shared Components JSON) -->
+<header class="ml-64 bg-[#f4faf6] border-b border-[#d5e8e0] sticky top-0 z-40 h-16 flex justify-between items-center px-8 w-[calc(100%-16rem)]">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#5f6b66] text-xl">search</span>
+<input class="w-full bg-white border border-[#d5e8e0] rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#05aba9] transition-all" placeholder="Buscar prospectos, campañas..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-[#5f6b66] hover:bg-[#d9eedb] transition-colors rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#f4faf6]"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-[#5f6b66] hover:bg-[#d9eedb] transition-colors rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 p-8 min-h-screen">
+<!-- Header Section -->
+<div class="mb-8">
+<h2 class="text-2xl font-headline font-bold text-[#1c1917]">Buenos días, Diego</h2>
+<p class="text-[#5f6b66]">Aquí tienes el resumen de tu gestión de leads para hoy, 24 de Octubre.</p>
+</div>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Card 1 -->
+<div class="bg-white p-6 rounded-xl border border-[#d5e8e0] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-[#5f6b66] uppercase tracking-wider">Leads activos</span>
+<div class="w-8 h-8 rounded bg-[#d9eedb] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#05aba9] text-xl" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold">1,284</span>
+<span class="text-green-600 text-xs font-bold mb-1.5 flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> 12%
+                    </span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white p-6 rounded-xl border border-[#d5e8e0] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-[#5f6b66] uppercase tracking-wider">Por verificar</span>
+<div class="w-8 h-8 rounded bg-[#fbcab9] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#925c4e] text-xl" style="font-variation-settings: 'FILL' 1;">pending_actions</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold">42</span>
+<span class="text-orange-600 text-xs font-bold mb-1.5 flex items-center">
+<span class="material-symbols-outlined text-sm">priority_high</span> Urgente
+                    </span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white p-6 rounded-xl border border-[#d5e8e0] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-[#5f6b66] uppercase tracking-wider">Próximos a vencer</span>
+<div class="w-8 h-8 rounded bg-[#9ce5de] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#048f8d] text-xl" style="font-variation-settings: 'FILL' 1;">event_busy</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold">15</span>
+<span class="text-[#05aba9] text-xs font-bold mb-1.5 flex items-center">
+                        Hoy
+                    </span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white p-6 rounded-xl border border-[#d5e8e0] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-[#5f6b66] uppercase tracking-wider">Score promedio</span>
+<div class="w-8 h-8 rounded bg-[#d9eedb] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#05aba9] text-xl" style="font-variation-settings: 'FILL' 1;">grade</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold">8.4</span>
+<div class="flex ml-2 mb-1.5 text-xs text-[#05aba9]">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star_half</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<!-- Table Section (Bento Style) -->
+<div class="lg:col-span-2 bg-white rounded-xl border border-[#d5e8e0] overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-[#d5e8e0] flex justify-between items-center">
+<h3 class="font-bold text-lg">Próximas fechas límite</h3>
+<button class="text-[#05aba9] text-sm font-bold hover:underline">Ver calendario</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-[#f4faf6] text-[#5f6b66] text-xs uppercase font-bold tracking-widest">
+<th class="px-6 py-3">Título</th>
+<th class="px-6 py-3">Organización</th>
+<th class="px-6 py-3">Estado</th>
+<th class="px-6 py-3">Deadline</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#d5e8e0]">
+<tr class="hover:bg-[#f4faf6] transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#fbcab9] flex items-center justify-center text-[10px] font-bold text-[#925c4e]">CR</div>
+<span class="font-medium text-sm">Cierre de contrato Retail</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#5f6b66]">Tech Corp S.A.</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-[#d9eedb] text-[#05aba9] text-[10px] font-bold uppercase rounded">Abierto</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium">Hoy, 18:00</td>
+</tr>
+<tr class="hover:bg-[#f4faf6] transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#9ce5de] flex items-center justify-center text-[10px] font-bold text-[#048f8d]">AM</div>
+<span class="font-medium text-sm">Actualización Métrica</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#5f6b66]">Global Logistics</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-[#fbcab9] text-[#925c4e] text-[10px] font-bold uppercase rounded">Evaluando</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium">Mañana, 09:00</td>
+</tr>
+<tr class="hover:bg-[#f4faf6] transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#d9eedb] flex items-center justify-center text-[10px] font-bold text-[#05aba9]">RV</div>
+<span class="font-medium text-sm">Reunión de Ventas</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#5f6b66]">Innova Soft</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-[#9ce5de] text-[#048f8d] text-[10px] font-bold uppercase rounded">Ganado</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium">26 Oct, 14:30</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Activity Timeline -->
+<div class="bg-white rounded-xl border border-[#d5e8e0] p-6 shadow-sm">
+<h3 class="font-bold text-lg mb-6">Actividad reciente</h3>
+<div class="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-0.5 before:bg-[#d5e8e0]">
+<!-- Item 1 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#05aba9] z-10 flex items-center justify-center">
+<span class="w-2 h-2 bg-[#05aba9] rounded-full"></span>
+</div>
+<div>
+<p class="text-sm font-bold">Llamada completada</p>
+<p class="text-xs text-[#5f6b66]">Con <span class="text-[#1c1917] font-medium">Marco Rossi</span> para discutir presupuesto.</p>
+<p class="text-[10px] text-[#5f6b66] mt-1 font-medium">Hace 25 min</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#fbcab9] z-10 flex items-center justify-center">
+<span class="w-2 h-2 bg-[#fbcab9] rounded-full"></span>
+</div>
+<div>
+<p class="text-sm font-bold">Lead calificado</p>
+<p class="text-xs text-[#5f6b66]">El sistema identificó un nuevo prospecto de <span class="text-[#1c1917] font-medium">E-commerce Pro</span>.</p>
+<p class="text-[10px] text-[#5f6b66] mt-1 font-medium">Hace 2 horas</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white border-2 border-[#9ce5de] z-10 flex items-center justify-center">
+<span class="w-2 h-2 bg-[#9ce5de] rounded-full"></span>
+</div>
+<div>
+<p class="text-sm font-bold">Documento firmado</p>
+<p class="text-xs text-[#5f6b66]">Contrato anual aceptado por <span class="text-[#1c1917] font-medium">Global Logistics</span>.</p>
+<p class="text-[10px] text-[#5f6b66] mt-1 font-medium">Hace 4 horas</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-2 text-[#05aba9] text-sm font-bold border border-[#05aba9] rounded-lg hover:bg-[#d9eedb] transition-colors">
+                    Ver actividad completa
+                </button>
+</div>
+</div>
+<!-- Bottom CTA -->
+<div class="mt-12 flex justify-center">
+<button class="bg-[#05aba9] text-white px-8 py-3 rounded-full font-bold flex items-center gap-3 hover:bg-[#048f8d] shadow-lg shadow-[#05aba922] transition-all transform active:scale-95">
+<span>Ver todos los leads</span>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Visual Accent (Asymmetric Pattern) -->
+<div class="fixed bottom-0 right-0 w-64 h-64 opacity-5 pointer-events-none -z-10">
+<svg viewbox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<path d="M47.7,-63.9C60.9,-54.4,69.9,-38.7,75.1,-21.9C80.3,-5.1,81.7,12.8,75.6,28.6C69.4,44.4,55.8,58.2,40.3,67C24.7,75.8,7.2,79.7,-11.1,77.7C-29.4,75.7,-48.5,67.8,-61.7,53.9C-74.8,40.1,-82,20,-80.7,1.1C-79.3,-17.7,-69.5,-35.4,-55.8,-45.1C-42,-54.9,-24.3,-56.7,-6.2,-58.1C11.9,-59.5,23.8,-60.5,47.7,-63.9Z" fill="#05aba9" transform="translate(100 100)"></path>
+</svg>
+</div>
+</main>
+<script>
+        // Micro-interaction: Active tab styling logic
+        const navLinks = document.querySelectorAll('nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                navLinks.forEach(l => {
+                    l.classList.remove('sidebar-active');
+                    l.classList.add('text-[#5f6b66]', 'hover:bg-[#f4faf6]');
+                });
+                link.classList.add('sidebar-active');
+                link.classList.remove('text-[#5f6b66]', 'hover:bg-[#f4faf6]');
+            });
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-105');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-105');
+        });
+    </script>
+</body></html>

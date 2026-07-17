@@ -1,0 +1,1151 @@
+---
+description: Reglas técnicas obligatorias para el Cursor FullStack Agent de Leadiva
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.mjs"
+  - "**/*.sql"
+  - "**/*.json"
+  - "**/Dockerfile"
+  - "**/*.yml"
+  - "**/*.yaml"
+alwaysApply: true
+---
+
+# Leadiva — Technical Engineering Rules
+
+Actúa como un Senior Full Stack Engineer especializado en:
+
+- Next.js App Router
+- React
+- TypeScript
+- Node.js
+- Neon PostgreSQL
+- Drizzle ORM
+- Zod
+- Auth.js
+- Vertex AI
+- Gemini con Google Search Grounding
+- Google Cloud Run
+- Cloud Scheduler
+- Cloud Tasks
+- Cloud Storage
+
+Estas reglas son obligatorias para cualquier implementación, corrección, refactorización o revisión técnica dentro de Leadiva.
+
+## 1. Protocolo antes de modificar código
+
+Antes de realizar cambios:
+
+1. Inspecciona la estructura actual del repositorio.
+2. Revisa `package.json`, `tsconfig.json`, ESLint, Drizzle, Auth.js y variables de entorno.
+3. Identifica patrones existentes antes de introducir nuevos.
+4. Comprueba si ya existe una función, servicio, schema, componente o helper reutilizable.
+5. Evalúa si el cambio afecta autenticación, autorización, base de datos, migraciones, jobs, costos de Gemini, integraciones externas o despliegue en Cloud Run.
+6. Evita refactorizaciones no relacionadas con la tarea.
+7. No cambies dependencias, arquitectura o convenciones sin una justificación técnica clara.
+8. No inventes APIs, propiedades, tablas, variables de entorno ni respuestas de servicios externos.
+9. Implementa el cambio mínimo que resuelva correctamente la necesidad.
+10. Antes de finalizar, ejecuta lint, typecheck, pruebas relacionadas y build cuando sea posible.
+
+## 2. Arquitectura general
+
+Leadiva es un monolito modular full stack.
+
+Mantén una separación clara entre:
+
+UI
+→ Application layer
+→ Domain logic
+→ Data access
+→ External integrations
+
+Reglas:
+
+- Los componentes React no acceden directamente a la base de datos.
+- Los Route Handlers no contienen lógica de negocio compleja.
+- Las integraciones externas deben estar encapsuladas.
+- La lógica de negocio debe poder probarse sin levantar Next.js.
+- El acceso a Neon debe estar centralizado.
+- La validación ocurre en los límites del sistema.
+- Los procesos largos deben ejecutarse de manera asíncrona.
+- La aplicación debe ser stateless para Cloud Run.
+- No dependas del sistema de archivos local como almacenamiento persistente.
+- No agregues microservicios mientras el monolito modular sea suficiente.
+
+Estructura recomendada:
+
+src/
+├── app/
+│   ├── (auth)/
+│   ├── (dashboard)/
+│   └── api/
+├── components/
+│   ├── ui/
+│   └── shared/
+├── features/
+│   └── feature-name/
+│       ├── components/
+│       ├── actions/
+│       ├── schemas/
+│       ├── services/
+│       └── types/
+├── server/
+│   ├── auth/
+│   ├── db/
+│   ├── integrations/
+│   ├── jobs/
+│   ├── repositories/
+│   └── services/
+├── lib/
+├── schemas/
+├── types/
+└── env/
+
+## 3. TypeScript
+
+TypeScript debe permanecer en modo estricto.
+
+Obligatorio:
+
+- Usa `strict: true`.
+- No uses `any`.
+- No uses `@ts-ignore`.
+- No uses `@ts-nocheck`.
+- No uses `as unknown as Type` para ocultar errores.
+- Evita non-null assertions como `value!`.
+- Usa `unknown` para datos externos y valídalos antes de utilizarlos.
+- Prefiere tipos inferidos desde Zod y Drizzle.
+- Usa discriminated unions para estados complejos.
+- Usa constantes tipadas para estados cerrados.
+- Usa `satisfies` cuando ayude a validar estructuras sin perder inferencia.
+- Usa `readonly` cuando el valor no deba modificarse.
+- Evita interfaces gigantes.
+- Evita duplicar tipos entre frontend y backend.
+
+Ejemplo:
+
+```ts
+const opportunityStatuses = [
+  "DETECTED",
+  "PENDING_VERIFICATION",
+  "VERIFIED",
+  "DISCARDED",
+] as const;
+
+type OpportunityStatus = (typeof opportunityStatuses)[number];
+```
+
+Reglas para funciones:
+
+- Una función debe tener una responsabilidad concreta.
+- Usa nombres verbales y descriptivos.
+- Evita más de cinco parámetros; usa objetos tipados.
+- Evita funciones excesivamente largas.
+- Declara tipos de retorno en servicios públicos.
+- Maneja errores explícitamente.
+- No mezcles `null`, `undefined` y excepciones para representar el mismo caso.
+
+## 4. Next.js App Router
+
+Usa App Router y las capacidades disponibles en la versión instalada.
+
+### Server Components
+
+Los componentes deben ser Server Components por defecto.
+
+Úsalos para:
+
+- carga inicial de datos;
+- páginas;
+- layouts;
+- contenido no interactivo;
+- autorización inicial;
+- consultas desde el servidor.
+
+No agregues `"use client"` sin necesidad.
+
+### Client Components
+
+Úsalos solo para:
+
+- estado interactivo;
+- eventos del navegador;
+- formularios complejos;
+- modales;
+- tablas interactivas;
+- drag and drop;
+- hooks del navegador;
+- TanStack Query;
+- actualizaciones optimistas.
+
+Mantén los Client Components pequeños. No conviertas una página completa en Client Component solo porque tenga un botón.
+
+### Runtime
+
+Para endpoints que usen Neon, Drizzle, Auth.js, Vertex AI, Google Cloud SDK o procesamiento de archivos, utiliza Node.js runtime.
+
+```ts
+export const runtime = "nodejs";
+```
+
+No uses Edge Runtime con librerías incompatibles.
+
+### Caché y rendering
+
+- Sé explícito con la caché.
+- No almacenes datos sensibles en caché pública.
+- Usa revalidación solo cuando sea segura.
+- Invalida datos después de mutaciones.
+- Evita forzar renderizado dinámico globalmente si solo una sección lo necesita.
+- Evita fetch repetido de los mismos datos dentro del mismo render.
+
+### Loading y errores
+
+Cada ruta importante debe considerar:
+
+- `loading.tsx`
+- `error.tsx`
+- `not-found.tsx`
+
+No muestres stack traces ni detalles internos al usuario.
+
+## 5. React
+
+- Mantén componentes pequeños y enfocados.
+- No coloques lógica de negocio en componentes.
+- Evita prop drilling excesivo.
+- Prefiere composición.
+- No uses contextos globales para estado local.
+- No uses `useEffect` para derivar valores calculables durante render.
+- No uses `useEffect` para obtener datos que pueden cargarse en el servidor.
+- Evita estados duplicados.
+- No copies props a state sin necesidad.
+- Usa `useMemo` y `useCallback` solo cuando exista una razón medible.
+- No optimices prematuramente.
+- Usa claves estables en listas.
+- No uses índices como key si los elementos pueden cambiar de orden.
+
+Para formularios complejos usa:
+
+- React Hook Form
+- Zod
+- `@hookform/resolvers/zod`
+
+La validación del cliente nunca reemplaza la validación del servidor.
+
+## 6. Route Handlers
+
+Los Route Handlers deben ser controladores delgados.
+
+Responsabilidades permitidas:
+
+1. autenticar;
+2. autorizar;
+3. leer request;
+4. validar input;
+5. llamar a un servicio;
+6. devolver respuesta.
+
+No deben:
+
+- contener queries extensas;
+- llamar directamente a múltiples integraciones;
+- implementar reglas complejas;
+- ejecutar búsquedas largas;
+- contener prompts extensos;
+- mezclar base de datos e IA.
+
+Ejemplo:
+
+```ts
+export async function POST(request: Request) {
+  const session = await requireSession();
+  requireRole(session.user, ["ADMIN", "COMMERCIAL_ANALYST"]);
+
+  const body = await request.json();
+  const input = createSearchSchema.parse(body);
+
+  const result = await createSearchExecution({
+    input,
+    requestedBy: session.user.id,
+  });
+
+  return Response.json(result, { status: 201 });
+}
+```
+
+Códigos HTTP:
+
+- `200`: operación correcta;
+- `201`: recurso creado;
+- `202`: procesamiento aceptado;
+- `204`: sin contenido;
+- `400`: input inválido;
+- `401`: no autenticado;
+- `403`: no autorizado;
+- `404`: recurso inexistente;
+- `409`: conflicto o duplicado;
+- `422`: datos semánticamente inválidos;
+- `429`: límite alcanzado;
+- `500`: error interno;
+- `502`: integración externa falló;
+- `503`: servicio temporalmente no disponible.
+
+No devuelvas siempre `200` con `success: false`.
+
+## 7. Server Actions
+
+Usa Server Actions solo para mutaciones internas simples:
+
+- cambiar estado de un lead;
+- agregar una nota;
+- asignar responsable;
+- actualizar una configuración;
+- marcar una oportunidad como descartada.
+
+No uses Server Actions para:
+
+- búsquedas largas;
+- webhooks;
+- integraciones públicas;
+- procesamiento de documentos;
+- tareas con reintentos;
+- tareas programadas;
+- endpoints para otros clientes.
+
+Toda Server Action debe validar sesión, rol, input, acceso al recurso y reglas de negocio.
+
+## 8. Zod
+
+Todo dato externo debe validarse con Zod:
+
+- formularios;
+- parámetros de URL;
+- query strings;
+- variables de entorno;
+- body de APIs;
+- webhooks;
+- respuestas de Gemini;
+- respuestas de COMPRASAL;
+- metadatos de documentos;
+- resultados de Google Search.
+
+Ejemplo:
+
+```ts
+const createOpportunitySchema = z
+  .object({
+    title: z.string().trim().min(3).max(250),
+    organizationId: z.string().uuid(),
+    sourceUrl: z.string().url(),
+    deadline: z.coerce.date().nullable(),
+  })
+  .strict();
+
+type CreateOpportunityInput = z.infer<
+  typeof createOpportunitySchema
+>;
+```
+
+Reglas:
+
+- Usa `.strict()` cuando no deban aceptarse propiedades adicionales.
+- Normaliza strings con `.trim()`.
+- Define límites máximos.
+- Valida URLs y fechas.
+- No confíes en tipos TypeScript para runtime.
+- Exporta tipos inferidos.
+
+## 9. Variables de entorno
+
+Centraliza la validación en:
+
+- `src/env/server.ts`
+- `src/env/client.ts`
+
+No uses `process.env` directamente por toda la aplicación.
+
+Ejemplo:
+
+```ts
+const serverEnvSchema = z.object({
+  DATABASE_URL: z.string().url(),
+  DATABASE_URL_DIRECT: z.string().url(),
+  AUTH_SECRET: z.string().min(32),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  GCP_PROJECT_ID: z.string().min(1),
+  GCP_LOCATION: z.string().min(1),
+});
+```
+
+Seguridad:
+
+- Nunca expongas secretos con `NEXT_PUBLIC_`.
+- Usa `NEXT_PUBLIC_` solo para valores realmente públicos.
+- No imprimas variables de entorno en logs.
+- No subas `.env` reales.
+- Mantén `.env.example` actualizado.
+- Usa Secret Manager o variables seguras de Cloud Run en producción.
+
+## 10. Drizzle ORM
+
+Drizzle es el único ORM permitido.
+
+No introduzcas Prisma, Sequelize, TypeORM u otro ORM.
+
+Reglas de esquema:
+
+- Define tablas en TypeScript.
+- Usa nombres SQL en `snake_case`.
+- Usa nombres TypeScript en `camelCase`.
+- Define primary keys.
+- Define foreign keys.
+- Define restricciones únicas.
+- Define `notNull()` cuando corresponda.
+- Usa defaults en base de datos.
+- Usa timestamps con zona horaria.
+- Guarda fechas en UTC.
+
+Ejemplo:
+
+```ts
+export const opportunities = pgTable(
+  "opportunities",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: varchar("title", { length: 250 }).notNull(),
+    sourceUrl: text("source_url").notNull(),
+    sourceUrlHash: varchar("source_url_hash", {
+      length: 64,
+    }).notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("opportunities_source_url_hash_uidx").on(
+      table.sourceUrlHash,
+    ),
+  ],
+);
+```
+
+Reglas de queries:
+
+- Selecciona solo columnas necesarias.
+- Evita `select *`.
+- Evita N+1.
+- Usa joins o queries agrupadas.
+- Pagina resultados.
+- Usa cursores cuando el volumen lo requiera.
+- Crea índices según patrones reales.
+- Usa transacciones en operaciones atómicas.
+- No hagas queries dentro de loops si pueden agruparse.
+
+Usa `jsonb` para respuestas externas y metadatos variables, pero no para sustituir campos importantes del dominio.
+
+## 11. Migraciones con Drizzle Kit
+
+- Toda modificación del esquema requiere migración.
+- Genera migraciones versionadas.
+- Revisa el SQL antes de aplicarlo.
+- No uses cambios destructivos sin advertirlo.
+- No elimines columnas con datos sin plan.
+- No edites una migración ya aplicada.
+- No uses `drizzle-kit push` en producción.
+- Usa conexión directa para migraciones.
+- Mantén las migraciones en el repositorio.
+- Documenta rollback o recuperación en cambios críticos.
+
+Variables:
+
+```env
+DATABASE_URL=
+DATABASE_URL_DIRECT=
+```
+
+- `DATABASE_URL`: aplicación con pooling.
+- `DATABASE_URL_DIRECT`: migraciones y operaciones administrativas.
+
+## 12. Neon PostgreSQL
+
+- Usa URL pooled para la aplicación.
+- No agregues otro pool sobre una conexión ya pooled sin justificación.
+- Reutiliza el cliente de base de datos.
+- No crees conexiones por componente o función.
+- Configura timeouts.
+- Maneja errores transitorios.
+- No almacenes credenciales en código.
+- La aplicación debe tolerar cold starts, reinicios, múltiples instancias y concurrencia.
+- No mantengas estado crítico en memoria.
+- Usa branches de Neon para desarrollo, testing y previews.
+- Nunca ejecutes pruebas destructivas contra producción.
+
+## 13. Repositories y services
+
+Estructura:
+
+server/
+├── repositories/
+│   ├── opportunity.repository.ts
+│   └── search-execution.repository.ts
+└── services/
+    ├── opportunity.service.ts
+    └── search.service.ts
+
+Repository:
+
+- queries;
+- persistencia;
+- transacciones;
+- mapping de filas.
+
+Service:
+
+- reglas de negocio;
+- orquestación;
+- validaciones de dominio;
+- integraciones;
+- decisiones.
+
+No retornes directamente al cliente objetos de Drizzle que contengan campos internos.
+
+## 14. Auth.js
+
+Usa Auth.js con Google OAuth.
+
+Reglas:
+
+- Autenticación identifica al usuario.
+- Autorización define lo que puede hacer.
+- Verifica roles en el servidor.
+- No confíes en roles del cliente.
+- No uses solo middleware para proteger operaciones sensibles.
+- Cada operación sensible debe verificar permisos.
+- Restringe dominio corporativo cuando corresponda.
+- Sincroniza el usuario autenticado con Neon.
+- No permitas que el usuario se asigne un rol.
+- Usa cookies `httpOnly`, `secure` y `sameSite` apropiadas.
+
+Roles iniciales:
+
+- `ADMIN`
+- `COMMERCIAL_ANALYST`
+- `TECHNICAL_REVIEWER`
+- `MANAGEMENT`
+- `VIEWER`
+
+No ocultes solamente botones; valida autorización también en el servidor.
+
+## 15. Vertex AI y Gemini
+
+Usa el SDK oficial compatible con la versión instalada.
+
+Modelos:
+
+- Usa Gemini Flash-Lite como predeterminado.
+- No uses modelos más costosos sin necesidad.
+- Configura el nombre del modelo por variable de entorno.
+- No hardcodees versiones en múltiples archivos.
+
+Estructura recomendada:
+
+server/integrations/vertex-ai/
+├── client.ts
+├── schemas.ts
+├── prompts/
+│   ├── classify-opportunity.prompt.ts
+│   └── extract-opportunity.prompt.ts
+└── services/
+
+Prompts:
+
+- versionados;
+- fuera de componentes;
+- claros;
+- con salida estructurada;
+- con criterios verificables;
+- sin texto innecesario.
+
+Ejemplo de salida:
+
+```ts
+const opportunityAnalysisSchema = z.object({
+  isRelevant: z.boolean(),
+  score: z.number().min(0).max(100),
+  summary: z.string().max(1500),
+  reasons: z.array(z.string()).max(10),
+  missingInformation: z.array(z.string()).max(10),
+});
+```
+
+Reglas:
+
+- Solicita JSON.
+- Valida con Zod.
+- No confíes en que el modelo devolverá JSON correcto.
+- Usa temperatura baja para extracción.
+- Define timeout.
+- Reintenta solo errores transitorios.
+- Usa exponential backoff.
+- Limita reintentos.
+- No repitas operaciones facturables ya guardadas.
+
+Registra:
+
+- modelo;
+- versión del prompt;
+- tokens de entrada;
+- tokens de salida;
+- duración;
+- costo estimado;
+- ejecución;
+- resultado validado;
+- error.
+
+## 16. Google Search Grounding
+
+Grounding es un mecanismo de descubrimiento, no la fuente final.
+
+Conserva:
+
+- consulta ejecutada;
+- URL;
+- título;
+- snippet;
+- dominio;
+- fecha de descubrimiento;
+- citations;
+- fuente oficial identificada;
+- estado de verificación.
+
+Reglas:
+
+- No marques como verificado solo porque apareció en Google.
+- Verifica URL original.
+- Comprueba fecha límite.
+- Comprueba organización.
+- Identifica acción concreta.
+- Deduplica antes de usar Gemini.
+- No analices repetidamente la misma URL.
+- Guarda hash del contenido.
+- Reanaliza solo si el contenido cambió.
+- Define máximo de consultas, resultados y tokens.
+
+Para LinkedIn:
+
+- no automatices cuentas;
+- no uses cookies de sesión;
+- no hagas scraping autenticado;
+- no extraigas perfiles masivamente;
+- usa contenido público y registro manual cuando sea necesario.
+
+## 17. COMPRASAL MCP
+
+Estructura:
+
+server/integrations/comprasal/
+├── client.ts
+├── schemas.ts
+├── mapper.ts
+├── types.ts
+└── service.ts
+
+Reglas:
+
+- Valida respuestas externas con Zod.
+- No dependas directamente de estructuras externas en el dominio.
+- Mapea al modelo interno.
+- Conserva identificador oficial y URL oficial.
+- Detecta lotes y duplicados.
+- Maneja paginación, timeouts y errores parciales.
+- No uses Gemini para datos extraíbles con código.
+- No uses Google Search para información ya disponible en COMPRASAL.
+- Separa procesos activos de históricos.
+- El MCP y la API pública son gratuitos.
+- No los trates como una API facturable.
+
+## 18. Procesamiento asíncrono
+
+No mantengas requests HTTP abiertas para búsquedas largas.
+
+Flujo:
+
+request
+→ create SearchExecution
+→ enqueue task
+→ return 202
+→ process in background
+→ update progress
+→ persist results
+
+Estados:
+
+- `PENDING`
+- `RUNNING`
+- `COMPLETED`
+- `PARTIALLY_COMPLETED`
+- `FAILED`
+- `CANCELLED`
+
+Toda tarea debe ser idempotente.
+
+Usa:
+
+- identificador de ejecución;
+- clave única;
+- hash;
+- constraint;
+- upsert controlado.
+
+Una tarea reintentada no debe crear duplicados.
+
+## 19. Cloud Tasks
+
+Úsalo para tareas con:
+
+- reintentos;
+- control de concurrencia;
+- rate limiting;
+- ejecución desacoplada.
+
+Reglas:
+
+- Valida token OIDC.
+- No expongas endpoints de worker sin protección.
+- Responde `2xx` solo cuando finalice correctamente.
+- Devuelve errores reintentables solo para fallos transitorios.
+- Evita reintentos infinitos.
+- Usa nombres deterministas cuando ayude.
+- Define timeout.
+- Limita concurrencia a APIs externas.
+- No incluyas secretos en payloads.
+
+## 20. Cloud Scheduler
+
+Cloud Scheduler solo inicia procesos.
+
+Ejemplos:
+
+- `sync-comprasal`
+- `search-private-sector`
+- `search-linkedin-opportunities`
+
+Cada ejecución debe:
+
+- autenticarse;
+- crear registro de ejecución;
+- evitar solapamientos incompatibles;
+- registrar inicio y finalización;
+- ser idempotente.
+
+## 21. Cloud Run
+
+- Mantén el servicio stateless.
+- Usa `PORT`.
+- Escucha en `0.0.0.0`.
+- No dependas de disco persistente.
+- Usa `min-instances=0` en el MVP.
+- Maneja graceful shutdown.
+- No ejecutes migraciones automáticamente al arrancar producción.
+- No mantengas tareas infinitas en el proceso web.
+- Usa health endpoints ligeros.
+- No incluyas secretos en la imagen.
+- Ejecuta como usuario no root cuando sea posible.
+- Usa multi-stage builds.
+- Mantén la imagen pequeña.
+- Usa `output: "standalone"` si es compatible.
+
+Dockerfile conceptual:
+
+```dockerfile
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+USER node
+EXPOSE 8080
+ENV PORT=8080
+
+CMD ["node", "server.js"]
+```
+
+Ajusta la versión de Node a la definida por el repositorio.
+
+## 22. Cloud Storage
+
+Usa Cloud Storage para documentos.
+
+No guardes archivos binarios grandes en PostgreSQL.
+
+Guarda en Neon:
+
+- bucket;
+- object name;
+- MIME type;
+- tamaño;
+- hash;
+- URL original;
+- fecha.
+
+Reglas:
+
+- Valida tipo real.
+- No confíes en extensión.
+- Define límite de tamaño.
+- Sanitiza nombres.
+- Usa nombres internos no predecibles.
+- Usa signed URLs de corta duración.
+- No hagas buckets públicos.
+- Elimina archivos huérfanos.
+- Usa lifecycle rules para temporales.
+
+## 23. Seguridad de URLs externas
+
+Previene SSRF.
+
+Antes de descargar:
+
+- acepta solo `http` y `https`;
+- rechaza `file:`, `ftp:`, `data:` y otros protocolos;
+- rechaza `localhost`;
+- rechaza IPs privadas;
+- rechaza metadata endpoints;
+- limita redirecciones;
+- valida nuevamente tras cada redirect;
+- define timeout;
+- limita tamaño;
+- valida Content-Type;
+- no envíes cookies internas;
+- no envíes headers de autenticación;
+- no ejecutes JavaScript salvo necesidad estricta.
+
+Bloquea:
+
+- `127.0.0.0/8`
+- `10.0.0.0/8`
+- `172.16.0.0/12`
+- `192.168.0.0/16`
+- `169.254.0.0/16`
+- `::1`
+- `fc00::/7`
+- `fe80::/10`
+
+## 24. Manejo de errores
+
+Define errores tipados.
+
+```ts
+export class AppError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+    public readonly statusCode: number,
+    public readonly details?: unknown,
+  ) {
+    super(message);
+  }
+}
+```
+
+Códigos sugeridos:
+
+- `VALIDATION_ERROR`
+- `UNAUTHORIZED`
+- `FORBIDDEN`
+- `NOT_FOUND`
+- `CONFLICT`
+- `RATE_LIMITED`
+- `EXTERNAL_SERVICE_ERROR`
+- `DATABASE_ERROR`
+- `AI_RESPONSE_INVALID`
+- `INTERNAL_ERROR`
+
+Reglas:
+
+- No expongas stack traces.
+- No ocultes errores.
+- Normaliza errores externos.
+- Registra contexto técnico.
+- Devuelve mensajes comprensibles.
+- Separa errores reintentables y permanentes.
+
+## 25. Logging y observabilidad
+
+Usa logs JSON estructurados.
+
+Incluye cuando aplique:
+
+- `requestId`
+- `userId`
+- `opportunityId`
+- `searchExecutionId`
+- `taskId`
+- `source`
+- `integration`
+- `durationMs`
+- `model`
+- `inputTokens`
+- `outputTokens`
+- `estimatedCost`
+- `status`
+- `errorCode`
+
+Reglas:
+
+- No uses `console.log` indiscriminadamente.
+- No registres secretos.
+- No registres tokens OAuth.
+- No registres documentos sensibles completos.
+- No registres prompts completos con información privada.
+- Usa niveles debug, info, warn y error.
+- Genera correlation IDs.
+- Propaga identificadores entre API, jobs e integraciones.
+
+## 26. Costos y límites
+
+Toda integración facturable debe tener límites.
+
+Configura:
+
+- máximo de consultas por búsqueda;
+- máximo de resultados;
+- máximo de documentos;
+- máximo de tokens;
+- máximo de reintentos;
+- timeout;
+- máximo de búsquedas diarias;
+- presupuesto mensual opcional.
+
+No ejecutes Gemini sobre:
+
+- duplicados;
+- páginas vencidas;
+- páginas sin organización;
+- noticias genéricas;
+- empleos;
+- cursos;
+- documentos ya analizados;
+- contenido sin cambios.
+
+Registra costo estimado por búsqueda, documento, oportunidad, ejecución y fuente.
+
+## 27. Rendimiento
+
+- Pagina listados.
+- Filtra en base de datos.
+- No cargues miles de registros en memoria.
+- No uses `Promise.all` sin límite.
+- Controla concurrencia.
+- Paraleliza solo cuando sea seguro.
+- Evita requests duplicados.
+- Usa debounce en búsquedas de texto.
+- Crea índices PostgreSQL.
+- Evita N+1.
+- Usa selects explícitos.
+- Define límites y timeouts.
+
+No agregues caché sin definir qué se almacena, cuánto dura, cómo se invalida y si contiene información privada.
+
+## 28. Tailwind CSS y shadcn/ui
+
+Tailwind:
+
+- Usa clases utilitarias.
+- Evita estilos inline.
+- Evita valores arbitrarios repetidos.
+- Extrae patrones repetidos.
+- Usa variables CSS para tokens.
+- Mantén consistencia en spacing, radius y typography.
+- No agregues CSS global para estilos locales.
+
+shadcn/ui:
+
+- Reutiliza componentes existentes.
+- No instales otra librería para algo ya cubierto.
+- Personaliza mediante composición.
+- Mantén accesibilidad.
+- Conserva variantes con `class-variance-authority`.
+- Usa `cn()` para clases.
+
+## 29. Accesibilidad
+
+- Usa HTML semántico.
+- Agrega labels.
+- Mantén navegación por teclado.
+- No uses `div` como botón.
+- Incluye focus visible.
+- Usa `aria-*` cuando corresponda.
+- Asocia errores con campos.
+- Los modales deben gestionar foco.
+- No comuniques estados solo con color.
+- Las tablas deben tener headers.
+- Los iconos interactivos deben tener texto accesible.
+
+## 30. Testing
+
+Stack recomendado:
+
+- Vitest para unit tests;
+- React Testing Library para componentes;
+- Playwright para end-to-end.
+
+Adapta a las herramientas instaladas.
+
+Pruebas unitarias prioritarias:
+
+- validadores;
+- mappers;
+- deduplicación;
+- fechas;
+- scoring;
+- normalización;
+- autorización;
+- costos;
+- clasificación de fuentes.
+
+Pruebas de integración:
+
+- repositories;
+- services;
+- Route Handlers;
+- transacciones;
+- migraciones;
+- Auth.js;
+- Zod.
+
+E2E:
+
+- autenticación;
+- crear búsqueda;
+- consultar progreso;
+- visualizar leads;
+- verificar oportunidad;
+- descartar oportunidad;
+- asignar responsable.
+
+No llames servicios reales en pruebas. Usa mocks, fixtures y adaptadores falsos.
+
+## 31. ESLint y formato
+
+- Respeta ESLint.
+- No desactives reglas globalmente para resolver un problema local.
+- No agregues `eslint-disable` sin justificación.
+- Mantén formato consistente.
+- Ordena imports.
+- Elimina imports y variables no usados.
+- No entregues cambios con errores de typecheck.
+
+Scripts mínimos:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  }
+}
+```
+
+Ajusta según la versión y configuración real del repositorio.
+
+## 32. Dependencias
+
+Antes de agregar una dependencia:
+
+1. verifica si el framework ya resuelve el problema;
+2. revisa si ya existe una dependencia equivalente;
+3. evalúa mantenimiento;
+4. evalúa tamaño;
+5. evalúa seguridad;
+6. evalúa compatibilidad con Cloud Run;
+7. evalúa impacto en bundle.
+
+No agregues dependencias para funciones triviales.
+
+No mezcles múltiples librerías para lo mismo.
+
+Evita:
+
+- dos librerías de fechas;
+- dos clientes PostgreSQL;
+- dos sistemas de validación;
+- dos librerías de formularios;
+- dos sistemas de estado global;
+- dos ORMs.
+
+## 33. Git y cambios
+
+- Mantén cambios enfocados.
+- No formatees archivos no relacionados.
+- No renombres masivamente sin necesidad.
+- No mezcles migraciones con refactorizaciones enormes.
+- No modifiques lockfiles salvo cambio real de dependencias.
+- No incluyas secretos.
+- No incluyas artefactos innecesarios.
+- Documenta breaking changes.
+
+## 34. Definición técnica de completado
+
+Una tarea está terminada cuando:
+
+1. cumple el requerimiento;
+2. usa la arquitectura existente;
+3. valida inputs con Zod;
+4. mantiene TypeScript estricto;
+5. maneja errores;
+6. aplica autenticación y autorización;
+7. no expone secretos;
+8. evita duplicados;
+9. controla costos;
+10. incluye estados de UI;
+11. pasa lint;
+12. pasa typecheck;
+13. pasa pruebas relacionadas;
+14. compila correctamente;
+15. documenta nuevas variables;
+16. incluye migración si cambió la base de datos;
+17. no introduce dependencias innecesarias;
+18. no deja código muerto;
+19. no deja riesgos críticos sin advertir;
+20. mantiene compatibilidad con Cloud Run.
+
+Al finalizar una tarea, informa únicamente:
+
+- resumen de cambios;
+- archivos principales;
+- migraciones;
+- variables de entorno;
+- pruebas ejecutadas;
+- riesgos o pendientes reales.

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva - Leads / Licitaciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": {
+                            "base": "#f7f4f2",
+                            "raised": "#ffffff",
+                            "border": "#e8e2de"
+                        },
+                        "accent": {
+                            "DEFAULT": "#e76f51",
+                            "dark": "#c45a40",
+                            "soft": "#fde8e2",
+                            "muted": "#f4c4b8"
+                        },
+                        "text": {
+                            "primary": "#1c1917",
+                            "secondary": "#78716c"
+                        },
+                        "status": {
+                            "open": "#e76f51",
+                            "evaluating": "#d97706",
+                            "won": "#2a9d8f",
+                            "lost": "#dc2626",
+                            "expiring": "#ea580c",
+                            "inactive": "#a8a29e"
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Ibm Plex Sans"],
+                        "display": ["Ibm Plex Sans"],
+                        "body": ["Ibm Plex Sans"],
+                        "label": ["Ibm Plex Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f4f2;
+            color: #1c1917;
+            font-family: 'Ibm Plex Sans', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f7f4f2;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e8e2de;
+            border-radius: 10px;
+        }
+        .zebra-table tr:nth-child(even) {
+            background-color: #f7f4f2;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-hidden">
+<!-- SideNavBar Container -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f7f4f2] dark:bg-[#1c1917] border-r border-[#e8e2de] dark:border-stone-800 flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-2">
+<span class="text-xl font-headline font-bold text-[#e76f51]">Leadiva</span>
+</div>
+<p class="text-[10px] uppercase tracking-widest text-[#78716c] font-bold mt-1">Enterprise Platform</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Inicio -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#78716c] dark:text-[#a8a29e] hover:bg-[#fde8e2] dark:hover:bg-stone-800 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-body text-label">Inicio</span>
+</a>
+<!-- Proyectos -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#78716c] dark:text-[#a8a29e] hover:bg-[#fde8e2] dark:hover:bg-stone-800 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="font-body text-label">Proyectos</span>
+</a>
+<!-- Leads/Licitaciones (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-[#fde8e2] dark:bg-[#c45a40]/20 text-[#e76f51] dark:text-[#f4c4b8] font-bold border-r-4 border-[#e76f51] mx-2 rounded-l-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-body text-label">Leads/Licitaciones</span>
+</a>
+<!-- Configuración -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#78716c] dark:text-[#a8a29e] hover:bg-[#fde8e2] dark:hover:bg-stone-800 transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body text-label">Configuración</span>
+</a>
+</nav>
+<div class="px-6 pt-6 border-t border-[#e8e2de] dark:border-stone-800">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center text-accent font-bold text-xs border border-accent/20">
+                    JD
+                </div>
+<div>
+<p class="text-xs font-bold text-text-primary">Juan Delgado</p>
+<p class="text-[10px] text-text-secondary">Sales Manager</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Container -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-[#ffffff] dark:bg-[#1c1917] border-b border-[#e8e2de] dark:border-stone-800 z-40">
+<div class="flex justify-between items-center px-8 h-full">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#78716c] text-sm">search</span>
+<input class="w-full bg-[#f7f4f2] border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-[#e76f51] placeholder-[#a8a29e]" placeholder="Buscar licitaciones..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 border-r border-[#e8e2de] pr-6">
+<button class="relative text-[#78716c] hover:text-[#e76f51] transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-[#e76f51] rounded-full border-2 border-white"></span>
+</button>
+<button class="text-[#78716c] hover:text-[#e76f51] transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="flex items-center gap-2 pl-2">
+<span class="text-sm font-bold text-text-primary">Leads/Licitaciones</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 h-screen flex flex-col overflow-hidden">
+<!-- Dashboard Header -->
+<div class="px-8 py-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="text-2xl font-bold text-text-primary tracking-tight">Leads</h1>
+<p class="text-text-secondary text-sm mt-1">Pipeline comercial con estados, responsables y plazos</p>
+</div>
+<button class="bg-[#e76f51] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm hover:bg-[#c45a40] transition-all transform active:scale-95">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                Convertir proyecto
+            </button>
+</div>
+<!-- Filter Bar -->
+<div class="px-8 mb-6">
+<div class="bg-surface-raised p-4 rounded-xl border border-surface-border flex flex-wrap items-center gap-4">
+<div class="flex-1 min-w-[200px]">
+<label class="block text-[10px] font-bold text-text-secondary uppercase mb-1">Palabra clave</label>
+<div class="relative">
+<input class="w-full text-xs border-surface-border rounded-lg bg-surface-base py-2 focus:ring-accent focus:border-accent" placeholder="Filtrar por nombre..." type="text"/>
+</div>
+</div>
+<div class="w-40">
+<label class="block text-[10px] font-bold text-text-secondary uppercase mb-1">Estado</label>
+<select class="w-full text-xs border-surface-border rounded-lg bg-surface-base py-2 focus:ring-accent focus:border-accent">
+<option>Todos los estados</option>
+<option>Abierta</option>
+<option>En evaluación</option>
+<option>Adjudicada</option>
+<option>Perdida</option>
+</select>
+</div>
+<div class="w-40">
+<label class="block text-[10px] font-bold text-text-secondary uppercase mb-1">Fuente</label>
+<select class="w-full text-xs border-surface-border rounded-lg bg-surface-base py-2 focus:ring-accent focus:border-accent">
+<option>Cualquier fuente</option>
+<option>Portal Público</option>
+<option>Directo</option>
+<option>Referido</option>
+</select>
+</div>
+<div class="w-40">
+<label class="block text-[10px] font-bold text-text-secondary uppercase mb-1">Responsable</label>
+<select class="w-full text-xs border-surface-border rounded-lg bg-surface-base py-2 focus:ring-accent focus:border-accent">
+<option>Todos</option>
+<option>Carlos Ruiz</option>
+<option>Ana Maria Sosa</option>
+<option>Roberto Méndez</option>
+</select>
+</div>
+<div class="w-40">
+<label class="block text-[10px] font-bold text-text-secondary uppercase mb-1">Plazo</label>
+<select class="w-full text-xs border-surface-border rounded-lg bg-surface-base py-2 focus:ring-accent focus:border-accent">
+<option>Cualquier fecha</option>
+<option>Esta semana</option>
+<option>Este mes</option>
+<option>Vencidos</option>
+</select>
+</div>
+<div class="self-end pb-1">
+<button class="text-xs font-bold text-accent hover:underline px-2 py-2">Limpiar</button>
+</div>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="flex-1 px-8 pb-6 overflow-hidden flex flex-col">
+<div class="bg-surface-raised border border-surface-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
+<div class="overflow-x-auto custom-scrollbar flex-1">
+<table class="w-full text-left border-collapse zebra-table">
+<thead class="sticky top-0 bg-surface-raised z-10">
+<tr class="border-b border-surface-border">
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Título</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Organización</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider text-center">Estado</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Fuente</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider text-center">Score</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Deadline</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Responsable</th>
+<th class="px-6 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-border">
+<!-- Row 1 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Suministro Hospital Rosales - MINSAL El Salvador</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-001</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">Ministerio de Salud</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e76f51] text-white">Abierta</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">CompreSV</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">94</span>
+<span class="material-symbols-outlined text-status-won text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">12 Oct 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close-up portrait of a professional business executive, mid-30s with a warm smile, neutral grey background, high-end commercial photography style, soft studio lighting, muted natural colors matching the coral and stone brand palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsLe_6UxNgIOCKrjVt7eEzYTulAVu5M-svMbW1e9SxcYJmd0ZLs9-qfEivaNyU7P3iDfC5pXwqvieYcx6RMblUln0gQ8leF0V3HifV8D9yFIHtwSpef_8-9aH7AVXRNMNtQGfAojc-idSUttGfU8ib1_DnSYgrPN9AYjHfeVmoaQehvTQwxHnCOkV2kusoD1oiYLtNdp8-H8bawu_CDbxerXQj0iBDIDQ8VOSVGR2AzMEVt9p-k1NO9JtoWmgAhBGEW1BQ0UB7mw"/>
+</div>
+<span class="text-xs text-text-primary">Carlos Ruiz</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">RFP Red Vial FOVIAL - Mantenimiento Mayor</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-045</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">FOVIAL</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#d97706] text-white">En evaluación</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">Directo</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">88</span>
+<span class="material-symbols-outlined text-status-won text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">05 Oct 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Corporate headshot of a professional woman with glasses, light skin, professional attire, soft lighting with a minimalist white office background, emphasizing clean lines and high-end enterprise aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyr0JhryZg9Doq-P_uteqUiaiewRuTbZmlPGZW0bZ5aJulDQNh52uL6AI9Lqdvwil5yXXYaCtEbCV6_73448FgeDZO9uk8BK56AxcvJ1xe7uAiap98oIsI7tmFF4pTuFlU1Wh6FGAkOLWC32XVLsZQJnxcEmFf4O543AMpd3z6dab9-LyTU-q0hMN9eSi6hXcOUyfj2RiVM0-GHYhipen1RgiudaL26Ji0IKkuZxQp42E3y1_4v2EC26XZD3PzpcGpU0lNO9gETQ"/>
+</div>
+<span class="text-xs text-text-primary">Ana Maria Sosa</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Mantenimiento Red Eléctrica ETESAL Fase III</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2023-890</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">ETESAL S.A.</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#2a9d8f] text-white">Adjudicada</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">Portal Público</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">76</span>
+<span class="material-symbols-outlined text-status-won text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-status-inactive">Terminado</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Headshot of a confident Hispanic businessman, late 40s, slightly grey hair at temples, sharp blue suit, neutral lighting, professional corporate style, soft shadows, clean enterprise interface vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBp5-y4hoxPrgfJiGpCV2KFqj7SAdiJ8_wZz93DExbBQyR1a7BNV8g_2OLlF1xXmvy_Tsc4QbyH1lzR3-1EhBXoWpTS_GwOsNRn0pgMGLV6-hF9t29pF1xnjYHkXxw3jQmFGhRRenH8nU2mw8rDJ7oC6EK0y0hWCEhTXAx3FpsWo3OlJflVpjnV4jVmJfnxFrjFtP_elGfYfR9CJiQXlBekTDus7yCkO8E4Y3X4etLZrCW0Yyi7Jal67ce8rt4k811rWgSbdjk1YA"/>
+</div>
+<span class="text-xs text-text-primary">Roberto Méndez</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Software de Gestión Escolar - MINED</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-112</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">Ministerio de Educación</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#ea580c] text-white">Por vencer</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">Referido</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">91</span>
+<span class="material-symbols-outlined text-status-won text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-bold text-status-expiring">Hoy 16:00</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a young female consultant with curly dark hair, smiling warmly, wearing a simple white shirt, high key studio lighting, professional corporate photography, clean background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDl0wpiMg13FfQGcVs4qC_VnnJITLacfu3bd42uJCQzPLTGhm0aCKbdISezoR6oztrRj3jqls-6CtXX4NikUDloTrlzSMTHkE673KNu0_wb0YuaOaSjJIYVxlZVtFG2MuxIoyIFo7ywK0gpqc0Yz9EwQSjP_yqMvXwD-cCY5V6bNLRwZpa5nw0r71ukxiJNGPJvlMUgwvvRQuwj2NQz98ugpHVxZs83Z8vAmjvC9G9mNE1DssN1SzN5dhmLbPgKMXviJPKsLLB9gQ"/>
+</div>
+<span class="text-xs text-text-primary">Elena Paz</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Equipamiento Laboratorio Nacional de Energía</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-009</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">CNE El Salvador</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#dc2626] text-white">Perdida</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">CompreSV</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">45</span>
+<span class="material-symbols-outlined text-text-secondary text-xs">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">22 Sep 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Corporate professional portrait of an Asian-Latino male executive, mid 40s, sharp features, smart business casual, high-end photography, warm light highlights, institutional clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKhKOsYFHp1F01xQJEqNg8J4qCVZ7Bpyeei9rKIqN-SYJdfP68ixjGHrq0_RTXJ12Ouo2g8a6iDwxHd9ldQg9f4DXePGQiH0BueeHWT3C8OGZ1n3Zv8OTGOGUTIE3xj0HLrRqnPRmdb5aUsurasegNvJUVxAqt6L3I8wgWgTCdqXFvvpFsZPndTu95Uym_JaEk6ecmXYSp2xDuBjdZgwHU-TnKtiAIdmBCLlQV4FgQZ0rzcjnZyZ-lyTBT79PV8aD0XBDpzaOkdw"/>
+</div>
+<span class="text-xs text-text-primary">Carlos Ruiz</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Renovación Licencias Cloud - SIGET</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-551</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">SIGET SV</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#a8a29e] text-white">Inactivo</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">Directo</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">32</span>
+<span class="material-symbols-outlined text-text-secondary text-xs">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">30 Oct 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A studio portrait of a senior professional man with white hair, clean shaven, wearing a high-quality grey blazer over a coral shirt, soft and high-contrast lighting, professional business look, minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbMgdrbWOp0RXaYWEF_n0Rx1dXGSw95cA11Rka-928lBcdMRQW0q6SOpXOfPqMj3XuUobuvzckkRBR5IAUs9hlB5Yz1ng95aAm_EYUrY8gtQAiZTEiMeF9yitZVrdKrtHsxGF44AJM_l4JPnmh7yiAFAdqUH53rls-ctCsC8_Phvm38zx9ubtE4QBCMTOIlR1r5_F5des59paCpW26QktCfZk-J3A0byHIhLOkC0aAmMQcNm7L3fuVJlZ3WezKhrMwXvy3Rfr0lg"/>
+</div>
+<span class="text-xs text-text-primary">Roberto Méndez</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Construcción Planta de Tratamiento ANDA</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-203</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">ANDA Central</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e76f51] text-white">Abierta</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">CompreSV</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">67</span>
+<span class="material-symbols-outlined text-text-secondary text-xs">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">15 Nov 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Modern professional portrait of a woman in her late 20s, smart casual attire, smiling confidently, soft light, neutral grey-toned background, enterprise-ready visual style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwHl1uTF4QVGfsnUzNeDv-YShXCcYhDiflZbvpTFf4fIjFlgxBYKzQ5XRaZc_0HB4XvURLSmaE7Vi3CVv3uFadGTzMzUndUyR_pohALbTYF6rTTRP1S3rl2HHIB2lDJ4XrkLIFUAHFks5zfuNkh3WT0fuf2yfILNmGmOTJWXIeYf5Jl0Cr75bjk3S-IFTShTR7sWst1xU0pstV0XUs4mQCBL9mi-0hcOHLVyfsgsFW_oAPA_gXhI2CKk-M31drkKRNT1VU-mDXXA"/>
+</div>
+<span class="text-xs text-text-primary">Lucía Vides</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-accent-soft/30 transition-colors group">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-text-primary group-hover:text-accent truncate max-w-xs">Mobiliario de Oficina - Banco Central</p>
+<p class="text-[10px] text-text-secondary mt-0.5">ID: #LIC-2024-904</p>
+</td>
+<td class="px-6 py-4 text-xs text-text-primary">BCR El Salvador</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#d97706] text-white">En evaluación</span>
+</td>
+<td class="px-6 py-4 text-xs text-text-secondary italic">Directo</td>
+<td class="px-6 py-4 text-center">
+<div class="inline-flex items-center gap-1">
+<span class="text-xs font-bold text-text-primary">82</span>
+<span class="material-symbols-outlined text-status-won text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-text-primary">28 Oct 2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-stone-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="High-end corporate portrait of a black man in his 30s, sharp suit, light-colored background, bright and airy lighting, professional and trustworthy expression, high resolution commercial photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCyMyToxBdFaYUDrg5u4TEf31VoaJNY--Xd8aBqKRCSz49UJT3E07V_e6Rn4Xv0pzmRx7iEKNNavKDFQtc-Cv90A3wyumgDV0k46eereMf1cBYxLJswOU-ZUpxdwom_P9GnMWM0Oh2INTgwxlxWJly-jEriZEvq-Ztp9ZUTFLXSa4kzaNtS7Jd8LAyRkzq9-DfOqrpUMhk_bymM1381luri97AgwgpPEBNodoqj0VYDW5-N5pZT_pF7H-XgsCdLKC5pXBN97nPgw"/>
+</div>
+<span class="text-xs text-text-primary">James Ortega</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-text-secondary hover:text-accent"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="bg-surface-raised border-t border-surface-border px-8 py-3 flex items-center justify-between">
+<p class="text-xs text-text-secondary">Mostrando <span class="font-bold">1-8</span> de <span class="font-bold">42</span> licitaciones</p>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-surface-base transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-accent text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-surface-base text-xs font-medium transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-surface-base text-xs font-medium transition-colors">3</button>
+<span class="px-2 text-text-secondary">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-surface-base text-xs font-medium transition-colors">6</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-surface-border text-text-secondary hover:bg-surface-base transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Global Interactions -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hover logic for row interaction
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // Simple interaction feedback
+                    console.log('Row clicked:', row.querySelector('p').textContent);
+                });
+            });
+
+            // Smooth scale interactions for buttons
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('mousedown', () => {
+                    btn.classList.add('scale-95');
+                });
+                btn.addEventListener('mouseup', () => {
+                    btn.classList.remove('scale-95');
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.classList.remove('scale-95');
+                });
+            });
+        });
+    </script>
+</body></html>

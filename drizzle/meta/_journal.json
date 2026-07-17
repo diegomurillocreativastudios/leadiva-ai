@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784152883021,
+      "tag": "0000_init_mvp",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784156423029,
+      "tag": "0001_add_lead_next_action",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784156774595,
+      "tag": "0002_add_search_execution_metrics",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784175175277,
+      "tag": "0003_large_valeria_richards",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784218752467,
+      "tag": "0004_motionless_colleen_wing",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784237673108,
+      "tag": "0005_unknown_boom_boom",
+      "breakpoints": true
+    }
+  ]
+}

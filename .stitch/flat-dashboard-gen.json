@@ -1,0 +1,539 @@
+{
+  "projectId": "929484233158471895",
+  "sessionId": "5001831884508273002",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/929484233158471895/files/fb53e04fc0854d30b3317fd922187a8b",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLuslR3oTPI4FdpaVkG9lktQqUJwwFbB7jDGJGQL69RJDovBRXzyv641zuLZ5pRst7_nRaBDyMNlyw_OWxsEuaQJ4YtOsrxVdWa53At5h26D3TqwDb0SV2bDuhKP_0z-SGZ2n3z1pEv3ov_ETjPWoYfXqAOOLUuYtzYzSEbD757Uwojo9x0DRgTDfaB3COQ65GH7UVDz0LpcAN3wiw180T81m9EMwtIUWFHsVyGscd6wp8syH26h-iyk2g"
+            },
+            "id": "18c0b09dd59a40e8a00f022a0d4510a4",
+            "generatedBy": "interactive_ui_controller",
+            "width": "1024",
+            "height": "1024",
+            "title": "Leadiva Logo",
+            "prompt": "Leadiva wordmark, professional institutional typography, flat blue #1d4ed8, minimalist enterprise style.. Design context: - Primary color: #1d4ed8\n- Font: inter\n- Mode: light\n- Roundness: rounded-md\n. The logo should be visually consistent with these brand tokens.",
+            "name": "projects/929484233158471895/screens/18c0b09dd59a40e8a00f022a0d4510a4",
+            "theme": {},
+            "screenType": "IMAGE",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/1c8a6f2dbd1a46498408be88d87e6bc6",
+              "designSystem": {
+                "displayName": "Institutional Precision",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered for high-density enterprise environments where clarity, speed of data ingestion, and professional authority are paramount. The brand personality is institutional, reliable, and utilitarian, eschewing decorative trends in favor of functional excellence.\n\nThe aesthetic follows a **Flat Institutional** approach. It prioritizes a clear information hierarchy through structural alignment and high-contrast typography rather than depth or texture. By removing all skeuomorphic elements, the interface reduces cognitive load, allowing users to focus entirely on complex tasks like tender management and project tracking. The visual tone is \"software as a tool\"\u2014unobtrusive, predictable, and robust.\n\n## Layout & Spacing\n\nThis design system employs a **Fixed Grid** model for main content areas to ensure readability on wide enterprise monitors, while utilizing fluid internal layouts for dashboards. \n\nThe spacing rhythm is based on a strict 4px baseline grid. Padding within data-heavy components like tables and lists is intentionally condensed to increase the information density. Layouts should prioritize vertical stacking and logical grouping, using margins to separate distinct functional areas rather than decorative dividers. On mobile, the 12-column grid collapses into a single column, maintaining consistent 16px side margins.\n\n## Elevation & Depth\n\nDepth is conveyed through **Tonal Layers** and crisp borders rather than shadows. The \"no skeuomorphism\" rule dictates that all surfaces are flat. \n\n- **Level 0 (Background):** The application background (`#f4f6f8`) serves as the base.\n- **Level 1 (Panels):** All content cards, tables, and sidebars use a flat white background (`#ffffff`) with a 1px solid border (`#e2e6ea`).\n- **Level 2 (Overlays):** Modals and dropdown menus are the only elements permitted to use shadows. These shadows must be subtle, neutral, and used purely to provide functional separation from the layers below.\n\nZebra striping in tables uses a very light tint to differentiate rows without adding visual weight, maintaining the flat integrity of the system.\n\n## Components\n\n### Buttons & Inputs\nButtons are strictly flat. The primary CTA uses the Leadiva Blue (`#1d4ed8`) with white text. Hover states transition to a darker Navy (`#1e3a8a`). Inputs are flat with a 1px border and use a 2px blue focus ring to indicate activity. \n\n### Data Tables\nTables are the core component of this system. They must be dense with 12px vertical padding. Use `table-data` typography for rows. A subtle zebra stripe (`#f8fafc`) should be applied to every second row. Headers are sticky, using a light grey background and semi-bold labels.\n\n### Status Badges\nBadges are small, rectangular with 4px radius or pill-shaped. They use a low-opacity background of their semantic color with high-contrast text of the same hue (e.g., \"Won\" status uses a light green background with `#16a34a` text).\n\n### Cards & Panels\nCards are used to group related information. They have no shadow, a 1px border, and a white background. Header sections within cards should be separated by a simple 1px horizontal rule.\n\n### Form Fields\nFields are stacked vertically with labels positioned above the input. Error states are indicated by a 1px red border and a small helper text below the field; no glows or shadows are permitted.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1d4ed8",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "app-bg": "#f4f6f8",
+                    "background": "#f8f9ff",
+                    "border": "#e2e6ea",
+                    "error": "#ba1a1a",
+                    "error_container": "#ffdad6",
+                    "hover-accent": "#1e3a8a",
+                    "inverse_on_surface": "#eaf1ff",
+                    "inverse_primary": "#b7c4ff",
+                    "inverse_surface": "#213145",
+                    "on_background": "#0b1c30",
+                    "on_error": "#ffffff",
+                    "on_error_container": "#93000a",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#cad3ff",
+                    "on_primary_fixed": "#001551",
+                    "on_primary_fixed_variant": "#0039b5",
+                    "on_secondary": "#ffffff",
+                    "on_secondary_container": "#5a6374",
+                    "on_secondary_fixed": "#131c2a",
+                    "on_secondary_fixed_variant": "#3e4758",
+                    "on_surface": "#0b1c30",
+                    "on_surface_variant": "#434655",
+                    "on_tertiary": "#ffffff",
+                    "on_tertiary_container": "#ffc9b7",
+                    "on_tertiary_fixed": "#390c00",
+                    "on_tertiary_fixed_variant": "#832700",
+                    "outline": "#747686",
+                    "outline_variant": "#c4c5d7",
+                    "primary": "#0037b0",
+                    "primary_container": "#1d4ed8",
+                    "primary_fixed": "#dce1ff",
+                    "primary_fixed_dim": "#b7c4ff",
+                    "secondary": "#565f70",
+                    "secondary_container": "#d7e0f4",
+                    "secondary_fixed": "#dae3f7",
+                    "secondary_fixed_dim": "#bec7db",
+                    "status-evaluating": "#d97706",
+                    "status-expiring": "#ea580c",
+                    "status-inactive": "#94a3b8",
+                    "status-lost": "#dc2626",
+                    "status-open": "#2563eb",
+                    "status-won": "#16a34a",
+                    "surface": "#ffffff",
+                    "surface_bright": "#f8f9ff",
+                    "surface_container": "#e5eeff",
+                    "surface_container_high": "#dce9ff",
+                    "surface_container_highest": "#d3e4fe",
+                    "surface_container_low": "#eff4ff",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_dim": "#cbdbf5",
+                    "surface_tint": "#2151da",
+                    "surface_variant": "#d3e4fe",
+                    "tertiary": "#7f2500",
+                    "tertiary_container": "#a73400",
+                    "tertiary_fixed": "#ffdbcf",
+                    "tertiary_fixed_dim": "#ffb59c"
+                  },
+                  "designMd": "---\nname: Institutional Precision\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#cbdbf5'\n  surface-bright: '#f8f9ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eff4ff'\n  surface-container: '#e5eeff'\n  surface-container-high: '#dce9ff'\n  surface-container-highest: '#d3e4fe'\n  on-surface: '#0b1c30'\n  on-surface-variant: '#434655'\n  inverse-surface: '#213145'\n  inverse-on-surface: '#eaf1ff'\n  outline: '#747686'\n  outline-variant: '#c4c5d7'\n  surface-tint: '#2151da'\n  primary: '#0037b0'\n  on-primary: '#ffffff'\n  primary-container: '#1d4ed8'\n  on-primary-container: '#cad3ff'\n  inverse-primary: '#b7c4ff'\n  secondary: '#565f70'\n  on-secondary: '#ffffff'\n  secondary-container: '#d7e0f4'\n  on-secondary-container: '#5a6374'\n  tertiary: '#7f2500'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#a73400'\n  on-tertiary-container: '#ffc9b7'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#dce1ff'\n  primary-fixed-dim: '#b7c4ff'\n  on-primary-fixed: '#001551'\n  on-primary-fixed-variant: '#0039b5'\n  secondary-fixed: '#dae3f7'\n  secondary-fixed-dim: '#bec7db'\n  on-secondary-fixed: '#131c2a'\n  on-secondary-fixed-variant: '#3e4758'\n  tertiary-fixed: '#ffdbcf'\n  tertiary-fixed-dim: '#ffb59c'\n  on-tertiary-fixed: '#390c00'\n  on-tertiary-fixed-variant: '#832700'\n  background: '#f8f9ff'\n  on-background: '#0b1c30'\n  surface-variant: '#d3e4fe'\n  app-bg: '#f4f6f8'\n  border: '#e2e6ea'\n  hover-accent: '#1e3a8a'\n  status-open: '#2563eb'\n  status-evaluating: '#d97706'\n  status-won: '#16a34a'\n  status-lost: '#dc2626'\n  status-expiring: '#ea580c'\n  status-inactive: '#94a3b8'\ntypography:\n  display:\n    fontFamily: Inter\n    fontSize: 30px\n    fontWeight: '700'\n    lineHeight: 38px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  headline-sm:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '600'\n    lineHeight: 24px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 18px\n  label-md:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 11px\n    fontWeight: '500'\n    lineHeight: 14px\n    letterSpacing: 0.03em\n  table-data:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  unit: 4px\n  container-margin: 24px\n  gutter: 16px\n  panel-padding: 20px\n  table-cell-padding: 12px 8px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 32px\n---\n\n## Brand & Style\n\nThis design system is engineered for high-density enterprise environments where clarity, speed of data ingestion, and professional authority are paramount. The brand personality is institutional, reliable, and utilitarian, eschewing decorative trends in favor of functional excellence.\n\nThe aesthetic follows a **Flat Institutional** approach. It prioritizes a clear information hierarchy through structural alignment and high-contrast typography rather than depth or texture. By removing all skeuomorphic elements, the interface reduces cognitive load, allowing users to focus entirely on complex tasks like tender management and project tracking. The visual tone is \"software as a tool\"\u2014unobtrusive, predictable, and robust.\n\n## Colors\n\nThe palette is anchored by a corporate blue primary color used for meaningful actions and navigation. The neutral scale is carefully stepped to provide high contrast for text (`#1a2332`) while maintaining a soft, professional foundation for surfaces and borders. \n\nThe color logic is strictly functional. Chromatic colors are reserved for primary calls to action, active states, and critical status indicators. Status badges utilize a specific spectrum of semantic colors to provide immediate visual feedback on project states without needing to read accompanying text. Backgrounds use a light grey tint to differentiate the application frame from content panels.\n\n## Typography\n\nThe design system uses **Inter** exclusively to leverage its exceptional legibility in data-heavy environments. The typographic scale is optimized for information density, utilizing smaller font sizes and tighter line heights for data tables and labels to maximize \"above-the-fold\" visibility.\n\nHeadline levels use semi-bold weights to create clear section breaks. Body text is set at 14px for standard reading and 13px for dense data grids. All labels and secondary information utilize a slightly wider letter spacing and the secondary text color to maintain hierarchy without cluttering the UI with varying font sizes.\n\n## Layout & Spacing\n\nThis design system employs a **Fixed Grid** model for main content areas to ensure readability on wide enterprise monitors, while utilizing fluid internal layouts for dashboards. \n\nThe spacing rhythm is based on a strict 4px baseline grid. Padding within data-heavy components like tables and lists is intentionally condensed to increase the information density. Layouts should prioritize vertical stacking and logical grouping, using margins to separate distinct functional areas rather than decorative dividers. On mobile, the 12-column grid collapses into a single column, maintaining consistent 16px side margins.\n\n## Elevation & Depth\n\nDepth is conveyed through **Tonal Layers** and crisp borders rather than shadows. The \"no skeuomorphism\" rule dictates that all surfaces are flat. \n\n- **Level 0 (Background):** The application background (`#f4f6f8`) serves as the base.\n- **Level 1 (Panels):** All content cards, tables, and sidebars use a flat white background (`#ffffff`) with a 1px solid border (`#e2e6ea`).\n- **Level 2 (Overlays):** Modals and dropdown menus are the only elements permitted to use shadows. These shadows must be subtle, neutral, and used purely to provide functional separation from the layers below.\n\nZebra striping in tables uses a very light tint to differentiate rows without adding visual weight, maintaining the flat integrity of the system.\n\n## Shapes\n\nThe shape language is professional and restrained. A standard 6px to 8px corner radius is applied to all primary UI elements (cards, buttons, inputs). This subtle rounding softens the institutional aesthetic just enough to feel modern without becoming playful.\n\nInteractive components like checkboxes use a smaller radius (4px) to maintain a crisp, precise appearance. Status badges utilize a fully rounded (pill) shape only if they need to stand out as distinct tokens within a table row, otherwise, they follow the standard 6px radius.\n\n## Components\n\n### Buttons & Inputs\nButtons are strictly flat. The primary CTA uses the Leadiva Blue (`#1d4ed8`) with white text. Hover states transition to a darker Navy (`#1e3a8a`). Inputs are flat with a 1px border and use a 2px blue focus ring to indicate activity. \n\n### Data Tables\nTables are the core component of this system. They must be dense with 12px vertical padding. Use `table-data` typography for rows. A subtle zebra stripe (`#f8fafc`) should be applied to every second row. Headers are sticky, using a light grey background and semi-bold labels.\n\n### Status Badges\nBadges are small, rectangular with 4px radius or pill-shaped. They use a low-opacity background of their semantic color with high-contrast text of the same hue (e.g., \"Won\" status uses a light green background with `#16a34a` text).\n\n### Cards & Panels\nCards are used to group related information. They have no shadow, a 1px border, and a white background. Header sections within cards should be separated by a simple 1px horizontal rule.\n\n### Form Fields\nFields are stacked vertically with labels positioned above the input. Error states are indicated by a 1px red border and a small helper text below the field; no glows or shadows are permitted.",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1d4ed8",
+                  "overrideSecondaryColor": "#1a2332",
+                  "overrideNeutralColor": "#64748b",
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "13px",
+                      "fontWeight": "400",
+                      "lineHeight": "18px"
+                    },
+                    "display": {
+                      "fontFamily": "Inter",
+                      "fontSize": "30px",
+                      "fontWeight": "700",
+                      "lineHeight": "38px",
+                      "letterSpacing": "-0.02em"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "24px",
+                      "fontWeight": "600",
+                      "lineHeight": "32px",
+                      "letterSpacing": "-0.01em"
+                    },
+                    "headline-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "20px",
+                      "fontWeight": "600",
+                      "lineHeight": "28px"
+                    },
+                    "headline-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "600",
+                      "lineHeight": "24px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "600",
+                      "lineHeight": "16px",
+                      "letterSpacing": "0.02em"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "11px",
+                      "fontWeight": "500",
+                      "lineHeight": "14px",
+                      "letterSpacing": "0.03em"
+                    },
+                    "table-data": {
+                      "fontFamily": "Inter",
+                      "fontSize": "13px",
+                      "fontWeight": "400",
+                      "lineHeight": "16px"
+                    }
+                  },
+                  "spacing": {
+                    "container-margin": "24px",
+                    "gutter": "16px",
+                    "panel-padding": "20px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "table-cell-padding": "12px 8px",
+                    "unit": "4px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          },
+          {
+            "screenshot": {
+              "name": "projects/929484233158471895/files/259482f93bb94f7f92203af2dd9ef93b",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvTXPvtvYiZ-6UuZGSth-Co4o5UTlNYZxbupWeFN4U1rtgdBIQ9EFJqtXPID_hccm-kFHRrIawD9BBq4zsFuV7rYFRFG8Y4vZXLOccUUHgNE2IAnTE2FkYI3JvF-6GYtJjyyesLF4Rj8-3dNNUjLtLTDrlMA9jnNy-hlloKOh40fKLotjtea1HKw2hP1EJ3fOLP4X9Dnzruk5MeXsQXdZ3nXt3ZxRlpWF5UiuymI7g-ZQUAYgcjOm4dDA"
+            },
+            "htmlCode": {
+              "name": "projects/929484233158471895/files/abdbb08586fe4fc0b19697dc167e2d6d",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzM3Nzc3YWY1MWRlMTQyYzY4NzcxMjI1YTYwZGRlMGU5EgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "0c7f16883303434dad116f88b137ea1d",
+            "generatedBy": "figaro_agent",
+            "width": "2560",
+            "height": "2048",
+            "title": "Dashboard Resumen - Leadiva",
+            "prompt": "Generate the main dashboard screen for Leadiva in Spanish. \n\nLayout details:\n- Sidebar: Uses {{DATA:IMAGE:IMAGE_4}} for the logo. Navigation items: Inicio (active), Proyectos, Leads/Licitaciones, Configuraci\u00f3n. Flat style, no shadows.\n- Top bar: Title \"Resumen\", Breadcrumb: \"Inicio / Resumen\". User profile for \"Diego\" on the right.\n- Background: #f4f6f8.\n- Header: \"Buenos d\u00edas, Diego\" (font-size: 24px, #1a2332) with subtitle \"Aqu\u00ed tienes un resumen de tu pipeline comercial.\" (#64748b).\n- KPI Row: 4 cards. \n    1. \"Leads activos\": 124\n    2. \"Por verificar\": 18\n    3. \"Pr\u00f3ximos a vencer\": 7\n    4. \"Score promedio\": 84%\n    Style: White background, 1px #e2e6ea border, 8px radius, no shadows. Labels #64748b, values #1a2332.\n- Main Section (2 Columns):\n    - Left Column: \"Pr\u00f3ximas fechas l\u00edmite\". Table with columns: T\u00edtulo, Organizaci\u00f3n, Estado, Deadline. \n        - Row 1: \"Licitaci\u00f3n Infraestructura\", \"Ministerio de Obras\", Badge: \"Abierto\" (#2563eb background, white text, flat), \"24 Oct 2023\".\n        - Row 2: \"Suministro IT 2024\", \"Ayuntamiento Madrid\", Badge: \"Evaluando\" (#d97706), \"28 Oct 2023\".\n        - Row 3: \"Consultor\u00eda Estrat\u00e9gica\", \"Global Corp\", Badge: \"Pr\u00f3ximo a vencer\" (#ea580c), \"01 Nov 2023\".\n        Subtle zebra striping.\n    - Right Column: \"Actividad reciente\". List items:\n        - \"Licitaci\u00f3n 'Mantenimiento Red' marcada como Ganada\" (Badge: #16a34a).\n        - \"Nuevo lead detectado: 'Ampliaci\u00f3n Puerto'\" (Badge: #2563eb).\n        - \"Lead 'Sistemas Seguridad' marcado como Perdido\" (Badge: #dc2626).\n- CTA: Primary button bottom right \"Ver todos los leads\" in #1d4ed8.\n\nStrict adherence to \"Flat Institutional\" style: no gradients, no glass, no neumorphism, high density, 13-14px body text.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_4}}\n  Alt Text: Leadiva Logo\n  Description: Leadiva wordmark, professional institutional typography, flat blue #1d4ed8, minimalist enterprise style.. Design context: - Primary color: #1d4ed8\n- Font: inter\n- Mode: light\n- Roundness: rounded-md\n. The logo should be visually consistent with these brand tokens.\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+            "name": "projects/929484233158471895/screens/0c7f16883303434dad116f88b137ea1d",
+            "theme": {
+              "colorMode": "LIGHT",
+              "font": "INTER",
+              "roundness": "ROUND_EIGHT",
+              "customColor": "#1d4ed8",
+              "headlineFont": "INTER",
+              "bodyFont": "INTER",
+              "labelFont": "INTER",
+              "namedColors": {
+                "app-bg": "#f4f6f8",
+                "background": "#f8f9ff",
+                "border": "#e2e6ea",
+                "error": "#ba1a1a",
+                "error_container": "#ffdad6",
+                "hover-accent": "#1e3a8a",
+                "inverse_on_surface": "#eaf1ff",
+                "inverse_primary": "#b7c4ff",
+                "inverse_surface": "#213145",
+                "on_background": "#0b1c30",
+                "on_error": "#ffffff",
+                "on_error_container": "#93000a",
+                "on_primary": "#ffffff",
+                "on_primary_container": "#cad3ff",
+                "on_primary_fixed": "#001551",
+                "on_primary_fixed_variant": "#0039b5",
+                "on_secondary": "#ffffff",
+                "on_secondary_container": "#5a6374",
+                "on_secondary_fixed": "#131c2a",
+                "on_secondary_fixed_variant": "#3e4758",
+                "on_surface": "#0b1c30",
+                "on_surface_variant": "#434655",
+                "on_tertiary": "#ffffff",
+                "on_tertiary_container": "#ffc9b7",
+                "on_tertiary_fixed": "#390c00",
+                "on_tertiary_fixed_variant": "#832700",
+                "outline": "#747686",
+                "outline_variant": "#c4c5d7",
+                "primary": "#0037b0",
+                "primary_container": "#1d4ed8",
+                "primary_fixed": "#dce1ff",
+                "primary_fixed_dim": "#b7c4ff",
+                "secondary": "#565f70",
+                "secondary_container": "#d7e0f4",
+                "secondary_fixed": "#dae3f7",
+                "secondary_fixed_dim": "#bec7db",
+                "status-evaluating": "#d97706",
+                "status-expiring": "#ea580c",
+                "status-inactive": "#94a3b8",
+                "status-lost": "#dc2626",
+                "status-open": "#2563eb",
+                "status-won": "#16a34a",
+                "surface": "#ffffff",
+                "surface_bright": "#f8f9ff",
+                "surface_container": "#e5eeff",
+                "surface_container_high": "#dce9ff",
+                "surface_container_highest": "#d3e4fe",
+                "surface_container_low": "#eff4ff",
+                "surface_container_lowest": "#ffffff",
+                "surface_dim": "#cbdbf5",
+                "surface_tint": "#2151da",
+                "surface_variant": "#d3e4fe",
+                "tertiary": "#7f2500",
+                "tertiary_container": "#a73400",
+                "tertiary_fixed": "#ffdbcf",
+                "tertiary_fixed_dim": "#ffb59c"
+              },
+              "colorVariant": "FIDELITY",
+              "overridePrimaryColor": "#1d4ed8",
+              "overrideSecondaryColor": "#1a2332",
+              "overrideNeutralColor": "#64748b",
+              "spacingScale": 2,
+              "typography": {
+                "body-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "lineHeight": "24px"
+                },
+                "body-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "400",
+                  "lineHeight": "20px"
+                },
+                "body-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "13px",
+                  "fontWeight": "400",
+                  "lineHeight": "18px"
+                },
+                "display": {
+                  "fontFamily": "Inter",
+                  "fontSize": "30px",
+                  "fontWeight": "700",
+                  "lineHeight": "38px",
+                  "letterSpacing": "-0.02em"
+                },
+                "headline-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "24px",
+                  "fontWeight": "600",
+                  "lineHeight": "32px",
+                  "letterSpacing": "-0.01em"
+                },
+                "headline-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "20px",
+                  "fontWeight": "600",
+                  "lineHeight": "28px"
+                },
+                "headline-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "600",
+                  "lineHeight": "24px"
+                },
+                "label-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "12px",
+                  "fontWeight": "600",
+                  "lineHeight": "16px",
+                  "letterSpacing": "0.02em"
+                },
+                "label-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "11px",
+                  "fontWeight": "500",
+                  "lineHeight": "14px",
+                  "letterSpacing": "0.03em"
+                },
+                "table-data": {
+                  "fontFamily": "Inter",
+                  "fontSize": "13px",
+                  "fontWeight": "400",
+                  "lineHeight": "16px"
+                }
+              },
+              "spacing": {
+                "container-margin": "24px",
+                "gutter": "16px",
+                "panel-padding": "20px",
+                "stack-lg": "32px",
+                "stack-md": "16px",
+                "stack-sm": "8px",
+                "table-cell-padding": "12px 8px",
+                "unit": "4px"
+              },
+              "headlineFontFamily": "Inter",
+              "bodyFontFamily": "Inter",
+              "labelFontFamily": "Inter"
+            },
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/1c8a6f2dbd1a46498408be88d87e6bc6",
+              "designSystem": {
+                "displayName": "Institutional Precision",
+                "styleGuidelines": "## Brand & Style\n\nThis design system is engineered for high-density enterprise environments where clarity, speed of data ingestion, and professional authority are paramount. The brand personality is institutional, reliable, and utilitarian, eschewing decorative trends in favor of functional excellence.\n\nThe aesthetic follows a **Flat Institutional** approach. It prioritizes a clear information hierarchy through structural alignment and high-contrast typography rather than depth or texture. By removing all skeuomorphic elements, the interface reduces cognitive load, allowing users to focus entirely on complex tasks like tender management and project tracking. The visual tone is \"software as a tool\"\u2014unobtrusive, predictable, and robust.\n\n## Layout & Spacing\n\nThis design system employs a **Fixed Grid** model for main content areas to ensure readability on wide enterprise monitors, while utilizing fluid internal layouts for dashboards. \n\nThe spacing rhythm is based on a strict 4px baseline grid. Padding within data-heavy components like tables and lists is intentionally condensed to increase the information density. Layouts should prioritize vertical stacking and logical grouping, using margins to separate distinct functional areas rather than decorative dividers. On mobile, the 12-column grid collapses into a single column, maintaining consistent 16px side margins.\n\n## Elevation & Depth\n\nDepth is conveyed through **Tonal Layers** and crisp borders rather than shadows. The \"no skeuomorphism\" rule dictates that all surfaces are flat. \n\n- **Level 0 (Background):** The application background (`#f4f6f8`) serves as the base.\n- **Level 1 (Panels):** All content cards, tables, and sidebars use a flat white background (`#ffffff`) with a 1px solid border (`#e2e6ea`).\n- **Level 2 (Overlays):** Modals and dropdown menus are the only elements permitted to use shadows. These shadows must be subtle, neutral, and used purely to provide functional separation from the layers below.\n\nZebra striping in tables uses a very light tint to differentiate rows without adding visual weight, maintaining the flat integrity of the system.\n\n## Components\n\n### Buttons & Inputs\nButtons are strictly flat. The primary CTA uses the Leadiva Blue (`#1d4ed8`) with white text. Hover states transition to a darker Navy (`#1e3a8a`). Inputs are flat with a 1px border and use a 2px blue focus ring to indicate activity. \n\n### Data Tables\nTables are the core component of this system. They must be dense with 12px vertical padding. Use `table-data` typography for rows. A subtle zebra stripe (`#f8fafc`) should be applied to every second row. Headers are sticky, using a light grey background and semi-bold labels.\n\n### Status Badges\nBadges are small, rectangular with 4px radius or pill-shaped. They use a low-opacity background of their semantic color with high-contrast text of the same hue (e.g., \"Won\" status uses a light green background with `#16a34a` text).\n\n### Cards & Panels\nCards are used to group related information. They have no shadow, a 1px border, and a white background. Header sections within cards should be separated by a simple 1px horizontal rule.\n\n### Form Fields\nFields are stacked vertically with labels positioned above the input. Error states are indicated by a 1px red border and a small helper text below the field; no glows or shadows are permitted.",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "font": "INTER",
+                  "roundness": "ROUND_EIGHT",
+                  "customColor": "#1d4ed8",
+                  "headlineFont": "INTER",
+                  "bodyFont": "INTER",
+                  "labelFont": "INTER",
+                  "namedColors": {
+                    "app-bg": "#f4f6f8",
+                    "background": "#f8f9ff",
+                    "border": "#e2e6ea",
+                    "error": "#ba1a1a",
+                    "error_container": "#ffdad6",
+                    "hover-accent": "#1e3a8a",
+                    "inverse_on_surface": "#eaf1ff",
+                    "inverse_primary": "#b7c4ff",
+                    "inverse_surface": "#213145",
+                    "on_background": "#0b1c30",
+                    "on_error": "#ffffff",
+                    "on_error_container": "#93000a",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#cad3ff",
+                    "on_primary_fixed": "#001551",
+                    "on_primary_fixed_variant": "#0039b5",
+                    "on_secondary": "#ffffff",
+                    "on_secondary_container": "#5a6374",
+                    "on_secondary_fixed": "#131c2a",
+                    "on_secondary_fixed_variant": "#3e4758",
+                    "on_surface": "#0b1c30",
+                    "on_surface_variant": "#434655",
+                    "on_tertiary": "#ffffff",
+                    "on_tertiary_container": "#ffc9b7",
+                    "on_tertiary_fixed": "#390c00",
+                    "on_tertiary_fixed_variant": "#832700",
+                    "outline": "#747686",
+                    "outline_variant": "#c4c5d7",
+                    "primary": "#0037b0",
+                    "primary_container": "#1d4ed8",
+                    "primary_fixed": "#dce1ff",
+                    "primary_fixed_dim": "#b7c4ff",
+                    "secondary": "#565f70",
+                    "secondary_container": "#d7e0f4",
+                    "secondary_fixed": "#dae3f7",
+                    "secondary_fixed_dim": "#bec7db",
+                    "status-evaluating": "#d97706",
+                    "status-expiring": "#ea580c",
+                    "status-inactive": "#94a3b8",
+                    "status-lost": "#dc2626",
+                    "status-open": "#2563eb",
+                    "status-won": "#16a34a",
+                    "surface": "#ffffff",
+                    "surface_bright": "#f8f9ff",
+                    "surface_container": "#e5eeff",
+                    "surface_container_high": "#dce9ff",
+                    "surface_container_highest": "#d3e4fe",
+                    "surface_container_low": "#eff4ff",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_dim": "#cbdbf5",
+                    "surface_tint": "#2151da",
+                    "surface_variant": "#d3e4fe",
+                    "tertiary": "#7f2500",
+                    "tertiary_container": "#a73400",
+                    "tertiary_fixed": "#ffdbcf",
+                    "tertiary_fixed_dim": "#ffb59c"
+                  },
+                  "designMd": "---\nname: Institutional Precision\ncolors:\n  surface: '#ffffff'\n  surface-dim: '#cbdbf5'\n  surface-bright: '#f8f9ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eff4ff'\n  surface-container: '#e5eeff'\n  surface-container-high: '#dce9ff'\n  surface-container-highest: '#d3e4fe'\n  on-surface: '#0b1c30'\n  on-surface-variant: '#434655'\n  inverse-surface: '#213145'\n  inverse-on-surface: '#eaf1ff'\n  outline: '#747686'\n  outline-variant: '#c4c5d7'\n  surface-tint: '#2151da'\n  primary: '#0037b0'\n  on-primary: '#ffffff'\n  primary-container: '#1d4ed8'\n  on-primary-container: '#cad3ff'\n  inverse-primary: '#b7c4ff'\n  secondary: '#565f70'\n  on-secondary: '#ffffff'\n  secondary-container: '#d7e0f4'\n  on-secondary-container: '#5a6374'\n  tertiary: '#7f2500'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#a73400'\n  on-tertiary-container: '#ffc9b7'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#dce1ff'\n  primary-fixed-dim: '#b7c4ff'\n  on-primary-fixed: '#001551'\n  on-primary-fixed-variant: '#0039b5'\n  secondary-fixed: '#dae3f7'\n  secondary-fixed-dim: '#bec7db'\n  on-secondary-fixed: '#131c2a'\n  on-secondary-fixed-variant: '#3e4758'\n  tertiary-fixed: '#ffdbcf'\n  tertiary-fixed-dim: '#ffb59c'\n  on-tertiary-fixed: '#390c00'\n  on-tertiary-fixed-variant: '#832700'\n  background: '#f8f9ff'\n  on-background: '#0b1c30'\n  surface-variant: '#d3e4fe'\n  app-bg: '#f4f6f8'\n  border: '#e2e6ea'\n  hover-accent: '#1e3a8a'\n  status-open: '#2563eb'\n  status-evaluating: '#d97706'\n  status-won: '#16a34a'\n  status-lost: '#dc2626'\n  status-expiring: '#ea580c'\n  status-inactive: '#94a3b8'\ntypography:\n  display:\n    fontFamily: Inter\n    fontSize: 30px\n    fontWeight: '700'\n    lineHeight: 38px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  headline-sm:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '600'\n    lineHeight: 24px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 18px\n  label-md:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 11px\n    fontWeight: '500'\n    lineHeight: 14px\n    letterSpacing: 0.03em\n  table-data:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  unit: 4px\n  container-margin: 24px\n  gutter: 16px\n  panel-padding: 20px\n  table-cell-padding: 12px 8px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 32px\n---\n\n## Brand & Style\n\nThis design system is engineered for high-density enterprise environments where clarity, speed of data ingestion, and professional authority are paramount. The brand personality is institutional, reliable, and utilitarian, eschewing decorative trends in favor of functional excellence.\n\nThe aesthetic follows a **Flat Institutional** approach. It prioritizes a clear information hierarchy through structural alignment and high-contrast typography rather than depth or texture. By removing all skeuomorphic elements, the interface reduces cognitive load, allowing users to focus entirely on complex tasks like tender management and project tracking. The visual tone is \"software as a tool\"\u2014unobtrusive, predictable, and robust.\n\n## Colors\n\nThe palette is anchored by a corporate blue primary color used for meaningful actions and navigation. The neutral scale is carefully stepped to provide high contrast for text (`#1a2332`) while maintaining a soft, professional foundation for surfaces and borders. \n\nThe color logic is strictly functional. Chromatic colors are reserved for primary calls to action, active states, and critical status indicators. Status badges utilize a specific spectrum of semantic colors to provide immediate visual feedback on project states without needing to read accompanying text. Backgrounds use a light grey tint to differentiate the application frame from content panels.\n\n## Typography\n\nThe design system uses **Inter** exclusively to leverage its exceptional legibility in data-heavy environments. The typographic scale is optimized for information density, utilizing smaller font sizes and tighter line heights for data tables and labels to maximize \"above-the-fold\" visibility.\n\nHeadline levels use semi-bold weights to create clear section breaks. Body text is set at 14px for standard reading and 13px for dense data grids. All labels and secondary information utilize a slightly wider letter spacing and the secondary text color to maintain hierarchy without cluttering the UI with varying font sizes.\n\n## Layout & Spacing\n\nThis design system employs a **Fixed Grid** model for main content areas to ensure readability on wide enterprise monitors, while utilizing fluid internal layouts for dashboards. \n\nThe spacing rhythm is based on a strict 4px baseline grid. Padding within data-heavy components like tables and lists is intentionally condensed to increase the information density. Layouts should prioritize vertical stacking and logical grouping, using margins to separate distinct functional areas rather than decorative dividers. On mobile, the 12-column grid collapses into a single column, maintaining consistent 16px side margins.\n\n## Elevation & Depth\n\nDepth is conveyed through **Tonal Layers** and crisp borders rather than shadows. The \"no skeuomorphism\" rule dictates that all surfaces are flat. \n\n- **Level 0 (Background):** The application background (`#f4f6f8`) serves as the base.\n- **Level 1 (Panels):** All content cards, tables, and sidebars use a flat white background (`#ffffff`) with a 1px solid border (`#e2e6ea`).\n- **Level 2 (Overlays):** Modals and dropdown menus are the only elements permitted to use shadows. These shadows must be subtle, neutral, and used purely to provide functional separation from the layers below.\n\nZebra striping in tables uses a very light tint to differentiate rows without adding visual weight, maintaining the flat integrity of the system.\n\n## Shapes\n\nThe shape language is professional and restrained. A standard 6px to 8px corner radius is applied to all primary UI elements (cards, buttons, inputs). This subtle rounding softens the institutional aesthetic just enough to feel modern without becoming playful.\n\nInteractive components like checkboxes use a smaller radius (4px) to maintain a crisp, precise appearance. Status badges utilize a fully rounded (pill) shape only if they need to stand out as distinct tokens within a table row, otherwise, they follow the standard 6px radius.\n\n## Components\n\n### Buttons & Inputs\nButtons are strictly flat. The primary CTA uses the Leadiva Blue (`#1d4ed8`) with white text. Hover states transition to a darker Navy (`#1e3a8a`). Inputs are flat with a 1px border and use a 2px blue focus ring to indicate activity. \n\n### Data Tables\nTables are the core component of this system. They must be dense with 12px vertical padding. Use `table-data` typography for rows. A subtle zebra stripe (`#f8fafc`) should be applied to every second row. Headers are sticky, using a light grey background and semi-bold labels.\n\n### Status Badges\nBadges are small, rectangular with 4px radius or pill-shaped. They use a low-opacity background of their semantic color with high-contrast text of the same hue (e.g., \"Won\" status uses a light green background with `#16a34a` text).\n\n### Cards & Panels\nCards are used to group related information. They have no shadow, a 1px border, and a white background. Header sections within cards should be separated by a simple 1px horizontal rule.\n\n### Form Fields\nFields are stacked vertically with labels positioned above the input. Error states are indicated by a 1px red border and a small helper text below the field; no glows or shadows are permitted.",
+                  "colorVariant": "FIDELITY",
+                  "overridePrimaryColor": "#1d4ed8",
+                  "overrideSecondaryColor": "#1a2332",
+                  "overrideNeutralColor": "#64748b",
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "13px",
+                      "fontWeight": "400",
+                      "lineHeight": "18px"
+                    },
+                    "display": {
+                      "fontFamily": "Inter",
+                      "fontSize": "30px",
+                      "fontWeight": "700",
+                      "lineHeight": "38px",
+                      "letterSpacing": "-0.02em"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "24px",
+                      "fontWeight": "600",
+                      "lineHeight": "32px",
+                      "letterSpacing": "-0.01em"
+                    },
+                    "headline-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "20px",
+                      "fontWeight": "600",
+                      "lineHeight": "28px"
+                    },
+                    "headline-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "600",
+                      "lineHeight": "24px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "600",
+                      "lineHeight": "16px",
+                      "letterSpacing": "0.02em"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "11px",
+                      "fontWeight": "500",
+                      "lineHeight": "14px",
+                      "letterSpacing": "0.03em"
+                    },
+                    "table-data": {
+                      "fontFamily": "Inter",
+                      "fontSize": "13px",
+                      "fontWeight": "400",
+                      "lineHeight": "16px"
+                    }
+                  },
+                  "spacing": {
+                    "container-margin": "24px",
+                    "gutter": "16px",
+                    "panel-padding": "20px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "table-cell-padding": "12px 8px",
+                    "unit": "4px"
+                  },
+                  "headlineFontFamily": "Inter",
+                  "bodyFontFamily": "Inter",
+                  "labelFontFamily": "Inter"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've designed the Leadiva commercial intelligence dashboard following your \"Flat Institutional\" requirements.\n\n### Design Highlights:\n- **Strict Flat Esthetic**: Eliminated all shadows, gradients, and skeuomorphic elements in favor of 1px borders (#e2e6ea) and solid surfaces (#ffffff on #f4f6f8), ensuring a clean, institutional enterprise look.\n- **Data Density**: Optimized the layout for high information density, using 13\u201314px typography and a structured table for deadlines with subtle zebra striping for readability.\n- **Color-Coded Status**: Implemented a flat badge system using your specific status colors (e.g., #2563eb for Open, #16a34a for Won) to provide immediate visual cues without decorative clutter.\n- **Navigation & Brand**: Integrated the Leadiva wordmark into a fixed 240px sidebar with a clear, non-raised active state for the \"Inicio\" tab.\n\nWould you like to explore the \"Leads/Licitaciones\" table view or perhaps adjust the density of the recent activity timeline?"
+    },
+    {
+      "suggestion": "Dise\u00f1ar la lista de Leads/Licitaciones"
+    },
+    {
+      "suggestion": "A\u00f1adir filtros avanzados al dashboard"
+    },
+    {
+      "suggestion": "Cambiar a modo oscuro institucional"
+    }
+  ]
+}

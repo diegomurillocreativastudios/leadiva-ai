@@ -1,0 +1,16 @@
+{
+  "name": "assets/9317367745445035381",
+  "designSystem": {
+    "displayName": "Leadiva Coral Flat",
+    "theme": {
+      "colorMode": "LIGHT",
+      "customColor": "#e76f51",
+      "headlineFont": "IBM_PLEX_SANS",
+      "bodyFont": "IBM_PLEX_SANS",
+      "labelFont": "IBM_PLEX_SANS",
+      "designMd": "# Leadiva Flat Institutional \u2014 Coral palette\n\nFlat Enterprise Clean UI. Warm coral brand, no skeuomorphism.\n\n## Surfaces (warm neutrals)\n- surface.base: #f7f4f2\n- surface.raised: #ffffff\n- surface.border: #e8e2de\n\n## Accent (coral family)\n- accent.DEFAULT: #e76f51\n- accent.dark: #c45a40\n- accent.soft: #fde8e2 (subtle selected/hover backgrounds)\n- accent.muted: #f4c4b8\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #78716c\n\n## Status (semantic, coral-harmonized)\n- status.open: #e76f51\n- status.evaluating: #d97706\n- status.won: #2a9d8f\n- status.lost: #dc2626\n- status.expiring: #ea580c\n- status.inactive: #a8a29e\n\n## Rules\nCTAs, links, active nav, focus rings use coral #e76f51 only.\nNo purple, no cold institutional blue.\nFlat panels: white + 1px border. Shadows only on modals/dropdowns.\nDense tables, subtle zebra with #f7f4f2.\nRadius 6-8px. WCAG AA contrast.\n",
+      "colorVariant": "TONAL_SPOT"
+    }
+  },
+  "version": "1"
+}

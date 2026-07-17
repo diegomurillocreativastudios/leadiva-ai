@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva - Dashboard Comercial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              surface: {
+                base: "#f7f4f2",
+                raised: "#ffffff",
+                border: "#e8e2de",
+              },
+              accent: {
+                DEFAULT: "#e76f51",
+                dark: "#c45a40",
+                soft: "#fde8e2",
+                muted: "#f4c4b8",
+              },
+              text: {
+                primary: "#1c1917",
+                secondary: "#78716c",
+              },
+              status: {
+                open: "#e76f51",
+                evaluating: "#d97706",
+                won: "#2a9d8f",
+                lost: "#dc2626",
+                expiring: "#ea580c",
+                inactive: "#a8a29e",
+              }
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            fontFamily: {
+              headline: ["IBM Plex Sans", "sans-serif"],
+              display: ["IBM Plex Sans", "sans-serif"],
+              body: ["IBM Plex Sans", "sans-serif"],
+              label: ["IBM Plex Sans", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background-color: #f7f4f2;
+        color: #1c1917;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .active-nav-border {
+        border-left: 4px solid #e76f51;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f7f4f2;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e8e2de;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #d1cbc7;
+      }
+    </style>
+</head>
+<body class="bg-surface-base text-text-primary antialiased">
+<!-- SideNavBar (Shared Component Blueprint) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-raised border-r border-surface-border flex flex-col py-6 z-50">
+<div class="px-6 mb-8">
+<h1 class="text-xl font-bold text-accent tracking-tight">Leadiva</h1>
+<p class="text-[10px] uppercase tracking-widest text-text-secondary font-semibold mt-1">Commercial Intelligence</p>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<!-- Inicio: Active State Mapping based on 'Dashboard' intent -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-accent bg-accent-soft border-l-4 border-accent font-bold transition-colors duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm">Inicio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-text-secondary hover:text-text-primary hover:bg-surface-base transition-colors duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm">Proyectos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-text-secondary hover:text-text-primary hover:bg-surface-base transition-colors duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm">Leads/Licitaciones</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-text-secondary hover:text-text-primary hover:bg-surface-base transition-colors duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm">Configuración</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-accent hover:bg-accent-dark text-white py-2.5 rounded flex items-center justify-center gap-2 transition-all duration-200 active:opacity-80">
+<span class="material-symbols-outlined text-sm">add</span>
+<span class="text-sm font-medium leading-none">Nuevo Reporte</span>
+</button>
+</div>
+</aside>
+<!-- Main Viewport -->
+<main class="ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar (Shared Component Blueprint) -->
+<header class="h-16 px-8 bg-surface-raised border-b border-surface-border sticky top-0 flex justify-between items-center z-40">
+<div class="flex items-center gap-8">
+<!-- Breadcrumbs -->
+<nav class="flex text-sm font-medium">
+<span class="text-text-secondary">Inicio</span>
+<span class="mx-2 text-surface-border">/</span>
+<span class="text-text-primary">Resumen</span>
+</nav>
+<!-- Search Bar -->
+<div class="relative w-72 focus-within:ring-1 focus-within:ring-accent rounded transition-all">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-lg">search</span>
+<input class="w-full bg-surface-base border-none text-sm py-2 pl-10 pr-4 rounded focus:ring-0" placeholder="Buscar leads, empresas..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 border-r border-surface-border pr-6">
+<button class="text-text-secondary hover:text-accent transition-all duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-text-secondary hover:text-accent transition-all duration-200">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<!-- User Profile -->
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="text-sm font-bold text-text-primary leading-none group-hover:text-accent transition-colors">Diego</p>
+<p class="text-[11px] text-text-secondary mt-1">Administrator</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-surface-border object-cover" data-alt="A professional headshot of a Hispanic male administrator in his late 30s with short dark hair and a friendly but professional expression. He is wearing a clean-cut white shirt against a soft, high-key studio background that matches the minimalist coral-themed UI. The lighting is bright and even, reinforcing an institutional, trustworthy atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR5XDfHZQN9hwsaspkGXAzMrTRFwj1kL5mrB2mRWEcw9SQEiGH65w9f7zId_Lwg4ZtQ-WQC1Fkxc6gQr2fSFi2_dw2Fzni2wVliUCL9N0md11L13Lp9DWSEW0rd4HHx9T4bdOvVM5ATQlJKhUbdXHbaM_TZmHu4dmxqpJ4-snIY_ieRVikwZ9UPlkceZGCyyOzkfSVLx_oAg0PYGkrnaZaxTkacnB7L8-ldOTq3q7HhQuyt4XenUp2GabQ4Y3nFuK0P5gGQ3LcYQ"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<section class="p-10 max-w-7xl">
+<!-- Greeting -->
+<div class="mb-10">
+<h2 class="text-3xl font-bold text-text-primary tracking-tight">Buenos días, Diego</h2>
+<p class="text-text-secondary mt-1 text-lg">Aquí tienes un resumen de tu pipeline comercial</p>
+</div>
+<!-- KPI Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- KPI 1 -->
+<div class="bg-surface-raised border border-surface-border p-6 rounded hover:border-accent transition-colors">
+<p class="text-text-secondary text-sm font-medium mb-2">Leads activos</p>
+<div class="flex items-baseline gap-3">
+<span class="text-3xl font-bold text-text-primary leading-none">124</span>
+<span class="text-status-won text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                            +12%
+                        </span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-raised border border-surface-border p-6 rounded hover:border-accent transition-colors">
+<p class="text-text-secondary text-sm font-medium mb-2">Por verificar</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-text-primary leading-none">18</span>
+<span class="text-text-secondary text-sm font-medium">Pendientes</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-raised border border-surface-border p-6 rounded hover:border-accent transition-colors">
+<p class="text-text-secondary text-sm font-medium mb-2">Próximos a vencer</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-status-lost leading-none">7</span>
+<span class="text-text-secondary text-sm font-medium">Esta semana</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-raised border border-surface-border p-6 rounded hover:border-accent transition-colors">
+<p class="text-text-secondary text-sm font-medium mb-2">Score promedio</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-text-primary leading-none">84%</span>
+<div class="w-12 h-1.5 bg-surface-base rounded-full overflow-hidden">
+<div class="bg-accent h-full w-[84%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Two Columns Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<!-- Table Column -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-text-primary">Próximas fechas límite</h3>
+<button class="text-accent hover:text-accent-dark text-sm font-bold flex items-center gap-1 transition-colors">
+                            Ver reporte completo
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="bg-surface-raised border border-surface-border rounded overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-base border-b border-surface-border">
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Título</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Organización</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Estado</th>
+<th class="px-6 py-4 text-[11px] font-bold text-text-secondary uppercase tracking-wider">Deadline</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-border">
+<tr class="hover:bg-surface-base/50 transition-colors">
+<td class="px-6 py-4 text-sm font-bold text-text-primary">Software ERP Federal</td>
+<td class="px-6 py-4 text-sm text-text-secondary">Ministerio de Finanzas</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-accent-soft text-accent text-[10px] font-bold rounded uppercase">Abierto</span>
+</td>
+<td class="px-6 py-4 text-sm text-text-secondary">Mañana, 14:00</td>
+</tr>
+<tr class="bg-surface-base/20 hover:bg-surface-base/50 transition-colors">
+<td class="px-6 py-4 text-sm font-bold text-text-primary">Suministros Energía Solar</td>
+<td class="px-6 py-4 text-sm text-text-secondary">Consorcio Energético SA</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-[#fff7ed] text-status-evaluating text-[10px] font-bold rounded uppercase border border-[#fed7aa]">Evaluando</span>
+</td>
+<td class="px-6 py-4 text-sm text-text-secondary">18 Oct 2023</td>
+</tr>
+<tr class="hover:bg-surface-base/50 transition-colors">
+<td class="px-6 py-4 text-sm font-bold text-text-primary">Auditoría Ciberseguridad</td>
+<td class="px-6 py-4 text-sm text-text-secondary">Banca Regional</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-[#f0fdf4] text-status-won text-[10px] font-bold rounded uppercase border border-[#bbf7d0]">Adjudicado</span>
+</td>
+<td class="px-6 py-4 text-sm text-text-secondary">Finalizado</td>
+</tr>
+<tr class="bg-surface-base/20 hover:bg-surface-base/50 transition-colors">
+<td class="px-6 py-4 text-sm font-bold text-text-primary">Renovación Flota Logística</td>
+<td class="px-6 py-4 text-sm text-text-secondary">LogiExpress SL</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-accent-soft text-accent text-[10px] font-bold rounded uppercase">Abierto</span>
+</td>
+<td class="px-6 py-4 text-sm text-status-lost font-medium">Hoy, 18:00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right Column: Recent Activity -->
+<div class="space-y-6">
+<h3 class="text-lg font-bold text-text-primary">Actividad reciente</h3>
+<div class="bg-surface-raised border border-surface-border rounded p-6 space-y-6">
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-accent text-sm">edit</span>
+</div>
+<div>
+<p class="text-sm text-text-primary leading-tight"><span class="font-bold">Sofía Méndez</span> actualizó el presupuesto para el Lead <span class="font-bold">ERP Federal</span>.</p>
+<p class="text-[11px] text-text-secondary mt-1">Hace 12 minutos</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-status-won/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-won text-sm">check_circle</span>
+</div>
+<div>
+<p class="text-sm text-text-primary leading-tight">La licitación <span class="font-bold">Auditoría Ciberseguridad</span> ha sido ganada.</p>
+<p class="text-[11px] text-text-secondary mt-1">Hace 3 horas</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-status-evaluating/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-evaluating text-sm">chat_bubble</span>
+</div>
+<div>
+<p class="text-sm text-text-primary leading-tight"><span class="font-bold">Carlos Ruiz</span> comentó en <span class="font-bold">Suministros Energía</span>.</p>
+<p class="text-[11px] text-text-secondary mt-1">Ayer a las 16:45</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-base flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-text-secondary text-sm">person_add</span>
+</div>
+<div>
+<p class="text-sm text-text-primary leading-tight">Nuevo Lead asignado: <span class="font-bold">Red Hospitalaria Norte</span>.</p>
+<p class="text-[11px] text-text-secondary mt-1">12 Oct 2023</p>
+</div>
+</div>
+<button class="w-full py-3 bg-accent text-white text-sm font-bold rounded flex items-center justify-center gap-2 transition-all hover:bg-accent-dark active:scale-[0.98]">
+                            Ver todos los leads
+                            <span class="material-symbols-outlined text-sm">launch</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<script>
+        // Simple micro-interaction for KPI cards
+        document.querySelectorAll('.bg-surface-raised').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-sm');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-sm');
+            });
+        });
+
+        // Current navigation active state handler (already manually set for demo)
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                navItems.forEach(i => {
+                    i.classList.remove('text-accent', 'bg-accent-soft', 'border-l-4', 'border-accent', 'font-bold');
+                    i.classList.add('text-text-secondary', 'hover:text-text-primary', 'hover:bg-surface-base');
+                });
+                item.classList.remove('text-text-secondary', 'hover:text-text-primary', 'hover:bg-surface-base');
+                item.classList.add('text-accent', 'bg-accent-soft', 'border-l-4', 'border-accent', 'font-bold');
+            });
+        });
+    </script>
+</body></html>

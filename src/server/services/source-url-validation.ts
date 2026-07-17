@@ -1,0 +1,451 @@
+import { lookup as dnsLookup } from "node:dns/promises";
+
+import {
+  assertSafePublicHttpUrl,
+  isPrivateOrReservedIp,
+} from "@/server/security/safe-url";
+
+export type SourceUrlValidationCode =
+  | "INVALID_URL"
+  | "BLOCKED_PROTOCOL"
+  | "BLOCKED_HOST"
+  | "BLOCKED_IP"
+  | "DNS_FAILED"
+  | "TIMEOUT"
+  | "HTTP_ERROR"
+  | "UNSUPPORTED_CONTENT_TYPE"
+  | "TOO_LARGE"
+  | "TOO_MANY_REDIRECTS"
+  | "NETWORK_ERROR";
+
+export type SourceUrlValidationSuccess = {
+  ok: true;
+  checkedAt: string;
+  finalUrl: string;
+  statusCode: number;
+  redirectCount: number;
+  contentType: string | null;
+};
+
+export type SourceUrlValidationFailure = {
+  ok: false;
+  checkedAt: string;
+  code: SourceUrlValidationCode;
+  detail: string;
+  statusCode?: number;
+  finalUrl?: string;
+};
+
+export type SourceUrlValidationResult =
+  | SourceUrlValidationSuccess
+  | SourceUrlValidationFailure;
+
+export type SourceUrlValidationDeps = {
+  fetchImpl?: typeof fetch;
+  lookupImpl?: (
+    hostname: string,
+  ) => Promise<Array<{ address: string; family: number }>>;
+  timeoutMs?: number;
+  maxRedirects?: number;
+  maxResponseBytes?: number;
+  now?: () => Date;
+};
+
+const DEFAULT_TIMEOUT_MS = 8_000;
+const DEFAULT_MAX_REDIRECTS = 3;
+const DEFAULT_MAX_RESPONSE_BYTES = 1_500_000;
+
+function allowedContentType(contentType: string | null): boolean {
+  if (!contentType) {
+    return true;
+  }
+  const normalized = contentType.toLowerCase();
+  return (
+    normalized.includes("text/html") ||
+    normalized.includes("application/xhtml+xml") ||
+    normalized.includes("application/pdf")
+  );
+}
+
+export async function resolveAndAssertPublicHost(
+  hostname: string,
+  lookupImpl: NonNullable<SourceUrlValidationDeps["lookupImpl"]>,
+): Promise<SourceUrlValidationFailure | null> {
+  let addresses: Array<{ address: string; family: number }>;
+  try {
+    addresses = await lookupImpl(hostname);
+  } catch {
+    return {
+      ok: false,
+      checkedAt: new Date().toISOString(),
+      code: "DNS_FAILED",
+      detail: "No se pudo resolver el dominio de la convocatoria",
+    };
+  }
+
+  if (!addresses.length) {
+    return {
+      ok: false,
+      checkedAt: new Date().toISOString(),
+      code: "DNS_FAILED",
+      detail: "El dominio de la convocatoria no tiene registros DNS",
+    };
+  }
+
+  for (const entry of addresses) {
+    if (isPrivateOrReservedIp(entry.address)) {
+      return {
+        ok: false,
+        checkedAt: new Date().toISOString(),
+        code: "BLOCKED_IP",
+        detail: "El dominio resuelve a una IP no pública",
+      };
+    }
+  }
+
+  return null;
+}
+
+export async function defaultPublicHostLookup(
+  hostname: string,
+): Promise<Array<{ address: string; family: number }>> {
+  const result = await dnsLookup(hostname, { all: true });
+  return result.map((entry) => ({
+    address: entry.address,
+    family: entry.family,
+  }));
+}
+
+function failure(
+  code: SourceUrlValidationCode,
+  detail: string,
+  extras?: Partial<SourceUrlValidationFailure>,
+  now: () => Date = () => new Date(),
+): SourceUrlValidationFailure {
+  return {
+    ok: false,
+    checkedAt: now().toISOString(),
+    code,
+    detail,
+    ...extras,
+  };
+}
+
+/**
+ * Validates that a convocatoria URL is public http(s), DNS-safe (no SSRF),
+ * and reachable with a successful HTTP response before Leadiva exposes it.
+ */
+export async function validateSourceUrl(
+  rawUrl: string,
+  deps: SourceUrlValidationDeps = {},
+): Promise<SourceUrlValidationResult> {
+  const fetchImpl = deps.fetchImpl ?? fetch;
+  const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
+  const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxRedirects = deps.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
+  const maxResponseBytes = deps.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+  const now = deps.now ?? (() => new Date());
+
+  const structural = assertSafePublicHttpUrl(rawUrl);
+  if (!structural.ok) {
+    return failure(structural.code, structural.detail, undefined, now);
+  }
+
+  let currentUrl = structural.url.toString();
+  let redirectCount = 0;
+
+  for (let hop = 0; hop <= maxRedirects; hop += 1) {
+    const parsed = assertSafePublicHttpUrl(currentUrl);
+    if (!parsed.ok) {
+      return failure(parsed.code, parsed.detail, { finalUrl: currentUrl }, now);
+    }
+
+    const dnsFailure = await resolveAndAssertPublicHost(
+      parsed.url.hostname,
+      lookupImpl,
+    );
+    if (dnsFailure) {
+      return { ...dnsFailure, checkedAt: now().toISOString(), finalUrl: currentUrl };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      let response = await fetchImpl(currentUrl, {
+        method: "HEAD",
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          Accept: "text/html,application/pdf,application/xhtml+xml,*/*",
+          "User-Agent": "LeadivaSourceValidator/1.0",
+        },
+      });
+
+      if (response.status === 405 || response.status === 501) {
+        response = await fetchImpl(currentUrl, {
+          method: "GET",
+          redirect: "manual",
+          signal: controller.signal,
+          headers: {
+            Accept: "text/html,application/pdf,application/xhtml+xml,*/*",
+            "User-Agent": "LeadivaSourceValidator/1.0",
+            Range: "bytes=0-0",
+          },
+        });
+      }
+
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location) {
+          return failure(
+            "HTTP_ERROR",
+            "Redirección sin destino",
+            { statusCode: response.status, finalUrl: currentUrl },
+            now,
+          );
+        }
+        if (hop === maxRedirects) {
+          return failure(
+            "TOO_MANY_REDIRECTS",
+            "Demasiadas redirecciones al validar la convocatoria",
+            { statusCode: response.status, finalUrl: currentUrl },
+            now,
+          );
+        }
+        currentUrl = new URL(location, currentUrl).toString();
+        redirectCount += 1;
+        continue;
+      }
+
+      if (response.status < 200 || response.status >= 400) {
+        return failure(
+          "HTTP_ERROR",
+          `La convocatoria respondió HTTP ${response.status}`,
+          { statusCode: response.status, finalUrl: currentUrl },
+          now,
+        );
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!allowedContentType(contentType)) {
+        return failure(
+          "UNSUPPORTED_CONTENT_TYPE",
+          "La URL no contiene HTML ni PDF verificable",
+          { statusCode: response.status, finalUrl: currentUrl },
+          now,
+        );
+      }
+
+      const contentLength = Number(response.headers.get("content-length"));
+      if (Number.isFinite(contentLength) && contentLength > maxResponseBytes) {
+        return failure(
+          "TOO_LARGE",
+          "La fuente supera el tamaño máximo de verificación",
+          { statusCode: response.status, finalUrl: currentUrl },
+          now,
+        );
+      }
+
+      // Drain/cancel body for GET fallbacks to avoid downloading full documents.
+      try {
+        await response.body?.cancel();
+      } catch {
+        // ignore
+      }
+
+      return {
+        ok: true,
+        checkedAt: now().toISOString(),
+        finalUrl: currentUrl,
+        statusCode: response.status,
+        redirectCount,
+        contentType,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return failure(
+          "TIMEOUT",
+          "Tiempo de espera agotado al validar la convocatoria",
+          { finalUrl: currentUrl },
+          now,
+        );
+      }
+      return failure(
+        "NETWORK_ERROR",
+        "No se pudo contactar la URL de la convocatoria",
+        { finalUrl: currentUrl },
+        now,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  return failure(
+    "TOO_MANY_REDIRECTS",
+    "Demasiadas redirecciones al validar la convocatoria",
+    { finalUrl: currentUrl },
+    now,
+  );
+}
+
+export type SourceContentSuccess = SourceUrlValidationSuccess & {
+  content: string | null;
+  bytesRead: number;
+};
+
+export type SourceContentResult = SourceContentSuccess | SourceUrlValidationFailure;
+
+async function readBodyWithLimit(
+  body: ReadableStream<Uint8Array> | null,
+  maxBytes: number,
+): Promise<{ content: string; bytesRead: number } | null> {
+  if (!body) {
+    return { content: "", bytesRead: 0 };
+  }
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytesRead = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      bytesRead += value.byteLength;
+      if (bytesRead > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const merged = new Uint8Array(bytesRead);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { content: new TextDecoder().decode(merged), bytesRead };
+}
+
+/**
+ * Retrieves bounded HTML after URL validation. PDFs remain eligible for
+ * urlContext verification but are not decoded as text locally.
+ */
+export async function retrieveSourceContent(
+  rawUrl: string,
+  deps: SourceUrlValidationDeps = {},
+): Promise<SourceContentResult> {
+  const validation = await validateSourceUrl(rawUrl, deps);
+  if (!validation.ok) {
+    return validation;
+  }
+
+  const fetchImpl = deps.fetchImpl ?? fetch;
+  const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
+  const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxResponseBytes = deps.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+  const now = deps.now ?? (() => new Date());
+  const parsed = assertSafePublicHttpUrl(validation.finalUrl);
+  if (!parsed.ok) {
+    return failure(parsed.code, parsed.detail, { finalUrl: validation.finalUrl }, now);
+  }
+
+  const dnsFailure = await resolveAndAssertPublicHost(parsed.url.hostname, lookupImpl);
+  if (dnsFailure) {
+    return { ...dnsFailure, checkedAt: now().toISOString(), finalUrl: validation.finalUrl };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(validation.finalUrl, {
+      method: "GET",
+      redirect: "manual",
+      signal: controller.signal,
+      headers: {
+        Accept: "text/html,application/pdf,application/xhtml+xml",
+        "User-Agent": "LeadivaSourceVerifier/1.0",
+      },
+    });
+
+    if (response.status >= 300 && response.status < 400) {
+      return failure(
+        "HTTP_ERROR",
+        "La URL cambió durante la recuperación de contenido",
+        { statusCode: response.status, finalUrl: validation.finalUrl },
+        now,
+      );
+    }
+    if (response.status < 200 || response.status >= 400) {
+      return failure(
+        "HTTP_ERROR",
+        `La convocatoria respondió HTTP ${response.status}`,
+        { statusCode: response.status, finalUrl: validation.finalUrl },
+        now,
+      );
+    }
+
+    const contentType = response.headers.get("content-type") ?? validation.contentType;
+    if (!allowedContentType(contentType)) {
+      return failure(
+        "UNSUPPORTED_CONTENT_TYPE",
+        "La URL no contiene HTML ni PDF verificable",
+        { statusCode: response.status, finalUrl: validation.finalUrl },
+        now,
+      );
+    }
+    const contentLength = Number(response.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > maxResponseBytes) {
+      return failure(
+        "TOO_LARGE",
+        "La fuente supera el tamaño máximo de verificación",
+        { statusCode: response.status, finalUrl: validation.finalUrl },
+        now,
+      );
+    }
+
+    if (contentType?.toLowerCase().includes("application/pdf")) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        // Best effort only.
+      }
+      return { ...validation, contentType, content: null, bytesRead: 0 };
+    }
+
+    const body = await readBodyWithLimit(response.body, maxResponseBytes);
+    if (!body) {
+      return failure(
+        "TOO_LARGE",
+        "La fuente supera el tamaño máximo de verificación",
+        { statusCode: response.status, finalUrl: validation.finalUrl },
+        now,
+      );
+    }
+    return { ...validation, contentType, ...body };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return failure("TIMEOUT", "Tiempo de espera agotado al recuperar la fuente", { finalUrl: validation.finalUrl }, now);
+    }
+    return failure("NETWORK_ERROR", "No se pudo recuperar el contenido de la fuente", { finalUrl: validation.finalUrl }, now);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function isSourceUrlValidated(
+  rawData: Record<string, unknown> | null | undefined,
+): boolean {
+  const validation = rawData?.sourceUrlValidation;
+  if (!validation || typeof validation !== "object") {
+    return false;
+  }
+  return (validation as { ok?: unknown }).ok === true;
+}

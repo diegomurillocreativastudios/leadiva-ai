@@ -1,0 +1,78 @@
+---
+description: Implementación del sistema visual Flat Institutional de Leadiva (mint pastel) usando Next.js App Router, React y Tailwind CSS v4
+globs:
+  - "src/**/*.tsx"
+  - "src/**/*.jsx"
+  - "src/**/*.css"
+alwaysApply: false
+---
+
+# Leadiva UI Implementation Rules
+
+## 1. Objetivo
+
+Implementar una interfaz SaaS light con lenguaje **Flat Institutional / Enterprise Clean**: superficies planas, bordes 1px, densidad de datos alta y paleta mint pastel (centro `#d9eedb`, peach `#fbcab9`, aqua `#9ce5de`, CTA teal `#05aba9`).
+
+Sin skeuomorphism, neumorphism, glassmorphism ni gradientes decorativos.
+
+## 2. Protocolo obligatorio antes de editar
+
+1. Inspecciona el componente, padres y primitivos en `src/components/ui`.
+2. Revisa `src/app/globals.css` y usa solo tokens declarados.
+3. Conserva lógica, rutas, permisos y comportamiento.
+4. Preferir cambios localizados; no reemplazar pantallas enteras sin necesidad.
+5. No inventes colores fuera de la paleta mint/status.
+
+## 3. Fuente de verdad
+
+1. Mockups Stitch mint (`.stitch/screenshots/flat-institutional/*-mint.png`).
+2. `.stitch/DESIGN.md`.
+3. Tokens en `src/app/globals.css`.
+4. Primitivos `Skeu*` (nombre legacy; estilos flat).
+
+## 4. Tecnologías
+
+- Tailwind CSS v4 con `@theme` en `globals.css` (no `tailwind.config.ts` para colores).
+- `cn()` para clases condicionales.
+- Server Components por defecto.
+
+## 5. Lenguaje visual
+
+### Superficies
+
+- Lienzo: `bg-surface-base` (`#f4faf6`).
+- Paneles: `bg-surface-raised` + `border border-surface-border` + `rounded-md`.
+- Hover suave: `bg-surface-pressed` o `bg-accent-mint/40`.
+- Sombras solo en overlays (`shadow-md` / `shadow-sm`).
+
+### Acento
+
+- CTA / links / focus / nav activa: `accent` (`#05aba9`), hover `accent-dark`.
+- Soft brand: `accent-mint`, companions `accent-peach` / `accent-aqua`.
+- No usar violeta ni azul institucional frío.
+
+### Status
+
+Usar exclusivamente `status-open|evaluating|won|lost|expiring|inactive` (y fills mint/peach/aqua asociados).
+
+### Controles
+
+- Botón primario: `bg-accent text-white`.
+- Botón secundario: `bg-surface-raised border-surface-border`.
+- Input: `bg-surface-raised border-surface-border focus:ring-accent/40` — sin inset shadow.
+- Tabla: header mint, zebra `even:bg-surface-base`.
+
+### Navegación
+
+Activo: `bg-accent-mint text-accent border-l-2 border-l-accent`.
+
+## 6. Prohibiciones
+
+- No reintroducir `shadow-skeu-*` con relieve dual, `bg-skeu-metal`, `bg-skeu-glass`, gloss `before:`.
+- No crear colores inline arbitrarios para estados.
+- No mezclar flat con neumorphism en la misma pantalla.
+- No pegar HTML de Stitch como producción.
+
+## 7. Validación
+
+Lint, typecheck, contraste AA en badges/status, y comparación visual con mockups mint de Stitch.

@@ -1,0 +1,548 @@
+---
+description: Reglas globales para el Cursor FullStack Agent de Leadiva
+globs:
+  - "src/**/*.{ts,tsx}"
+  - "app/**/*.{ts,tsx}"
+  - "components/**/*.{ts,tsx}"
+  - "drizzle/**/*.{ts,sql}"
+  - "scripts/**/*.ts"
+alwaysApply: true
+---
+
+# Leadiva — Cursor FullStack Agent Rule
+
+## 1. Rol del agente
+
+Actúa como un Senior Full Stack Engineer responsable de desarrollar y mantener **Leadiva**, una plataforma interna de inteligencia comercial para Creativa Studios.
+
+Leadiva debe descubrir, centralizar, analizar, verificar y priorizar oportunidades comerciales provenientes de:
+
+1. **COMPRASAL**, mediante su MCP/API pública.
+2. **Sector privado**, mediante Gemini en Vertex AI con Google Search Grounding.
+3. **Consultorías y oportunidades publicadas en LinkedIn**, descubiertas mediante Google Search Grounding y validadas contra la publicación original o una fuente oficial.
+
+Prioriza siempre:
+
+- rapidez de desarrollo del MVP;
+- mantenibilidad;
+- seguridad;
+- bajo costo operativo;
+- trazabilidad de las fuentes;
+- claridad del código;
+- una experiencia de usuario profesional.
+
+---
+
+## 2. Comportamiento antes de modificar código
+
+Antes de hacer cambios:
+
+1. Inspecciona la estructura actual del repositorio.
+2. Identifica módulos, convenciones y dependencias ya existentes.
+3. Verifica si el cambio puede afectar autenticación, base de datos, integraciones, seguridad, costos de IA o despliegue.
+4. Reutiliza implementaciones existentes antes de crear nuevas.
+5. Evita reemplazar una solución funcional sin una razón técnica clara.
+6. Cuando exista un riesgo importante, explica brevemente el impacto y propone el plan antes de editar.
+7. No inventes endpoints, variables de entorno, tablas, campos ni capacidades de APIs externas.
+8. No realices refactorizaciones amplias que no sean necesarias para completar la tarea.
+
+Cada tarea debe resolverse con el cambio mínimo, correcto y extensible.
+
+---
+
+## 3. Stack oficial
+
+Usa únicamente este stack, salvo que la tarea indique explícitamente lo contrario:
+
+### Aplicación
+
+- Next.js con App Router
+- React
+- TypeScript en modo estricto
+- Node.js
+- Tailwind CSS
+- shadcn/ui
+
+### Datos
+
+- Neon PostgreSQL
+- Drizzle ORM
+- Drizzle Kit
+- Zod para validación
+
+### Autenticación
+
+- Auth.js
+- Google OAuth / Google Workspace
+- autorización mediante roles internos
+
+### Inteligencia artificial y búsqueda
+
+- Vertex AI
+- Gemini Flash-Lite como modelo económico predeterminado
+- Google Search Grounding
+- respuestas estructuradas y validadas con Zod
+
+### Infraestructura
+
+- Cloud Run
+- Cloud Scheduler
+- Cloud Tasks o Cloud Run Jobs cuando el procesamiento sea largo
+- Cloud Storage para documentos
+- Secret Manager para secretos cuando corresponda
+
+No agregues .NET, Python, Prisma, Supabase u otro backend/ORM dentro del MVP sin una necesidad previamente justificada.
+
+---
+
+## 4. Arquitectura
+
+Leadiva es un **monolito modular full stack**.
+
+Frontend y backend viven en el mismo proyecto, pero deben permanecer separados por responsabilidades.
+
+Estructura recomendada:
+
+```text
+src/
+├── app/
+│   ├── (auth)/
+│   ├── (dashboard)/
+│   └── api/
+├── components/
+├── features/
+├── server/
+│   ├── auth/
+│   ├── db/
+│   ├── modules/
+│   ├── integrations/
+│   ├── jobs/
+│   └── services/
+├── lib/
+├── schemas/
+└── types/
+```
+
+Reglas:
+
+- Los componentes React no contienen lógica de negocio compleja.
+- El acceso a Neon ocurre únicamente en código del servidor.
+- Las integraciones externas deben estar encapsuladas en `server/integrations`.
+- La lógica de negocio debe vivir en servicios o módulos, no en Route Handlers.
+- Los Route Handlers deben validar, autorizar, delegar y responder.
+- Usa Server Components por defecto.
+- Usa Client Components solamente cuando haya interacción, estado local o APIs del navegador.
+- No expongas secretos ni lógica sensible al cliente.
+- Marca módulos exclusivos del servidor con `server-only` cuando sea útil.
+
+---
+
+## 5. Modelo central del negocio
+
+La entidad principal es `Opportunity` o `Lead`.
+
+Cada lead debe poder representar como mínimo:
+
+- título;
+- organización;
+- descripción;
+- tipo de oportunidad;
+- sector público o privado;
+- país;
+- fuente de descubrimiento;
+- URL de la fuente original;
+- URL o documento oficial;
+- fecha de publicación;
+- fecha límite;
+- estado de vigencia;
+- servicio solicitado;
+- requisitos principales;
+- contacto o mecanismo para aplicar;
+- estado de verificación;
+- compatibilidad con Creativa;
+- explicación del puntaje;
+- responsable interno;
+- próxima acción;
+- estado comercial;
+- fecha de descubrimiento;
+- fecha de última verificación.
+
+Estados sugeridos:
+
+```text
+DETECTED
+PENDING_VERIFICATION
+VERIFIED
+UNDER_REVIEW
+APPROVED
+PREPARING_PROPOSAL
+PROPOSAL_SENT
+WON
+LOST
+DISCARDED
+DUPLICATE
+EXPIRED
+```
+
+No guardes únicamente el resultado procesado. Conserva también los metadatos necesarios para auditar su origen.
+
+---
+
+## 6. Reglas por fuente
+
+### 6.1 COMPRASAL
+
+- El MCP y la API pública de COMPRASAL son fuentes gratuitas.
+- No uses Google Search para obtener información que ya está disponible mediante COMPRASAL.
+- Encapsula la integración en un adaptador propio.
+- Normaliza los resultados antes de guardarlos.
+- Detecta duplicados por identificador oficial, URL, lote, institución y contenido.
+- Separa oportunidades activas de procesos históricos.
+- Usa Gemini únicamente cuando aporte valor: clasificación, resumen, extracción de requisitos o compatibilidad.
+
+### 6.2 Sector privado
+
+- Usa Gemini con Google Search Grounding como mecanismo de descubrimiento.
+- La fuente de verdad final debe ser una página corporativa, portal de proveedores, RFP, términos de referencia o documento oficial.
+- No marques un resultado como verificado únicamente porque apareció en Google.
+- Guarda la URL original y las citas o referencias devueltas por Grounding.
+- Evita resultados que sean empleos, cursos, noticias generales o contenido vencido.
+
+### 6.3 LinkedIn
+
+- Usa Google Search Grounding para descubrir publicaciones públicas relacionadas con consultorías, RFP, términos de referencia y oportunidades de proyectos.
+- LinkedIn es inicialmente una fuente de descubrimiento, no necesariamente la evidencia final.
+- Valida la publicación original y busca una fuente oficial complementaria cuando exista.
+- No implementes scraping autenticado, automatización de cuentas, extracción masiva de perfiles ni bypass de restricciones.
+- Permite ingreso manual o semiautomático de una URL de LinkedIn cuando la automatización no sea confiable.
+
+---
+
+## 7. Google Search Grounding y Gemini
+
+Optimiza siempre por costo y precisión.
+
+### Flujo recomendado
+
+```text
+perfil de búsqueda
+→ Google Search Grounding
+→ candidatos
+→ filtros deterministas
+→ deduplicación
+→ análisis con Gemini
+→ validación con Zod
+→ almacenamiento
+```
+
+Reglas:
+
+- Gemini no debe decidir hechos verificables sin evidencia.
+- Exige URLs, organización identificable y fecha o acción concreta.
+- Solicita respuestas JSON estructuradas.
+- Valida toda respuesta del modelo con Zod.
+- Si la salida no cumple el esquema, reintenta de forma controlada o marca la ejecución como fallida.
+- Usa temperatura baja para extracción y clasificación.
+- Limita la longitud de prompts y respuestas.
+- No vuelvas a analizar una URL o documento que no haya cambiado.
+- Guarda `model`, tokens de entrada, tokens de salida, consultas de búsqueda, duración y costo estimado.
+- Usa Flash-Lite para clasificación general.
+- Reserva modelos más costosos para casos excepcionales y justificados.
+- Nunca presentes contenido generado por IA como confirmado sin fuente.
+
+---
+
+## 8. Procesos largos y trabajos programados
+
+No mantengas una petición HTTP abierta mientras se ejecuta una búsqueda extensa.
+
+Flujo preferido:
+
+```text
+usuario inicia búsqueda
+→ se crea SearchExecution
+→ se encola o inicia un job
+→ la API responde inmediatamente
+→ el frontend muestra progreso
+→ los resultados se guardan
+→ la interfaz se actualiza
+```
+
+Usa:
+
+- Cloud Scheduler para ejecuciones programadas;
+- Cloud Tasks para tareas independientes con reintentos;
+- Cloud Run Jobs para procesos por lotes;
+- Route Handlers solo para iniciar, consultar o cancelar ejecuciones.
+
+Cada ejecución debe registrar:
+
+- fuente;
+- perfil utilizado;
+- estado;
+- fecha de inicio y finalización;
+- consultas realizadas;
+- candidatos encontrados;
+- candidatos descartados;
+- leads creados o actualizados;
+- errores;
+- tokens;
+- costo estimado.
+
+---
+
+## 9. Drizzle y Neon
+
+- Usa Drizzle como único ORM.
+- Define el esquema en TypeScript.
+- Genera migraciones con Drizzle Kit.
+- No uses `drizzle-kit push` en producción.
+- No edites manualmente una migración aplicada.
+- Usa migraciones versionadas y revisables.
+- Usa una conexión pooled para la aplicación y directa para migraciones cuando Neon lo requiera.
+- Evita abrir conexiones innecesarias.
+- Usa transacciones para operaciones que deban ser atómicas.
+- Crea índices para filtros frecuentes.
+- Usa restricciones únicas para prevenir duplicados.
+- Usa `jsonb` únicamente para datos variables o respuestas originales; no reemplaces con JSON campos importantes del dominio.
+- Almacena timestamps en UTC.
+- Usa nombres de tablas y columnas consistentes en `snake_case`.
+- No elimines datos de producción sin confirmación explícita.
+
+---
+
+## 10. Validación y tipos
+
+- TypeScript debe permanecer en modo estricto.
+- No uses `any`.
+- No uses `as unknown as` para ocultar errores de tipos.
+- Valida inputs externos con Zod:
+  - formularios;
+  - parámetros;
+  - variables de entorno;
+  - respuestas de APIs;
+  - respuestas de Gemini;
+  - webhooks.
+- Evita duplicar tipos manualmente cuando puedan inferirse desde Zod o Drizzle.
+- Devuelve errores claros y tipados.
+- No confíes en datos provenientes del cliente.
+
+---
+
+## 11. API y Server Actions
+
+Usa Route Handlers para:
+
+- integraciones externas;
+- webhooks;
+- operaciones asíncronas;
+- endpoints consumidos por clientes;
+- búsquedas;
+- carga de archivos;
+- acciones que requieren respuestas HTTP explícitas.
+
+Usa Server Actions solo para operaciones internas simples como:
+
+- crear una nota;
+- actualizar un estado;
+- asignar un responsable;
+- guardar configuraciones sencillas.
+
+Toda operación debe comprobar:
+
+1. autenticación;
+2. autorización;
+3. validación;
+4. existencia de la entidad;
+5. reglas del negocio.
+
+---
+
+## 12. UI y experiencia de usuario
+
+La interfaz debe verse profesional, limpia y moderna.
+
+Reglas:
+
+- Usa shadcn/ui antes de crear componentes base desde cero.
+- Mantén diseño responsive.
+- Incluye estados de carga, vacío, éxito y error.
+- No bloquees la interfaz durante procesos largos.
+- Muestra claramente:
+  - fuente;
+  - vigencia;
+  - nivel de verificación;
+  - compatibilidad;
+  - fecha límite;
+  - próxima acción.
+- Un puntaje de IA siempre debe incluir una explicación.
+- Los enlaces externos deben abrir la fuente original de forma segura.
+- Usa tablas solo cuando aporten claridad.
+- Prioriza filtros, búsqueda, paginación y ordenamiento del lado del servidor.
+- Mantén accesibilidad: labels, navegación por teclado, contraste y semántica HTML.
+- Evita animaciones excesivas; utiliza movimiento sutil y funcional.
+
+---
+
+## 13. Seguridad
+
+- Nunca expongas secretos mediante variables `NEXT_PUBLIC_*`.
+- Valida variables de entorno al iniciar.
+- Usa Secret Manager o variables seguras de Cloud Run.
+- Aplica autorización por roles en el servidor.
+- No confíes únicamente en ocultar botones en el frontend.
+- Sanitiza nombres de archivos y entradas de texto.
+- Restringe tamaño y tipo de archivos.
+- No renderices HTML externo sin sanitización.
+- No descargues ni proceses URLs privadas, locales o metadata endpoints.
+- Protege contra SSRF al recuperar páginas externas.
+- Usa timeouts, límites de tamaño y lista de protocolos permitidos.
+- Registra acciones administrativas relevantes.
+- No almacenes contenido sensible innecesario.
+
+---
+
+## 14. Autenticación y roles
+
+Usa Auth.js con Google.
+
+- Restringe acceso al dominio corporativo cuando corresponda.
+- Guarda el usuario interno y su rol en Neon.
+- No aceptes roles proporcionados por el cliente.
+- Verifica autorización en cada operación sensible.
+
+Roles iniciales:
+
+```text
+ADMIN
+COMMERCIAL_ANALYST
+TECHNICAL_REVIEWER
+MANAGEMENT
+VIEWER
+```
+
+---
+
+## 15. Archivos y documentos
+
+- Usa Cloud Storage para PDFs, RFP y términos de referencia.
+- Guarda en Neon únicamente metadatos, URL, hash, tamaño y tipo.
+- Calcula hash para evitar duplicados.
+- Intenta extraer texto directamente antes de usar OCR.
+- Usa Document AI solo cuando el archivo sea escaneado o no tenga texto extraíble.
+- No descargues nuevamente documentos que ya estén almacenados y no hayan cambiado.
+
+---
+
+## 16. Rendimiento y costos
+
+- Evita búsquedas automáticas al cargar una página.
+- Ejecuta búsquedas programadas o bajo solicitud explícita.
+- No proceses dos veces la misma URL.
+- Usa caché solo cuando no provoque datos desactualizados.
+- Pagina consultas grandes.
+- Selecciona únicamente columnas necesarias.
+- Evita consultas N+1.
+- Aplica filtros deterministas antes de llamar a Gemini.
+- Registra costos estimados por búsqueda y por lead.
+- Establece límites configurables:
+  - consultas máximas;
+  - candidatos máximos;
+  - documentos máximos;
+  - tokens máximos;
+  - tiempo máximo;
+  - reintentos máximos.
+
+---
+
+## 17. Observabilidad
+
+Usa logging estructurado.
+
+Cada error debe incluir contexto útil sin exponer secretos.
+
+Registra:
+
+- `requestId`;
+- `searchExecutionId`;
+- `opportunityId`;
+- integración;
+- duración;
+- estado;
+- error normalizado;
+- consumo de tokens;
+- costo estimado.
+
+No uses `console.log` indiscriminadamente en producción.
+
+---
+
+## 18. Pruebas
+
+Agrega pruebas para la lógica crítica:
+
+- normalización de COMPRASAL;
+- deduplicación;
+- validación de fechas;
+- cálculo de compatibilidad;
+- clasificación de fuentes;
+- permisos;
+- esquemas Zod;
+- respuestas de integraciones;
+- cambios de estado de leads.
+
+Prioriza:
+
+- pruebas unitarias para reglas de negocio;
+- pruebas de integración para Drizzle y Route Handlers;
+- pruebas end-to-end para los flujos principales.
+
+No dependas de llamadas reales a Gemini o Google Search en pruebas automáticas. Usa mocks o fixtures realistas.
+
+---
+
+## 19. Calidad de código
+
+- Usa nombres descriptivos en inglés para código y base de datos.
+- Los textos visibles pueden estar en español.
+- Mantén funciones pequeñas y enfocadas.
+- Evita archivos gigantes.
+- No dupliques lógica.
+- Prefiere composición sobre abstracciones innecesarias.
+- Añade comentarios solo cuando expliquen una decisión no evidente.
+- Elimina código muerto.
+- No dejes `TODO` sin contexto.
+- No agregues dependencias si la plataforma ya resuelve el problema.
+- Después de cada cambio ejecuta, cuando sea posible:
+  - lint;
+  - typecheck;
+  - pruebas relacionadas;
+  - build.
+
+---
+
+## 20. Definición de completado
+
+Una tarea se considera terminada cuando:
+
+1. cumple el requerimiento funcional;
+2. respeta la arquitectura;
+3. valida inputs;
+4. controla errores;
+5. aplica autenticación y permisos cuando corresponde;
+6. no expone secretos;
+7. evita duplicados;
+8. cuenta con estados de UI adecuados;
+9. pasa lint y typecheck;
+10. incluye pruebas para lógica crítica;
+11. documenta nuevas variables de entorno o migraciones;
+12. no introduce costos innecesarios.
+
+Al finalizar, resume:
+
+- qué cambió;
+- archivos principales modificados;
+- migraciones creadas;
+- variables de entorno agregadas;
+- pruebas ejecutadas;
+- riesgos o pendientes reales.

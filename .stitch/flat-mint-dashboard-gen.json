@@ -1,0 +1,73 @@
+{
+  "projectId": "929484233158471895",
+  "sessionId": "8031487489663828207",
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "screenshot": {
+              "name": "projects/929484233158471895/files/a5fa093313024471a945bdbebfb17282",
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsrz_LF4w04E-ApMlw5wwhEa7EZZBwVPxmgacgvU9NcfXfZ_IPa9SIjeSq6EzC9iKw8V4gsc9wcSJ2HxjDOacg0f5qXvrsh8OZVzYHJBphGuC48bQHYrNLvr7dppkZ7nUtRwnLQmDv4GEGMLvJzQe1JOiC5dEjUsAQplphFkoU2Gv425RdKUGLtfd7PFXmUqq8yIep5ES2IZieZf9VzBMzDZbF7L5xrGKmP_VKCXa_Hap6_pU6P-Jqy"
+            },
+            "htmlCode": {
+              "name": "projects/929484233158471895/files/7deb0ac3f2e04da2882fe1e9ccd68404",
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2VjNzkxZTZhMTg4ZDRmNmJiZWU2MDBmZTFiNWM0YjQyEgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+              "mimeType": "text/html"
+            },
+            "id": "43ad10c87a2444a4b33a6e97becf2e06",
+            "generatedBy": "figaro_agent",
+            "width": "2560",
+            "height": "2176",
+            "title": "Dashboard Resumen - Leadiva (Mint)",
+            "prompt": "Leadiva Dashboard (Spanish UI). \nColors: Canvas #f4faf6, cards #ffffff, borders #d5e8e0. Text #1c1917 / #5f6b66.\nPrimary Teal #05aba9 for primary buttons, active nav indicator, and CTA.\nMint #d9eedb for soft fills, selected nav bg, and KPI accents.\nPeach #fbcab9 for warm soft panels and chips.\nAqua #9ce5de for secondary buttons.\n\nLayout:\n- SideNavBar: 'Inicio' active with #d9eedb background and #05aba9 left border.\n- TopNavBar: 'Leadiva' product name.\n- Main Content:\n  - Header: 'Buenos d\u00edas, Diego' with summary text.\n  - KPI Cards: 4 cards with mint/peach accents (Leads activos, Por verificar, Pr\u00f3ximos a vencer, Score promedio).\n  - Deadlines Table: 'Pr\u00f3ximas fechas l\u00edmite' with columns: T\u00edtulo, Organizaci\u00f3n, Estado, Deadline. Soft mint/aqua badges.\n  - Activity: 'Actividad reciente' vertical timeline.\n  - CTA: 'Ver todos los leads' button in #05aba9 at the bottom.\nFlat institutional style, no gradients.",
+            "name": "projects/929484233158471895/screens/43ad10c87a2444a4b33a6e97becf2e06",
+            "theme": {
+              "colorMode": "LIGHT",
+              "customColor": "#05aba9",
+              "headlineFont": "IBM_PLEX_SANS",
+              "bodyFont": "IBM_PLEX_SANS",
+              "labelFont": "IBM_PLEX_SANS",
+              "colorVariant": "TONAL_SPOT"
+            },
+            "deviceType": "DESKTOP",
+            "screenType": "DESIGN",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "designSystem": {
+              "name": "assets/8031487489663830885",
+              "designSystem": {
+                "displayName": "Leadiva Mint Pastel",
+                "theme": {
+                  "colorMode": "LIGHT",
+                  "customColor": "#05aba9",
+                  "headlineFont": "IBM_PLEX_SANS",
+                  "bodyFont": "IBM_PLEX_SANS",
+                  "labelFont": "IBM_PLEX_SANS",
+                  "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+                  "colorVariant": "TONAL_SPOT"
+                }
+              },
+              "version": "1"
+            }
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've created the Leadiva Dashboard using your specified Mint-centered pastel palette and Flat Institutional style.\n\n### Design Decisions:\n- **Color Palette**: Strictly adhered to your hex codes. Used **Deep Teal (#05aba9)** for primary actions and active indicators, **Pale Mint (#d9eedb)** for soft backgrounds and KPI accents, and **Light Peach (#fbcab9)** for secondary UI elements.\n- **Visual Hierarchy**: The dashboard follows a clean, institutional layout with a white card-based system against a **Soft Mint Canvas (#f4faf6)**.\n- **Navigation**: The sidebar highlights \"Inicio\" with the requested mint background and teal left border, providing clear context.\n- **Data Display**: Integrated a dense, readable table for deadlines and a vertical timeline for recent activity, utilizing the pastel chips for status categorization.\n\nThe primary CTA \"Ver todos los leads\" is prominently styled in Deep Teal to drive the main user action."
+    },
+    {
+      "suggestion": "Add a \"Nuevo Lead\" modal"
+    },
+    {
+      "suggestion": "Create the \"Proyectos\" screen in this style"
+    },
+    {
+      "suggestion": "Adjust the table density"
+    }
+  ]
+}

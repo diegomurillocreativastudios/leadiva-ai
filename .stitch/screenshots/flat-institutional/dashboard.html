@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva Dashboard - Inteligencia Comercial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#d3e4fe",
+                        "primary": "#1d4ed8",
+                        "primary-container": "#1d4ed8",
+                        "hover-accent": "#1e3a8a",
+                        "surface-container-low": "#eff4ff",
+                        "surface": "#ffffff",
+                        "inverse-surface": "#213145",
+                        "status-expiring": "#ea580c",
+                        "on-secondary-fixed-variant": "#3e4758",
+                        "on-tertiary-container": "#ffc9b7",
+                        "background": "#f4f6f8",
+                        "on-primary-fixed": "#001551",
+                        "surface-container": "#e5eeff",
+                        "status-open": "#2563eb",
+                        "tertiary-container": "#a73400",
+                        "on-secondary-container": "#5a6374",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "primary-fixed": "#dce1ff",
+                        "secondary": "#64748b",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb59c",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "border": "#e2e6ea",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#434655",
+                        "status-evaluating": "#d97706",
+                        "inverse-on-surface": "#eaf1ff",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-background": "#1a2332",
+                        "surface-container-highest": "#d3e4fe",
+                        "status-won": "#16a34a",
+                        "app-bg": "#f4f6f8",
+                        "on-tertiary-fixed": "#390c00",
+                        "surface-bright": "#f8f9ff",
+                        "outline": "#747686",
+                        "on-secondary-fixed": "#131c2a",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#c4c5d7",
+                        "surface-container-high": "#dce9ff",
+                        "on-primary-container": "#cad3ff",
+                        "surface-tint": "#2151da",
+                        "secondary-fixed": "#dae3f7",
+                        "on-tertiary-fixed-variant": "#832700",
+                        "inverse-primary": "#b7c4ff",
+                        "on-surface": "#1a2332",
+                        "status-lost": "#dc2626",
+                        "secondary-container": "#d7e0f4",
+                        "on-error": "#ffffff",
+                        "status-inactive": "#94a3b8",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#0039b5",
+                        "secondary-fixed-dim": "#bec7db",
+                        "error": "#ba1a1a",
+                        "tertiary": "#7f2500"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "8px",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "table-cell-padding": "12px 8px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "gutter": "16px",
+                        "panel-padding": "20px",
+                        "stack-lg": "32px",
+                        "container-margin": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "headline-sm": ["Inter", "sans-serif"],
+                        "table-data": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "table-data": ["13px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f4f6f8;
+            color: #1a2332;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- Sidebar Component (Shared Identity) -->
+<aside class="w-[240px] h-screen fixed left-0 top-0 bg-surface border-r border-border flex flex-col p-stack-md gap-stack-sm z-20">
+<div class="flex items-center gap-3 px-2 mb-8">
+<img alt="Leadiva Logo" class="w-10 h-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI_uqUcogaDU-P0sEh1M3QgdL3nW37qb_Zw9yIcxfTZoNbrOLzhndKfr5gdX4w2D0X5pPwUHdvzbyIzOwA2Ho1hddEdrqvHlK0Yg54cTyqw0ZK1a1XPl5Yr0qwA_4b6tDWKhJJyy2To88jxkpwa5O5Xmxn--FzAAQROa_6uKadmE36dEC5vYvneUauxErMLxIAwbjQMSdcbEY1oTmsgNllnWNXCeQ9xu3MIqd0zFvLyrB_7ZtMsvkm1mSh--YEZkbUVCtMb4gnaw"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Leadiva</h1>
+<p class="text-[10px] uppercase tracking-wider text-secondary font-bold">Commercial Intelligence</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 ease-in-out text-primary font-bold bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md">Inicio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 ease-in-out text-secondary hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-md text-label-md">Proyectos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 ease-in-out text-secondary hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-md text-label-md">Leads/Licitaciones</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 ease-in-out text-secondary hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Configuración</span>
+</a>
+</nav>
+<div class="mt-auto pt-stack-md border-t border-border">
+<div class="bg-surface-container p-3 rounded-lg">
+<p class="text-label-sm font-label-sm text-secondary uppercase mb-1">Capacidad Pipeline</p>
+<div class="h-1.5 w-full bg-border rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+<p class="text-[10px] mt-2 text-on-surface-variant font-medium">65% utilizado</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-[240px] flex flex-col min-h-screen">
+<!-- TopNavBar Component -->
+<header class="h-16 sticky top-0 right-0 bg-surface border-b border-border flex justify-between items-center px-gutter w-full z-10">
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Resumen</h2>
+<nav class="flex items-center gap-1.5 text-[11px] text-secondary">
+<span>Inicio</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="font-medium">Resumen</span>
+</nav>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center bg-background border border-border rounded-md px-3 py-1.5 w-64">
+<span class="material-symbols-outlined text-secondary text-[18px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-full py-0" placeholder="Buscar leads..." type="text"/>
+</div>
+<div class="flex items-center gap-4 border-l border-border pl-6">
+<button class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="flex items-center gap-3 ml-2">
+<div class="text-right hidden sm:block">
+<p class="font-label-md text-label-md text-on-surface">Diego</p>
+<p class="text-[10px] text-secondary font-medium">Key Account Manager</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-xs border border-primary-fixed-dim">
+                            D
+                        </div>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="p-8 flex-1 overflow-y-auto">
+<!-- Page Header -->
+<header class="mb-8">
+<h1 class="font-headline-lg text-headline-lg text-on-background">Buenos días, Diego</h1>
+<p class="text-body-md text-secondary">Aquí tienes un resumen de tu pipeline comercial.</p>
+</header>
+<!-- KPI Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-md mb-8">
+<div class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-1">
+<span class="text-secondary font-label-md text-label-md uppercase tracking-tight">Leads activos</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[28px] font-bold text-on-background leading-none">124</span>
+<span class="text-status-won text-[11px] font-bold flex items-center">+12% <span class="material-symbols-outlined text-[14px]">trending_up</span></span>
+</div>
+</div>
+<div class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-1">
+<span class="text-secondary font-label-md text-label-md uppercase tracking-tight">Por verificar</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[28px] font-bold text-on-background leading-none">18</span>
+<span class="text-status-evaluating text-[11px] font-bold">Pendientes</span>
+</div>
+</div>
+<div class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-1">
+<span class="text-secondary font-label-md text-label-md uppercase tracking-tight">Próximos a vencer</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[28px] font-bold text-on-background leading-none text-status-expiring">7</span>
+<span class="text-status-expiring text-[11px] font-bold">Esta semana</span>
+</div>
+</div>
+<div class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-1">
+<span class="text-secondary font-label-md text-label-md uppercase tracking-tight">Score promedio</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[28px] font-bold text-on-background leading-none">84%</span>
+<div class="flex gap-0.5 ml-2">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-border text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-md">
+<!-- Left Column: Deadlines -->
+<section class="lg:col-span-2 bg-surface border border-border rounded-lg overflow-hidden">
+<div class="px-5 py-4 border-b border-border flex justify-between items-center bg-surface-container-lowest">
+<h3 class="font-headline-sm text-headline-sm">Próximas fechas límite</h3>
+<button class="text-primary font-label-md text-label-md hover:underline">Ver calendario</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#f8fafc] border-b border-border">
+<tr>
+<th class="p-table-cell-padding text-label-sm font-label-sm text-secondary uppercase">Título</th>
+<th class="p-table-cell-padding text-label-sm font-label-sm text-secondary uppercase">Organización</th>
+<th class="p-table-cell-padding text-label-sm font-label-sm text-secondary uppercase">Estado</th>
+<th class="p-table-cell-padding text-label-sm font-label-sm text-secondary uppercase">Deadline</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border">
+<tr class="hover:bg-surface-container-low transition-colors font-table-data text-table-data">
+<td class="p-table-cell-padding font-semibold text-on-surface">Licitación Infraestructura</td>
+<td class="p-table-cell-padding text-secondary">Ministerio de Obras</td>
+<td class="p-table-cell-padding">
+<span class="px-2 py-1 rounded bg-[#2563eb] text-white text-[11px] font-bold">Abierto</span>
+</td>
+<td class="p-table-cell-padding text-secondary">24 Oct 2023</td>
+</tr>
+<tr class="bg-[#f8fafc] hover:bg-surface-container-low transition-colors font-table-data text-table-data">
+<td class="p-table-cell-padding font-semibold text-on-surface">Suministro IT 2024</td>
+<td class="p-table-cell-padding text-secondary">Ayuntamiento Madrid</td>
+<td class="p-table-cell-padding">
+<span class="px-2 py-1 rounded bg-[#d97706] text-white text-[11px] font-bold">Evaluando</span>
+</td>
+<td class="p-table-cell-padding text-secondary">28 Oct 2023</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors font-table-data text-table-data">
+<td class="p-table-cell-padding font-semibold text-on-surface">Consultoría Estratégica</td>
+<td class="p-table-cell-padding text-secondary">Global Corp</td>
+<td class="p-table-cell-padding">
+<span class="px-2 py-1 rounded bg-[#ea580c] text-white text-[11px] font-bold uppercase text-[9px]">Próximo a vencer</span>
+</td>
+<td class="p-table-cell-padding text-secondary">01 Nov 2023</td>
+</tr>
+<tr class="bg-[#f8fafc] hover:bg-surface-container-low transition-colors font-table-data text-table-data">
+<td class="p-table-cell-padding font-semibold text-on-surface">Mantenimiento HVAC v2</td>
+<td class="p-table-cell-padding text-secondary">Sacyr</td>
+<td class="p-table-cell-padding">
+<span class="px-2 py-1 rounded bg-[#2563eb] text-white text-[11px] font-bold">Abierto</span>
+</td>
+<td class="p-table-cell-padding text-secondary">05 Nov 2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Right Column: Recent Activity -->
+<section class="bg-surface border border-border rounded-lg flex flex-col">
+<div class="px-5 py-4 border-b border-border bg-surface-container-lowest">
+<h3 class="font-headline-sm text-headline-sm">Actividad reciente</h3>
+</div>
+<div class="flex-1 p-5 space-y-5">
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full mt-2 bg-[#16a34a] flex-shrink-0"></div>
+<div class="flex flex-col gap-0.5">
+<p class="text-body-sm text-on-surface leading-tight">Licitación 'Mantenimiento Red' marcada como <span class="font-bold text-status-won">Ganada</span></p>
+<p class="text-[11px] text-secondary">Hace 2 horas</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full mt-2 bg-[#2563eb] flex-shrink-0"></div>
+<div class="flex flex-col gap-0.5">
+<p class="text-body-sm text-on-surface leading-tight">Nuevo lead detectado: <span class="font-bold text-primary">'Ampliación Puerto'</span></p>
+<p class="text-[11px] text-secondary">Hace 5 horas</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full mt-2 bg-[#dc2626] flex-shrink-0"></div>
+<div class="flex flex-col gap-0.5">
+<p class="text-body-sm text-on-surface leading-tight">Lead 'Sistemas Seguridad' marcado como <span class="font-bold text-status-lost">Perdido</span></p>
+<p class="text-[11px] text-secondary">Ayer, 18:45</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full mt-2 bg-secondary flex-shrink-0"></div>
+<div class="flex flex-col gap-0.5">
+<p class="text-body-sm text-on-surface leading-tight">Documentación subida para 'IT 2024'</p>
+<p class="text-[11px] text-secondary">Ayer, 14:20</p>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-border mt-auto">
+<button class="w-full py-2 text-label-md font-label-md text-secondary border border-border rounded hover:bg-surface-container transition-colors">
+                            Ver historial completo
+                        </button>
+</div>
+</section>
+</div>
+<!-- Footer / CTA -->
+<footer class="mt-8 flex justify-end">
+<button class="bg-primary text-white px-6 py-3 rounded-lg font-bold text-body-md shadow-sm hover:bg-hover-accent transition-all transform active:scale-95 flex items-center gap-2">
+                    Ver todos los leads
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</footer>
+</main>
+</div>
+<!-- Floating Mini Stats Widget -->
+<div class="fixed bottom-6 left-[256px] bg-inverse-surface text-white p-3 rounded-xl border border-white/10 shadow-xl hidden md:flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-300" id="quick-access">
+<div class="flex items-center gap-2 px-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">bolt</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest opacity-80">Quick View</span>
+</div>
+<div class="h-6 w-px bg-white/20"></div>
+<div class="flex items-center gap-4">
+<div class="text-center">
+<p class="text-[10px] uppercase text-white/60">Win Rate</p>
+<p class="text-sm font-bold">62%</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] uppercase text-white/60">Volumen</p>
+<p class="text-sm font-bold">€1.2M</p>
+</div>
+</div>
+<button class="p-1 hover:bg-white/10 rounded-full transition-colors" onclick="this.parentElement.remove()">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<script>
+        // Micro-interaction for hover effects on table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.cursor = 'pointer';
+            });
+        });
+
+        // Simple notification toggle simulation
+        const notifyBtn = document.querySelector('.material-symbols-outlined:nth-child(1)');
+        if (notifyBtn) {
+            notifyBtn.parentElement.addEventListener('click', () => {
+                console.log('Notificaciones abiertas');
+            });
+        }
+    </script>
+</body></html>

@@ -1,0 +1,32 @@
+{
+  "projectId": "929484233158471895",
+  "projectName": "projects/929484233158471895",
+  "designSystemAssetId": "8031487489663830885",
+  "designSystemName": "Leadiva Mint Pastel",
+  "url": "https://stitch.withgoogle.com/projects/929484233158471895",
+  "palette": {
+    "coral_soft": "#f9a79b",
+    "peach": "#fbcab9",
+    "mint_center": "#d9eedb",
+    "aqua": "#9ce5de",
+    "teal_cta": "#05aba9",
+    "teal_hover": "#048f8d",
+    "surface_base": "#f4faf6",
+    "surface_raised": "#ffffff",
+    "surface_border": "#d5e8e0"
+  },
+  "screens": {
+    "home": {
+      "screenId": "43ad10c87a2444a4b33a6e97becf2e06",
+      "name": "projects/929484233158471895/screens/43ad10c87a2444a4b33a6e97becf2e06",
+      "title": "Dashboard Resumen - Leadiva (Mint)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/dashboard-mint.png"
+    },
+    "leads": {
+      "screenId": "83d2653bd32e4ac4adaa50ac0983662c",
+      "name": "projects/929484233158471895/screens/83d2653bd32e4ac4adaa50ac0983662c",
+      "title": "Leads y Licitaciones - Leadiva (Mint)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/leads-mint.png"
+    }
+  }
+}
