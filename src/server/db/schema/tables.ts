@@ -21,7 +21,7 @@ export const users = pgTable(
     email: varchar("email", { length: 255 }).notNull(),
     passwordHash: text("password_hash").notNull(),
     imageUrl: text("image_url"),
-    role: varchar("role", { length: 40 }).notNull().default("COMMERCIAL_ANALYST"),
+    role: varchar("role", { length: 40 }).notNull().default("USER"),
     interestCategories: jsonb("interest_categories")
       .$type<string[]>()
       .notNull()

@@ -2,11 +2,10 @@ import Link from "next/link";
 import { Activity } from "lucide-react";
 
 import { SkeuButton } from "@/components/ui/skeu-button";
+import { homeSearchHref } from "@/lib/home-search-href";
 
 export function searchActivityHref(executionId?: string): string {
-  return executionId
-    ? `/activity?execution=${encodeURIComponent(executionId)}`
-    : "/activity";
+  return homeSearchHref(executionId);
 }
 
 export function SearchActivityTrigger({

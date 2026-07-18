@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
 import { isAllowedEmailDomain } from "@/env/server";
-import type { RegisterInput } from "@/schemas/auth";
+import type { RegisterInput, UpdateProfileInput } from "@/schemas/auth";
 import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
 
@@ -50,7 +50,7 @@ export async function registerUser(input: RegisterInput) {
       lastName: input.lastName.trim(),
       email,
       passwordHash,
-      role: "COMMERCIAL_ANALYST",
+      role: "USER",
       interestCategories: [],
       isActive: true,
     })
@@ -62,4 +62,69 @@ export async function registerUser(input: RegisterInput) {
     });
 
   return created;
+}
+
+export async function getUserProfile(userId: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+      role: users.role,
+      imageUrl: users.imageUrl,
+      interestCategories: users.interestCategories,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return user ?? null;
+}
+
+export async function updateUserAvatar(userId: string, imageUrl: string) {
+  const [updated] = await db
+    .update(users)
+    .set({
+      imageUrl,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      imageUrl: users.imageUrl,
+    });
+
+  if (!updated) {
+    throw new AuthServiceError("VALIDATION", "Usuario no encontrado.");
+  }
+
+  return updated;
+}
+
+export async function updateUserProfile(
+  userId: string,
+  input: UpdateProfileInput,
+) {
+  const [updated] = await db
+    .update(users)
+    .set({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+      imageUrl: users.imageUrl,
+    });
+
+  if (!updated) {
+    throw new AuthServiceError("VALIDATION", "Usuario no encontrado.");
+  }
+
+  return updated;
 }

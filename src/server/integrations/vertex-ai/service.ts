@@ -4,6 +4,7 @@ import { and, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 
 import { getServerEnv } from "@/env/server";
 import { areEquivalentUrls, extractDomain } from "@/lib/normalization";
+import { buildSearchExecutionTitle } from "@/lib/search-execution-title";
 import { db } from "@/server/db";
 import {
   searchExecutions,
@@ -64,7 +65,10 @@ export type PrivateSearchMetrics = {
   model?: string;
   promptVersion?: string;
   searchMode?: "PRIVATE_RFP" | "LINKEDIN";
+  /** Full discovery plan (joined intents). */
   query?: string;
+  /** User-facing title derived from the custom Ask Leadiva query. */
+  title?: string;
   queriesExecuted?: number;
   queriesExecutedEstimated?: boolean;
   groundingSources?: number;
@@ -312,6 +316,11 @@ async function upsertPrivateCandidate(params: {
       mapped.contentHash &&
       existing.contentHash === mapped.contentHash
     ) {
+      // Still bind the row to this execution so home results can open detail.
+      await db
+        .update(searchResults)
+        .set({ searchExecutionId: executionId })
+        .where(eq(searchResults.id, existing.id));
       return "unchanged";
     }
 
@@ -464,6 +473,7 @@ export async function runGroundedSearch(params: {
     customQuery: params.query,
   });
   const query = searchPlan.intents.map((intent) => intent.query).join("\n");
+  const executionTitle = buildSearchExecutionTitle(params.query);
 
   await assertNoOverlappingPrivateSearch(params.sourceType);
 
@@ -485,6 +495,10 @@ export async function runGroundedSearch(params: {
       searchProfileId: profile.id,
       status: "RUNNING",
       startedAt: new Date(),
+      metrics: {
+        ...(executionTitle ? { title: executionTitle } : {}),
+        query: query.slice(0, 500),
+      },
     })
     .returning();
 
@@ -642,6 +656,7 @@ export async function runGroundedSearch(params: {
         configured: false,
         outcome,
         query: query.slice(0, 500),
+        ...(executionTitle ? { title: executionTitle } : {}),
         candidatesFound: 0,
         normalizedCandidatesFound: 0,
         schemaValidCandidates: 0,
@@ -848,7 +863,8 @@ export async function runGroundedSearch(params: {
         configured: false,
         outcome,
         candidatesFound: 0,
-        query,
+        query: query.slice(0, 500),
+        ...(executionTitle ? { title: executionTitle } : {}),
         discoveryMode,
         searchProvider:
           discoveryMode === "PROVIDER_SEARCH" ? "BRAVE" : undefined,
@@ -1302,6 +1318,7 @@ export async function runGroundedSearch(params: {
       promptVersion: batch.promptVersion,
       searchMode,
       query: query.slice(0, 500),
+      ...(executionTitle ? { title: executionTitle } : {}),
       queriesExecuted,
       queriesExecutedEstimated,
       groundingSources: providerDiscovery ? 0 : batch.sources.length,
@@ -1532,6 +1549,7 @@ export async function runGroundedSearch(params: {
           configured: isVertexConfigured(),
           outcome,
           query: query.slice(0, 500),
+          ...(executionTitle ? { title: executionTitle } : {}),
           candidatesFound: 0,
           groundingSourcesFound,
           groundingChunksFound: groundingSourcesFound,

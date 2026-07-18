@@ -23,6 +23,21 @@ export const loginSchema = z
   })
   .strict();
 
+export const updateProfileSchema = z
+  .object({
+    firstName: z
+      .string()
+      .trim()
+      .min(1, "El nombre es obligatorio")
+      .max(120, "El nombre es demasiado largo"),
+    lastName: z
+      .string()
+      .trim()
+      .min(1, "El apellido es obligatorio")
+      .max(120, "El apellido es demasiado largo"),
+  })
+  .strict();
+
 export const onboardingSchema = z
   .object({
     interestCategories: z
@@ -54,6 +69,7 @@ export const addNoteSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
 
 export {

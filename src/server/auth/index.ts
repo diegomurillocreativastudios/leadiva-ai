@@ -9,7 +9,14 @@ import { isAllowedEmailDomain } from "@/env/server";
 import { loginSchema } from "@/schemas/auth";
 import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
-import type { UserRole } from "@/server/db/schema/enums";
+import { userRoles, type UserRole } from "@/server/db/schema/enums";
+
+function resolveUserRole(value: unknown): UserRole {
+  return typeof value === "string" &&
+    (userRoles as readonly string[]).includes(value)
+    ? (value as UserRole)
+    : "USER";
+}
 
 declare module "next-auth" {
   interface Session {
@@ -77,7 +84,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           id: user.id,
           email: user.email,
           name: `${user.firstName} ${user.lastName}`,
-          role: user.role as UserRole,
+          role: resolveUserRole(user.role),
           interestCategories: user.interestCategories ?? [],
         };
       },
@@ -95,14 +102,20 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
 
       if (trigger === "update" && session) {
         const updatePayload = session as {
-          user?: { interestCategories?: string[] };
+          user?: { interestCategories?: string[]; name?: string };
           interestCategories?: string[];
+          name?: string;
         };
         const categories =
           updatePayload.user?.interestCategories ??
           updatePayload.interestCategories;
         if (Array.isArray(categories)) {
           token.interestCategories = categories;
+        }
+
+        const nextName = updatePayload.user?.name ?? updatePayload.name;
+        if (typeof nextName === "string" && nextName.trim()) {
+          token.name = nextName.trim();
         }
       }
 
@@ -111,7 +124,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.id ?? "");
-        session.user.role = (token.role as UserRole) ?? "VIEWER";
+        session.user.role = resolveUserRole(token.role);
         session.user.interestCategories = Array.isArray(
           token.interestCategories,
         )

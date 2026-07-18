@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { cn } from "@/lib/utils";
 
 const sizeMap = {
@@ -16,50 +14,64 @@ const sizeClassMap = {
   xl: "size-32",
 } as const;
 
+const wordmarkClassMap = {
+  sm: "text-lg font-semibold",
+  md: "text-xl font-semibold",
+  lg: "text-2xl font-bold",
+  xl: "text-3xl font-bold",
+} as const;
+
 export type LeadivaLogoSize = keyof typeof sizeMap;
 
 type LeadivaLogoProps = {
   size?: LeadivaLogoSize;
   className?: string;
   priority?: boolean;
-  /** Recolors the mark via CSS mask (works with the embedded PNG logo). */
-  tone?: "default" | "teal";
 };
 
+/** Brand mark — always teal, matching the login treatment. */
 export function LeadivaLogo({
   size = "md",
   className,
-  priority = false,
-  tone = "default",
+  priority: _priority = false,
 }: LeadivaLogoProps) {
-  const pixels = sizeMap[size];
-
-  if (tone === "teal") {
-    return (
-      <span
-        role="img"
-        aria-label="Leadiva"
-        className={cn(
-          "inline-block shrink-0 bg-accent",
-          "[mask-image:url(/leadiva.svg)] [mask-size:contain] [mask-repeat:no-repeat] [mask-position:center]",
-          "[-webkit-mask-image:url(/leadiva.svg)] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]",
-          sizeClassMap[size],
-          className,
-        )}
-      />
-    );
-  }
-
   return (
-    <Image
-      src="/leadiva.svg"
-      alt="Leadiva"
-      width={pixels}
-      height={pixels}
-      priority={priority}
-      unoptimized
-      className={cn("shrink-0 object-contain", className)}
+    <span
+      role="img"
+      aria-label="Leadiva AI"
+      className={cn(
+        "inline-block shrink-0 bg-accent",
+        "[mask-image:url(/leadiva.svg)] [mask-size:contain] [mask-repeat:no-repeat] [mask-position:center]",
+        "[-webkit-mask-image:url(/leadiva.svg)] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]",
+        sizeClassMap[size],
+        className,
+      )}
     />
+  );
+}
+
+type LeadivaWordmarkProps = {
+  size?: LeadivaLogoSize;
+  className?: string;
+  as?: "span" | "p";
+};
+
+/** Wordmark — always “Leadiva AI” with coral AI, matching login. */
+export function LeadivaWordmark({
+  size = "sm",
+  className,
+  as: Tag = "span",
+}: LeadivaWordmarkProps) {
+  return (
+    <Tag
+      className={cn(
+        "font-heading tracking-tight text-text-primary",
+        wordmarkClassMap[size],
+        className,
+      )}
+    >
+      Leadiva <span className="text-accent-coral">AI</span>
+    </Tag>
   );
 }
 
@@ -68,6 +80,8 @@ type LeadivaBrandProps = {
   className?: string;
   showWordmark?: boolean;
   priority?: boolean;
+  /** Horizontal (sidebar) or stacked (auth headers). */
+  orientation?: "horizontal" | "stacked";
 };
 
 export function LeadivaBrand({
@@ -75,15 +89,20 @@ export function LeadivaBrand({
   className,
   showWordmark = true,
   priority = false,
+  orientation = "horizontal",
 }: LeadivaBrandProps) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
+    <div
+      className={cn(
+        "flex items-center",
+        orientation === "stacked"
+          ? "flex-col gap-2 text-center"
+          : "gap-2.5",
+        className,
+      )}
+    >
       <LeadivaLogo size={size} priority={priority} />
-      {showWordmark ? (
-        <span className="font-heading text-lg font-semibold tracking-tight text-accent">
-          Leadiva
-        </span>
-      ) : null}
+      {showWordmark ? <LeadivaWordmark size={size} /> : null}
     </div>
   );
 }

@@ -43,6 +43,13 @@
       "when": 1784237673108,
       "tag": "0005_unknown_boom_boom",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784397722177,
+      "tag": "0006_simplify_user_roles",
+      "breakpoints": true
     }
   ]
 }

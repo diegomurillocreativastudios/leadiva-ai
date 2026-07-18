@@ -11,7 +11,7 @@ export default function RootNotFound() {
         description="La ruta que buscas no existe o ya no está disponible."
         action={
           <SkeuButton asChild variant="primary">
-            <Link href="/home">Ir a Leadiva</Link>
+            <Link href="/">Ir a Leadiva</Link>
           </SkeuButton>
         }
       />

@@ -31,6 +31,7 @@ export type SearchExecutionCandidateOutcome =
 export type SearchExecutionCandidateView = {
   temporaryId: string;
   executionId: string;
+  searchResultId: string | null;
   title: string | null;
   organizationName: string | null;
   summary: string | null;
@@ -184,6 +185,7 @@ export type SearchExecutionDetail = {
     id: string;
     status: string;
     outcome: string | null;
+    query: string | null;
     createdAt: string;
     startedAt: string | null;
     completedAt: string | null;
@@ -391,10 +393,20 @@ export function normalizeCandidateTrace(
     optionalString(value.sourceDomain, 255) ??
     (officialSourceUrl ? new URL(officialSourceUrl).hostname : null);
 
+  const searchResultId = optionalString(value.searchResultId, 36);
+  const temporaryId =
+    optionalString(value.temporaryId, 160) ?? `candidate-${index + 1}`;
+
   return {
-    temporaryId:
-      optionalString(value.temporaryId, 160) ?? `candidate-${index + 1}`,
+    temporaryId,
     executionId,
+    searchResultId:
+      searchResultId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        searchResultId,
+      )
+        ? searchResultId
+        : null,
     title: optionalString(value.title, 500),
     organizationName: optionalString(value.organizationName, 250),
     summary: optionalString(value.summary, 2_000),
@@ -487,6 +499,8 @@ export function mergeCandidateViews(
     merged.set(key, {
       ...discoveryCandidate,
       ...finalCandidate,
+      searchResultId:
+        finalCandidate.searchResultId ?? discoveryCandidate.searchResultId,
       summary: finalCandidate.summary ?? discoveryCandidate.summary,
       applicationUrl:
         finalCandidate.applicationUrl ?? discoveryCandidate.applicationUrl,

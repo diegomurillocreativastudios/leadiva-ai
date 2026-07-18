@@ -10,7 +10,7 @@ export default function DashboardNotFound() {
       description="La ruta que buscas no existe o ya no está disponible."
       action={
         <SkeuButton asChild variant="primary">
-          <Link href="/home">Volver al inicio</Link>
+          <Link href="/">Volver al inicio</Link>
         </SkeuButton>
       }
     />

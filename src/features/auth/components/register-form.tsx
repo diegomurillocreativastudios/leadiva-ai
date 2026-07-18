@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { registerAction, type ActionState } from "@/features/auth/actions";
-import { LeadivaLogo } from "@/components/shared/leadiva-logo";
+import { LeadivaBrand } from "@/components/shared/leadiva-logo";
 import { Label } from "@/components/ui/label";
 import { SkeuButton } from "@/components/ui/skeu-button";
 import { SkeuInput } from "@/components/ui/skeu-input";
@@ -53,13 +53,12 @@ export function RegisterForm() {
 
   return (
     <div className="w-full">
-      <div className="mb-5 flex flex-col items-center gap-2 text-center">
-        <LeadivaLogo size="xl" tone="teal" priority className="size-36" />
-        <p className="font-heading text-3xl font-bold tracking-tight text-text-primary">
-          Leadiva{" "}
-          <span className="text-accent-coral">AI</span>
-        </p>
-      </div>
+      <LeadivaBrand
+        size="xl"
+        orientation="stacked"
+        priority
+        className="mb-5 [&_[role=img]]:size-36"
+      />
 
       <div className="rounded-md border border-surface-border bg-surface-raised p-6 sm:p-7">
         <header className="mb-5 text-center">

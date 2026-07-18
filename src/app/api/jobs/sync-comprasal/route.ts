@@ -16,8 +16,7 @@ export async function POST(request: Request) {
     Boolean(env.JOB_SYNC_SECRET) && jobSecret === env.JOB_SYNC_SECRET;
   const authorizedBySession =
     Boolean(session?.user) &&
-    (session?.user.role === "ADMIN" ||
-      session?.user.role === "COMMERCIAL_ANALYST");
+    (session?.user.role === "ADMIN" || session?.user.role === "USER");
 
   if (!authorizedBySecret && !authorizedBySession) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

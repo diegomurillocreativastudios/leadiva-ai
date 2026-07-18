@@ -10,6 +10,7 @@ import {
   onboardingSchema,
   registerSchema,
   updateOpportunityStatusSchema,
+  updateProfileSchema,
 } from "@/schemas/auth";
 import {
   assignLeadSchema,
@@ -24,9 +25,12 @@ import {
 } from "@/schemas/projects";
 import { signIn, signOut, unstable_update } from "@/server/auth";
 import { requireSession } from "@/server/auth/session";
+import { validateAvatarDataUrl } from "@/lib/avatar-image";
 import {
   AuthServiceError,
   registerUser,
+  updateUserAvatar,
+  updateUserProfile,
 } from "@/server/services/auth.service";
 import {
   addOpportunityNote,
@@ -94,7 +98,7 @@ export async function loginAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: "/home",
+      redirectTo: "/",
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -108,6 +112,67 @@ export async function loginAction(
 
 export async function logoutAction() {
   await signOut({ redirectTo: "/login" });
+}
+
+export async function uploadAvatarAction(
+  dataUrl: string,
+): Promise<{ imageUrl?: string; error?: string }> {
+  const session = await requireSession();
+  const validated = validateAvatarDataUrl(dataUrl);
+
+  if (!validated.ok) {
+    return { error: validated.error };
+  }
+
+  try {
+    const updated = await updateUserAvatar(session.user.id, validated.dataUrl);
+    return { imageUrl: updated.imageUrl ?? validated.dataUrl };
+  } catch {
+    return { error: "No se pudo guardar la foto de perfil." };
+  }
+}
+
+export async function updateProfileAction(input: {
+  firstName: string;
+  lastName: string;
+}): Promise<{
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  error?: string;
+  fieldErrors?: {
+    firstName?: string;
+    lastName?: string;
+  };
+}> {
+  const session = await requireSession();
+  const parsed = updateProfileSchema.safeParse(input);
+
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return {
+      error: parsed.error.issues[0]?.message ?? "Datos de perfil inválidos",
+      fieldErrors: {
+        firstName: fieldErrors.firstName?.[0],
+        lastName: fieldErrors.lastName?.[0],
+      },
+    };
+  }
+
+  try {
+    const updated = await updateUserProfile(session.user.id, parsed.data);
+    const name = `${updated.firstName} ${updated.lastName}`.trim();
+    await unstable_update({
+      user: { name },
+    });
+    return {
+      name,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+    };
+  } catch {
+    return { error: "No se pudo guardar el perfil." };
+  }
 }
 
 export async function saveOnboardingAction(
@@ -128,7 +193,7 @@ export async function saveOnboardingAction(
       interestCategories: parsed.data.interestCategories,
     },
   });
-  redirect("/settings");
+  redirect("/");
 }
 
 export async function convertToLeadAction(formData: FormData) {
@@ -145,7 +210,7 @@ export async function convertToLeadAction(formData: FormData) {
       searchResultId: parsed.data.searchResultId,
       userId: session.user.id,
     });
-    redirect(`/leads/${lead.id}`);
+    redirect("/");
   } catch (error) {
     if (error instanceof Error && error.message === "RESULT_REJECTED") {
       throw new Error("Este proyecto fue descartado y no puede convertirse");
@@ -186,7 +251,7 @@ export async function discardProjectAction(
   }
 
   await discardSearchResult(parsed.data.searchResultId, parsed.data.reason);
-  redirect("/projects");
+  redirect("/");
 }
 
 export async function bulkDiscardProjectsAction(
@@ -256,7 +321,7 @@ export async function bulkConvertProjectsAction(
   }
 
   if (result.leads.length === 1 && result.errors.length === 0) {
-    redirect(`/leads/${result.leads[0].id}`);
+    redirect("/");
   }
 
   return {

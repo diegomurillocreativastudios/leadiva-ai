@@ -1,4 +1,3 @@
-import { DashboardShell } from "@/components/shared/dashboard-shell";
 import { requireSession } from "@/server/auth/session";
 
 export default async function DashboardLayout({
@@ -6,11 +5,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireSession();
-
-  return (
-    <DashboardShell userName={session.user.name}>
-      {children}
-    </DashboardShell>
-  );
+  await requireSession();
+  return children;
 }

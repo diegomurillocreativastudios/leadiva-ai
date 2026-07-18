@@ -20,6 +20,7 @@ function candidate(
   return {
     temporaryId: "candidate-1",
     executionId,
+    searchResultId: null,
     title: "Website redesign opportunity",
     organizationName: "Example Foundation",
     summary: null,
@@ -197,5 +198,28 @@ describe("search execution filters and final state", () => {
       preliminaryScore: 82,
       discoveredByFamilies: ["rfp"],
     });
+  });
+
+  it("keeps searchResultId when merging a persisted row over a trace", () => {
+    const searchResultId = "550e8400-e29b-41d4-a716-446655440000";
+    const merged = mergeCandidateViews([
+      candidate({
+        temporaryId: "persist-0",
+        stage: "PERSISTENCE",
+        outcome: "CREATED",
+        reasonCode: null,
+        searchResultId: null,
+      }),
+      candidate({
+        temporaryId: `result-${searchResultId}`,
+        stage: "PERSISTENCE",
+        outcome: "VERIFIED",
+        reasonCode: null,
+        searchResultId,
+      }),
+    ]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.searchResultId).toBe(searchResultId);
   });
 });

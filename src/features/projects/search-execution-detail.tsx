@@ -217,7 +217,7 @@ export function ExecutionDetailView({
               id="execution-detail-title"
               className="font-heading text-base font-semibold"
             >
-              Búsqueda del sector privado
+              {detail.execution.query ?? "Búsqueda del sector privado"}
             </h3>
             <Badge variant="secondary">
               {searchStatusLabel(detail.execution.status)}

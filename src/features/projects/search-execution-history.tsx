@@ -45,7 +45,7 @@ export function SearchExecutionHistory({
             >
               <td className="px-3 py-2.5 whitespace-nowrap">
                 <Link
-                  href={`/activity?execution=${item.id}`}
+                  href={`/b/${item.id}`}
                   prefetch={false}
                   scroll={false}
                   aria-current={selectedId === item.id ? "true" : undefined}

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 
 import {
   buildSearchExecutionSummary,
@@ -11,6 +11,11 @@ import {
   type SearchExecutionDetail,
   type SearchExecutionListItem,
 } from "@/features/projects/search-execution-activity";
+import {
+  isSearchExecutionHiddenFromHistory,
+  withSearchExecutionHiddenFromHistory,
+  withSearchExecutionTitle,
+} from "@/lib/search-execution-history";
 import { db } from "@/server/db";
 import {
   searchExecutions,
@@ -43,10 +48,19 @@ function executionView(row: {
   sourceType: string | null;
   profileName: string | null;
 }): SearchExecutionDetail["execution"] {
+  const title = metricString(row.metrics, "title");
+  const rawQuery = metricString(row.metrics, "query");
+  const queryLabel =
+    title ??
+    (rawQuery
+      ? (rawQuery.split("\n").find((line) => line.trim())?.trim() ?? rawQuery)
+      : null);
+
   return {
     id: row.id,
     status: row.status,
     outcome: metricString(row.metrics, "outcome"),
+    query: queryLabel,
     createdAt: row.createdAt.toISOString(),
     startedAt: toIso(row.startedAt),
     completedAt: toIso(row.completedAt),
@@ -77,11 +91,17 @@ function traceCandidates(
     );
 }
 
+/** Sidebar / history list cap — high enough for MVP full history + own scroll. */
+export const MAX_USER_SEARCH_HISTORY_LIMIT = 100;
+
 export async function listUserSearchExecutions(params: {
   userId: string;
   limit?: number;
 }): Promise<SearchExecutionListItem[]> {
-  const limit = Math.min(20, Math.max(1, params.limit ?? 20));
+  const limit = Math.min(
+    MAX_USER_SEARCH_HISTORY_LIMIT,
+    Math.max(1, params.limit ?? MAX_USER_SEARCH_HISTORY_LIMIT),
+  );
   const rows = await db
     .select({
       id: searchExecutions.id,
@@ -105,6 +125,7 @@ export async function listUserSearchExecutions(params: {
       and(
         eq(searchProfiles.createdByUserId, params.userId),
         inArray(searchProfiles.sourceType, ["PRIVATE_WEB", "LINKEDIN"]),
+        sql`coalesce((${searchExecutions.metrics}->>'hiddenFromHistory')::boolean, false) = false`,
       ),
     )
     .orderBy(desc(searchExecutions.createdAt))
@@ -165,6 +186,11 @@ export async function getUserSearchExecutionDetail(params: {
     return null;
   }
 
+  const metrics = row.metrics as Record<string, unknown> | null;
+  if (isSearchExecutionHiddenFromHistory(metrics)) {
+    return null;
+  }
+
   const persisted = await db
     .select({
       id: searchResults.id,
@@ -192,6 +218,7 @@ export async function getUserSearchExecutionDetail(params: {
       normalizeCandidateTrace(
         {
           temporaryId: `result-${candidate.id}`,
+          searchResultId: candidate.id,
           title: candidate.title,
           organizationName: candidate.organizationName,
           summary: candidate.summary,
@@ -213,7 +240,15 @@ export async function getUserSearchExecutionDetail(params: {
       Boolean(candidate),
     );
 
-  const metrics = row.metrics as Record<string, unknown> | null;
+  const merged = mergeCandidateViews([
+    ...traceCandidates(metrics, row.id),
+    ...persistedCandidates,
+  ]);
+
+  const candidates = await attachSearchResultIdsToCandidates({
+    executionId: row.id,
+    candidates: merged,
+  });
 
   return {
     execution: executionView(row),
@@ -223,9 +258,222 @@ export async function getUserSearchExecutionDetail(params: {
       candidatesDiscarded: row.candidatesDiscarded,
     }),
     discardCounts: readDiscardCounts(metrics),
-    candidates: mergeCandidateViews([
-      ...traceCandidates(metrics, row.id),
-      ...persistedCandidates,
-    ]),
+    candidates,
+  };
+}
+
+/** Links home candidates to search_results rows by URL and repairs execution ownership. */
+async function attachSearchResultIdsToCandidates(params: {
+  executionId: string;
+  candidates: SearchExecutionCandidateView[];
+}): Promise<SearchExecutionCandidateView[]> {
+  const urls = [
+    ...new Set(
+      params.candidates
+        .map((candidate) => candidate.officialSourceUrl)
+        .filter((url): url is string => Boolean(url)),
+    ),
+  ];
+
+  if (urls.length === 0) {
+    return params.candidates;
+  }
+
+  const rows = await db
+    .select({
+      id: searchResults.id,
+      sourceUrl: searchResults.sourceUrl,
+      sourceOriginalUrl: searchResults.sourceOriginalUrl,
+      sourceResolvedUrl: searchResults.sourceResolvedUrl,
+      searchExecutionId: searchResults.searchExecutionId,
+    })
+    .from(searchResults)
+    .where(
+      and(
+        searchResultNotDeleted(),
+        or(
+          inArray(searchResults.sourceUrl, urls),
+          inArray(searchResults.sourceOriginalUrl, urls),
+          inArray(searchResults.sourceResolvedUrl, urls),
+        ),
+      ),
+    );
+
+  if (rows.length === 0) {
+    return params.candidates;
+  }
+
+  const orphanIds = rows
+    .filter((row) => row.searchExecutionId !== params.executionId)
+    .map((row) => row.id);
+
+  if (orphanIds.length > 0) {
+    await db
+      .update(searchResults)
+      .set({ searchExecutionId: params.executionId })
+      .where(inArray(searchResults.id, orphanIds));
+  }
+
+  const idByUrl = new Map<string, string>();
+  for (const row of rows) {
+    for (const url of [
+      row.sourceUrl,
+      row.sourceOriginalUrl,
+      row.sourceResolvedUrl,
+    ]) {
+      if (url) {
+        idByUrl.set(url.toLowerCase(), row.id);
+      }
+    }
+  }
+
+  return params.candidates.map((candidate) => {
+    if (candidate.searchResultId) {
+      return candidate;
+    }
+
+    const matchedId = candidate.officialSourceUrl
+      ? (idByUrl.get(candidate.officialSourceUrl.toLowerCase()) ?? null)
+      : null;
+
+    if (!matchedId) {
+      return candidate;
+    }
+
+    return {
+      ...candidate,
+      searchResultId: matchedId,
+      temporaryId: `result-${matchedId}`,
+    };
+  });
+}
+
+async function getOwnedSearchExecution(params: {
+  executionId: string;
+  userId: string;
+}) {
+  const [row] = await db
+    .select({
+      id: searchExecutions.id,
+      metrics: searchExecutions.metrics,
+    })
+    .from(searchExecutions)
+    .innerJoin(
+      searchProfiles,
+      eq(searchExecutions.searchProfileId, searchProfiles.id),
+    )
+    .where(
+      and(
+        eq(searchExecutions.id, params.executionId),
+        eq(searchProfiles.createdByUserId, params.userId),
+      ),
+    )
+    .limit(1);
+
+  return row ?? null;
+}
+
+export async function renameUserSearchExecution(params: {
+  executionId: string;
+  userId: string;
+  title: string;
+}): Promise<{ id: string; title: string } | null> {
+  const row = await getOwnedSearchExecution(params);
+  if (!row || isSearchExecutionHiddenFromHistory(row.metrics)) {
+    return null;
+  }
+
+  const nextMetrics = withSearchExecutionTitle(row.metrics, params.title);
+  const title = String(nextMetrics.title);
+
+  await db
+    .update(searchExecutions)
+    .set({ metrics: nextMetrics })
+    .where(eq(searchExecutions.id, row.id));
+
+  return { id: row.id, title };
+}
+
+export async function hideUserSearchExecutionFromHistory(params: {
+  executionId: string;
+  userId: string;
+}): Promise<{ id: string } | null> {
+  const row = await getOwnedSearchExecution(params);
+  if (!row || isSearchExecutionHiddenFromHistory(row.metrics)) {
+    return null;
+  }
+
+  await db
+    .update(searchExecutions)
+    .set({
+      metrics: withSearchExecutionHiddenFromHistory(row.metrics),
+    })
+    .where(eq(searchExecutions.id, row.id));
+
+  return { id: row.id };
+}
+
+export type UserSearchExecutionResultDetail = {
+  id: string;
+  searchExecutionId: string;
+  title: string;
+  snippet: string | null;
+  sourceUrl: string;
+  deadlineAt: Date | null;
+  estimatedAmount: string | null;
+  currency: string | null;
+  amountStatus: string;
+};
+
+/** Returns a persisted search result owned by the user within a given execution. */
+export async function getUserSearchExecutionResultDetail(params: {
+  executionId: string;
+  leadId: string;
+  userId: string;
+}): Promise<UserSearchExecutionResultDetail | null> {
+  const execution = await getOwnedSearchExecution({
+    executionId: params.executionId,
+    userId: params.userId,
+  });
+  if (!execution || isSearchExecutionHiddenFromHistory(execution.metrics)) {
+    return null;
+  }
+
+  const [result] = await db
+    .select({
+      id: searchResults.id,
+      searchExecutionId: searchResults.searchExecutionId,
+      title: searchResults.title,
+      snippet: searchResults.snippet,
+      sourceUrl: searchResults.sourceUrl,
+      deadlineAt: searchResults.deadlineAt,
+      estimatedAmount: searchResults.estimatedAmount,
+      currency: searchResults.currency,
+      amountStatus: searchResults.amountStatus,
+    })
+    .from(searchResults)
+    .where(
+      and(
+        eq(searchResults.id, params.leadId),
+        eq(searchResults.searchExecutionId, params.executionId),
+        searchResultNotDeleted(),
+      ),
+    )
+    .limit(1);
+
+  if (!result || !result.searchExecutionId) {
+    return null;
+  }
+
+  return {
+    id: result.id,
+    searchExecutionId: result.searchExecutionId,
+    title: result.title,
+    snippet: result.snippet,
+    sourceUrl: result.sourceUrl,
+    deadlineAt: result.deadlineAt,
+    estimatedAmount: result.estimatedAmount,
+    currency: result.currency,
+    amountStatus: result.amountStatus,
   };
 }
