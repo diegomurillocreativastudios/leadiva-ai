@@ -14,11 +14,26 @@ import { toast } from "sonner";
 
 import { SkeuButton } from "@/components/ui/skeu-button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   FOCUS_HOME_SEARCH_FLAG,
   NEW_HOME_SEARCH_EVENT,
-  pickHomeGreeting,
+  pickHomeGreetingParts,
+  type HomeGreetingParts,
 } from "@/lib/home-greetings";
 import { homeSearchHref } from "@/lib/home-search-href";
+import {
+  HOME_SEARCH_SOURCES,
+  defaultHomeSearchSource,
+  homeSearchSourceIds,
+  resolveHomeSearchRequest,
+  type HomeSearchSourceId,
+} from "@/lib/home-search-source";
 import { cn } from "@/lib/utils";
 
 type SearchResponse = {
@@ -26,9 +41,17 @@ type SearchResponse = {
   error?: string;
   message?: string;
   configured?: boolean;
+  status?: string;
+  candidatesCreated?: number;
+  candidatesUpdated?: number;
+  candidatesDiscarded?: number;
   candidatesFound?: number;
   candidatesVerified?: number;
 };
+
+function isHomeSearchSourceId(value: string): value is HomeSearchSourceId {
+  return (homeSearchSourceIds as readonly string[]).includes(value);
+}
 
 export function AskLeadivaPrompt({
   variant = "hero",
@@ -40,11 +63,19 @@ export function AskLeadivaPrompt({
 } = {}) {
   const router = useRouter();
   const inputId = useId();
+  const sourceId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const [source, setSource] = useState<HomeSearchSourceId>(
+    defaultHomeSearchSource,
+  );
   const [pending, startTransition] = useTransition();
-  const [greeting, setGreeting] = useState("");
+  const [greeting, setGreeting] = useState<HomeGreetingParts | null>(null);
   const docked = variant === "docked";
+  const searchRequest = resolveHomeSearchRequest(source, query.trim());
+  const canSubmit =
+    !pending &&
+    (!searchRequest.requiresQuery || query.trim().length >= 3);
 
   function focusSearchIfEmpty() {
     const input = inputRef.current;
@@ -59,7 +90,7 @@ export function AskLeadivaPrompt({
       return;
     }
 
-    setGreeting(pickHomeGreeting(userName));
+    setGreeting(pickHomeGreetingParts(userName));
 
     function onNewSearch() {
       setQuery("");
@@ -84,25 +115,28 @@ export function AskLeadivaPrompt({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = query.trim();
-    if (trimmed.length < 3) {
+    const request = resolveHomeSearchRequest(source, trimmed);
+
+    if (request.requiresQuery && trimmed.length < 3) {
       toast.error("Escribe al menos 3 caracteres para buscar.");
       return;
     }
 
     startTransition(async () => {
-      const toastId = toast.loading("Buscando oportunidades…");
+      const toastId = toast.loading(request.loadingMessage);
       try {
-        const response = await fetch("/api/jobs/search-grounding", {
+        const response = await fetch(request.endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sourceType: "PRIVATE_WEB",
-            query: trimmed,
-          }),
+          ...(request.body
+            ? {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(request.body),
+              }
+            : {}),
         });
         const json = (await response.json()) as SearchResponse;
 
-        if (!response.ok) {
+        if (!response.ok && response.status !== 207) {
           toast.error(json.error ?? json.message ?? "Error en la búsqueda", {
             id: toastId,
           });
@@ -115,6 +149,23 @@ export function AskLeadivaPrompt({
               "Vertex AI no configurado. Completa GCP_PROJECT_ID.",
             { id: toastId },
           );
+          router.refresh();
+          return;
+        }
+
+        if (source === "COMPRASAL") {
+          toast.success(
+            [
+              json.status === "PARTIALLY_COMPLETED"
+                ? "Sync parcial"
+                : "Sincronizado",
+              `${json.candidatesCreated ?? 0} creados`,
+              `${json.candidatesUpdated ?? 0} actualizados`,
+              `${json.candidatesDiscarded ?? 0} descartados`,
+            ].join(" · "),
+            { id: toastId },
+          );
+          setQuery("");
           router.refresh();
           return;
         }
@@ -159,9 +210,17 @@ export function AskLeadivaPrompt({
       {!docked ? (
         <h1
           id={`${inputId}-heading`}
-          className="mb-10 min-h-[1.2em] text-center font-heading text-2xl font-semibold tracking-tight text-text-primary md:text-3xl"
+          className="mb-10 min-h-[1.2em] text-center font-heading text-4xl font-semibold tracking-tight text-text-primary md:text-5xl"
         >
-          {greeting || "\u00a0"}
+          {greeting ? (
+            <>
+              {greeting.before}
+              {greeting.name}
+              {greeting.after}
+            </>
+          ) : (
+            "\u00a0"
+          )}
         </h1>
       ) : null}
 
@@ -199,11 +258,61 @@ export function AskLeadivaPrompt({
             docked ? "text-base" : "text-lg",
           )}
         />
+        <label htmlFor={sourceId} className="sr-only">
+          Origen de la búsqueda
+        </label>
+        <Select
+          value={source}
+          disabled={pending}
+          onValueChange={(value) => {
+            if (isHomeSearchSourceId(value)) {
+              setSource(value);
+            }
+          }}
+        >
+          <SelectTrigger
+            id={sourceId}
+            size="sm"
+            aria-label="Origen de la búsqueda"
+            className={cn(
+              "shrink-0 border-surface-border bg-surface-pressed font-medium text-text-primary shadow-none",
+              "hover:bg-accent-mint/70 focus-visible:border-accent focus-visible:ring-accent/40",
+              "data-placeholder:text-text-secondary",
+              "[&_svg]:text-text-secondary",
+              docked
+                ? "h-8 max-w-38 rounded-full px-3 text-xs"
+                : "h-10 max-w-44 rounded-full px-3.5 text-sm",
+            )}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent
+            align="end"
+            position="popper"
+            className="min-w-44 rounded-xl border-surface-border bg-surface-raised p-1.5 text-text-primary shadow-md"
+          >
+            {HOME_SEARCH_SOURCES.map((option) => (
+              <SelectItem
+                key={option.id}
+                value={option.id}
+                className={cn(
+                  "cursor-pointer rounded-lg py-2 pr-8 pl-2.5 text-text-primary",
+                  "focus:!bg-accent-mint focus:!text-text-primary",
+                  "focus:**:!text-text-primary focus:[&_svg]:!text-text-primary",
+                  "data-[highlighted]:!bg-accent-mint data-[highlighted]:!text-text-primary",
+                  "data-[highlighted]:**:!text-text-primary data-[highlighted]:[&_svg]:!text-text-primary",
+                )}
+              >
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <SkeuButton
           type="submit"
           variant="primary"
           size={docked ? "icon-sm" : "icon"}
-          disabled={pending || query.trim().length < 3}
+          disabled={!canSubmit}
           aria-label={pending ? "Buscando" : "Buscar oportunidades"}
         >
           {pending ? (
