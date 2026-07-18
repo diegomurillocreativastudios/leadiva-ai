@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "screen": {
+        "screenshot": {
+          "name": "projects/929484233158471895/files/9223236306029936088",
+          "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsjUcTdjahZCBOR7MDSub8xIwm6HnJ5IjFD48JDynVELit9DXF9GaT5tF_DZAzpEk0mzqW4cUD005Kw3GS0hmuxish1magl49dQkZ6v6UetHOuS4ifDcaKe7hC7-19kwGL5FFl_dJXGw2tH-XDrVwyaihx1BTBZX-93FdQbeNRp1TfeSKCPPdqePAZFa02yHUuOEZqIS1FQTRxJMAzEFxiefhUlZDfk7M7NHVFYRdRSHsQA0EGuCfzKc0EwZokEU-b1fwDsBVBF"
+        },
+        "id": "9223236306029932549",
+        "width": "1024",
+        "height": "1024",
+        "title": "Leadiva Logo Official",
+        "name": "projects/929484233158471895/screens/9223236306029932549",
+        "theme": {},
+        "screenType": "IMAGE",
+        "isCreatedByClient": true,
+        "screenMetadata": {
+          "status": "COMPLETE"
+        }
+      }
+    }
+  ],
+  "screenInstances": [
+    {
+      "id": "9223236306029932549",
+      "sourceScreen": "projects/929484233158471895/screens/9223236306029932549",
+      "x": 2091,
+      "width": 512,
+      "height": 512
+    }
+  ]
+}

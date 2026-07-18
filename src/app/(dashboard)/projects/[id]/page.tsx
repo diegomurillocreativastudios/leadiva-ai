@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { convertToLeadAction } from "@/features/auth/actions";
 import { DiscardProjectForm } from "@/features/projects/discard-project-form";
@@ -42,9 +42,6 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
-  if (!session.user.interestCategories?.length) {
-    redirect("/onboarding");
-  }
 
   const { id } = await params;
   const project = await getSearchResultById(id);

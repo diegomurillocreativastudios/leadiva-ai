@@ -1,0 +1,61 @@
+{
+  "deleteOrKeepHidden": [
+    {
+      "screenId": "09f9790fb5a74467b5eaac51e6a7973a",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva (Coral)"
+    },
+    {
+      "screenId": "0c7f16883303434dad116f88b137ea1d",
+      "hidden": true,
+      "title": "Dashboard Resumen - Leadiva"
+    },
+    {
+      "screenId": "18c0b09dd59a40e8a00f022a0d4510a4",
+      "hidden": true,
+      "title": "Leadiva Logo"
+    },
+    {
+      "screenId": "2ce5eae1e51043b486d127ca18f7a2d2",
+      "hidden": true,
+      "title": "Iniciar Sesi\u00f3n - Leadiva"
+    },
+    {
+      "screenId": "43ad10c87a2444a4b33a6e97becf2e06",
+      "hidden": true,
+      "title": "Dashboard Resumen - Leadiva (Mint)"
+    },
+    {
+      "screenId": "49818abb822944019926f55d41fd6c09",
+      "hidden": true,
+      "title": "Iniciar Sesi\u00f3n - Creativa Studios"
+    },
+    {
+      "screenId": "83d2653bd32e4ac4adaa50ac0983662c",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva (Mint)"
+    },
+    {
+      "screenId": "89f6cce9dc474a8dba37ff681015c194",
+      "hidden": true,
+      "title": "Resumen del Dashboard - Leadiva"
+    },
+    {
+      "screenId": "94b428e6942249ac87a1ef40a513afef",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva"
+    },
+    {
+      "screenId": "d5ee748ae6b349d2aace3a89c94b1472",
+      "hidden": false,
+      "title": "Remove the white background from this logo to make it transparent. Keep only the black line-art rocket and circuit icon. The output should be a clean, high-resolution PNG with a transparent background. No changes to the icon geometry or stroke weight."
+    }
+  ],
+  "stillVisibleExtras": [
+    {
+      "screenId": "d5ee748ae6b349d2aace3a89c94b1472",
+      "hidden": false,
+      "title": "Remove the white background from this logo to make it transparent. Keep only the black line-art rocket and circuit icon. The output should be a clean, high-resolution PNG with a transparent background. No changes to the icon geometry or stroke weight."
+    }
+  ]
+}

@@ -72,24 +72,9 @@ export async function registerAction(
     return { error: "No se pudo crear la cuenta" };
   }
 
-  try {
-    await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirectTo: "/onboarding",
-    });
-  } catch (error) {
-    // Auth.js throws a redirect on success; rethrow so Next.js can follow it.
-    if (error instanceof AuthError) {
-      return {
-        error:
-          "Tu cuenta fue creada. Inicia sesión manualmente para continuar.",
-      };
-    }
-    throw error;
-  }
-
-  return { success: "ok" };
+  return {
+    success: "Cuenta creada correctamente. Ya puedes iniciar sesión.",
+  };
 }
 
 export async function loginAction(
@@ -143,7 +128,7 @@ export async function saveOnboardingAction(
       interestCategories: parsed.data.interestCategories,
     },
   });
-  redirect("/home");
+  redirect("/settings");
 }
 
 export async function convertToLeadAction(formData: FormData) {

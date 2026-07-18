@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { saveOnboardingAction, type ActionState } from "@/features/auth/actions";
 import { interestCategories } from "@/server/db/schema/enums";
+import { LeadivaBrand } from "@/components/shared/leadiva-logo";
 import { SkeuButton } from "@/components/ui/skeu-button";
 import {
   SkeuCard,
@@ -37,9 +38,7 @@ export function OnboardingForm({
   return (
     <SkeuCard className="w-full max-w-lg">
       <SkeuCardHeader>
-        <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">
-          Leadiva
-        </p>
+        <LeadivaBrand size="sm" className="mb-2" />
         <SkeuCardTitle className="text-xl">¿Qué te interesa revisar?</SkeuCardTitle>
         <SkeuCardDescription>
           Elige una o más categorías para priorizar proyectos en el catálogo.
@@ -69,7 +68,7 @@ export function OnboardingForm({
             disabled={pending}
             className="w-full"
           >
-            {pending ? "Guardando…" : "Continuar"}
+            {pending ? "Guardando…" : "Guardar"}
           </SkeuButton>
         </SkeuCardFooter>
       </form>

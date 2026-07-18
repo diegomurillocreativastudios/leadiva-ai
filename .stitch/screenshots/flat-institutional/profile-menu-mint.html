@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              soft: "#d9eedb",
+              peach: "#fbcab9",
+              aqua: "#9ce5de",
+              teal: "#05aba9",
+              "teal-hover": "#048f8d",
+              coral: "#f9a79b"
+            },
+            surface: {
+              base: "#f4faf6",
+              raised: "#ffffff",
+              border: "#d5e8e0"
+            },
+            text: {
+              primary: "#1c1917",
+              secondary: "#5f6b66"
+            }
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            headline: ["IBM Plex Sans", "sans-serif"],
+            display: ["IBM Plex Sans", "sans-serif"],
+            body: ["IBM Plex Sans", "sans-serif"],
+            label: ["IBM Plex Sans", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background-color: #f4faf6;
+    }
+    .profile-menu-enter {
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="text-text-primary overflow-hidden">
+<!-- Main Container -->
+<div class="flex h-screen w-screen bg-surface-base">
+<!-- SideNavBar (Shared Component Blueprint) -->
+<aside class="h-full w-64 fixed left-0 top-0 border-r border-surface-border bg-surface-base flex flex-col py-6 z-20">
+<!-- Brand Header -->
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-brand-teal flex items-center justify-center text-white font-bold">L</div>
+<div>
+<h1 class="text-xl font-bold text-brand-teal leading-none">Leadiva</h1>
+<p class="text-[10px] text-text-secondary uppercase tracking-widest mt-1">Institutional Platform</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-brand-teal bg-brand-soft font-bold border-r-4 border-brand-teal" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-label">Inicio</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-brand-soft/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-label">Oportunidades</span>
+</a>
+</nav>
+<!-- Profile Section Wrapper (Relative for Menu Positioning) -->
+<div class="mt-auto px-4 relative">
+<!-- Profile Menu (Floating above profile row - Based on wireframe IMAGE_5) -->
+<div class="absolute bottom-[calc(100%+8px)] left-4 right-4 bg-white border border-surface-border rounded-lg shadow-xl profile-menu-enter z-30 overflow-hidden" id="profileMenu">
+<ul class="flex flex-col">
+<li>
+<button class="w-full flex items-center gap-3 px-4 py-3.5 text-text-secondary hover:bg-brand-soft transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-brand-teal" data-icon="account_circle">account_circle</span>
+<span>Perfil</span>
+</button>
+</li>
+<li class="border-t border-surface-border">
+<button class="w-full flex items-center gap-3 px-4 py-3.5 text-text-secondary hover:bg-brand-soft transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-brand-teal" data-icon="settings">settings</span>
+<span>Configuración</span>
+</button>
+</li>
+<li class="border-t border-surface-border">
+<button class="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 hover:bg-red-50 transition-colors text-sm font-medium">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Cerrar sesión</span>
+</button>
+</li>
+</ul>
+</div>
+<!-- Profile Trigger Row (Active State per prompt) -->
+<button class="w-full flex items-center gap-3 px-3 py-3 rounded-lg bg-brand-soft border border-brand-teal/20 transition-all duration-200 active:scale-95 group" id="profileTrigger">
+<div class="w-10 h-10 rounded-full border-2 border-brand-teal bg-white flex items-center justify-center text-brand-teal font-bold text-sm shrink-0 shadow-sm">
+            DM
+          </div>
+<div class="flex-1 text-left overflow-hidden">
+<p class="text-sm font-bold text-brand-teal truncate">Diego Murillo Correa</p>
+<p class="text-[10px] text-text-secondary truncate">Administrador</p>
+</div>
+<span class="material-symbols-outlined text-brand-teal text-lg group-hover:translate-y-[-2px] transition-transform" data-icon="keyboard_arrow_up">keyboard_arrow_up</span>
+</button>
+</div>
+</aside>
+<!-- Content Canvas -->
+<main class="ml-64 flex-1 h-full overflow-y-auto p-12">
+<!-- TopNavBar Space simulation -->
+<div class="mb-12 flex items-center justify-between">
+<div>
+<h2 class="text-3xl font-headline font-extrabold text-text-primary tracking-tight">Componente — Menu perfil (click)</h2>
+<p class="text-text-secondary mt-2">Visualización del estado activo de la interacción del perfil en el sidebar.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="p-2 rounded-full hover:bg-brand-soft transition-colors cursor-pointer text-text-secondary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</div>
+<div class="p-2 rounded-full hover:bg-brand-soft transition-colors cursor-pointer text-text-secondary">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Visual Showcase -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Feature Card 1 -->
+<div class="col-span-8 bg-surface-raised border border-surface-border p-8 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<span class="inline-block px-3 py-1 bg-brand-soft text-brand-teal text-xs font-bold rounded-full mb-4">MINT PASTEL DESIGN</span>
+<h3 class="text-2xl font-bold text-text-primary mb-4">Interacción Intuitiva</h3>
+<p class="text-text-secondary max-w-md mb-6 leading-relaxed">
+              El menú de perfil se despliega verticalmente respetando la jerarquía visual de la marca Leadiva. El uso de micro-interacciones y sombras suaves proporciona una sensación de profundidad y calidad profesional.
+            </p>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 bg-brand-teal text-white font-bold rounded-lg hover:bg-brand-teal-hover transition-all shadow-lg shadow-brand-teal/20">
+                Explorar Guía
+              </button>
+</div>
+</div>
+<!-- Decorative element -->
+<div class="absolute -right-12 -bottom-12 w-64 h-64 bg-brand-soft rounded-full opacity-30 blur-3xl group-hover:scale-110 transition-transform duration-500"></div>
+</div>
+<!-- Mini Stats Card -->
+<div class="col-span-4 bg-brand-teal p-8 rounded-xl text-white flex flex-col justify-between">
+<span class="material-symbols-outlined text-4xl" data-icon="verified_user">verified_user</span>
+<div>
+<p class="text-white/80 text-sm font-medium">Estado de cuenta</p>
+<h4 class="text-3xl font-bold">Activa</h4>
+</div>
+</div>
+<!-- Status Card 1 -->
+<div class="col-span-4 bg-white border border-surface-border p-6 rounded-xl">
+<div class="flex items-center justify-between mb-4">
+<div class="w-10 h-10 rounded-lg bg-brand-aqua/30 flex items-center justify-center text-brand-teal">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+</div>
+<span class="text-brand-teal font-bold">+12%</span>
+</div>
+<p class="text-text-secondary text-sm">Oportunidades totales</p>
+<p class="text-2xl font-bold mt-1">1,284</p>
+</div>
+<!-- Image Card -->
+<div class="col-span-8 h-48 rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A clean, minimalist high-tech office lobby at golden hour. Soft sunlight filters through floor-to-ceiling windows, illuminating a mint and white architectural interior. A sleek reception desk is visible in the distance with pastel green accents. The overall atmosphere is peaceful, professional, and sophisticated, matching a mint and teal brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFeHHMLjh7yWYa8xEydBQaHU2NJnYSmaAPyvrB-G7obMZWgonciu8vnQp9eJQkbfWpAMbAyqejgh3cemNwC-T37rEohA7nvjL1v3uSv2HmglCRg49GaMtizoq_kzemySzWmpxoTQIFH0Lu24DVTkXPwu4iVkhLkQSI9AW7PrsA-WS0cilVz4B5HHXUrNLg1TnW1pWutMtqDZZn9Y7NjIfqrR7E9PnQ9IXi9az3bO6JGbZqqJCGICrhZB0fQIEnm8Y_b0EcDicVqw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-6">
+<p class="text-white font-medium">Sede principal Leadiva Corporativo</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+    // Simple toggle interaction for demonstration if needed, 
+    // though the prompt asks to "Show" the active state primarily.
+    const trigger = document.getElementById('profileTrigger');
+    const menu = document.getElementById('profileMenu');
+    let isOpen = true; // Defaulting to open as requested by the user prompt to "show the menu"
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isOpen = !isOpen;
+      if (isOpen) {
+        menu.classList.remove('hidden');
+        menu.classList.add('profile-menu-enter');
+        trigger.classList.add('bg-brand-soft', 'border-brand-teal/20');
+      } else {
+        menu.classList.add('hidden');
+        trigger.classList.remove('bg-brand-soft', 'border-brand-teal/20');
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+        isOpen = false;
+        menu.classList.add('hidden');
+        trigger.classList.remove('bg-brand-soft', 'border-brand-teal/20');
+      }
+    });
+  </script>
+</body></html>

@@ -33,6 +33,10 @@ const generalSans = localFont({
 export const metadata: Metadata = {
   title: "Leadiva",
   description: "Inteligencia de oportunidades comerciales",
+  icons: {
+    icon: "/leadiva.svg",
+    apple: "/leadiva.svg",
+  },
 };
 
 export default function RootLayout({

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { logoutAction } from "@/features/auth/actions";
+import { LeadivaBrand } from "@/components/shared/leadiva-logo";
 import { SkeuButton } from "@/components/ui/skeu-button";
 import { cn } from "@/lib/utils";
 
@@ -76,11 +77,9 @@ function SidebarBody({
 }) {
   return (
     <>
-      <div className="mb-8">
-        <p className="font-heading text-lg font-semibold tracking-tight text-accent">
-          Leadiva
-        </p>
-        <p className="truncate text-xs text-text-secondary">{userName}</p>
+      <div className="mb-8 space-y-1">
+        <LeadivaBrand size="sm" />
+        <p className="truncate pl-[38px] text-xs text-text-secondary">{userName}</p>
       </div>
       <NavLinks pathname={pathname} onNavigate={onNavigate} />
       <form action={logoutAction} className="mt-4">
@@ -124,9 +123,9 @@ export function AppSidebar({ userName }: { userName: string }) {
   return (
     <>
       <div className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-surface-border bg-surface-raised px-4 py-3 md:hidden">
-        <div>
-          <p className="font-heading font-semibold text-accent">Leadiva</p>
-          <p className="truncate text-xs text-text-secondary">{userName}</p>
+        <div className="min-w-0">
+          <LeadivaBrand size="sm" />
+          <p className="truncate pl-[38px] text-xs text-text-secondary">{userName}</p>
         </div>
         <SkeuButton
           type="button"

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva | Registro Interno</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            coral: "#f9a79b",
+                            peach: "#fbcab9",
+                            mint: "#d9eedb",
+                            aqua: "#9ce5de",
+                            teal: "#05aba9",
+                            "teal-hover": "#048f8d"
+                        },
+                        surface: {
+                            base: "#f4faf6",
+                            raised: "#ffffff",
+                            border: "#d5e8e0"
+                        },
+                        text: {
+                            primary: "#1c1917",
+                            secondary: "#5f6b66"
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["IBM Plex Sans", "sans-serif"],
+                        display: ["IBM Plex Sans", "sans-serif"],
+                        body: ["IBM Plex Sans", "sans-serif"],
+                        label: ["IBM Plex Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="h-full bg-surface-base text-text-primary overflow-hidden">
+<main class="flex h-full w-full">
+<!-- LEFT PANEL: Brand Anchor -->
+<section class="hidden lg:flex lg:w-[42%] bg-brand-mint flex-col justify-between p-12 border-r border-surface-border">
+<div class="flex flex-col">
+<div class="mb-8">
+<img alt="Leadiva Logo" class="w-32 h-auto block grayscale brightness-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtzqLdjO-ChdhU63u0x7qae_W3AIYiAfEYGQu9lJM8waT5rJR0cXlmqbIeAGv1JGpBCbHtcJgn1AscNB8pnhx4yJGyeAJY0_0G0FI0f4fttiAIk3wg-Yxm8_dKPQZKhvVtiW4fj-dD3G5H7FljsWFunfFuW3wwmZZaDZqtLxchriYRcS-RbmQQx6vr9A9ZUlQqQZ5XYMOQ-RKUX-ejbRvmAXbBMVH_gdmdADnoeGwVEGCozT7SxTMIyBSWl2CdBG8dMwt7bl9ybg"/>
+</div>
+<h1 class="text-4xl font-bold tracking-tight text-text-primary mb-2">Leadiva</h1>
+<p class="text-lg text-text-secondary leading-relaxed">Inteligencia comercial para Creativa Studios</p>
+</div>
+<div class="mt-auto">
+<div class="flex items-center gap-2 text-sm font-medium tracking-wide text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-brand-teal"></span>
+                    Acceso interno · Creativa Studios
+                </div>
+</div>
+</section>
+<!-- RIGHT PANEL: Registration Form -->
+<section class="flex-1 bg-white flex items-center justify-center p-6 md:p-12 overflow-y-auto">
+<div class="w-full max-w-[400px]">
+<!-- Mobile Logo (visible only on small screens) -->
+<div class="lg:hidden mb-8">
+<img alt="Leadiva Logo" class="w-16 h-auto grayscale brightness-0 mb-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtzqLdjO-ChdhU63u0x7qae_W3AIYiAfEYGQu9lJM8waT5rJR0cXlmqbIeAGv1JGpBCbHtcJgn1AscNB8pnhx4yJGyeAJY0_0G0FI0f4fttiAIk3wg-Yxm8_dKPQZKhvVtiW4fj-dD3G5H7FljsWFunfFuW3wwmZZaDZqtLxchriYRcS-RbmQQx6vr9A9ZUlQqQZ5XYMOQ-RKUX-ejbRvmAXbBMVH_gdmdADnoeGwVEGCozT7SxTMIyBSWl2CdBG8dMwt7bl9ybg"/>
+<h2 class="text-2xl font-bold text-brand-teal">Leadiva</h2>
+</div>
+<header class="mb-10">
+<h2 class="text-3xl font-bold text-text-primary mb-2">Crear cuenta</h2>
+<p class="text-text-secondary">Acceso interno para el equipo de Creativa Studios</p>
+</header>
+<form class="space-y-5" id="registrationForm" onsubmit="return false;">
+<!-- Row 1: Names -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-text-secondary" for="nombres">Nombres</label>
+<input class="w-full px-4 py-3 border border-surface-border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all placeholder:text-gray-300" id="nombres" name="nombres" required="" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-text-secondary" for="apellidos">Apellidos</label>
+<input class="w-full px-4 py-3 border border-surface-border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all placeholder:text-gray-300" id="apellidos" name="apellidos" required="" type="text"/>
+</div>
+</div>
+<!-- Row 2: Email -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-text-secondary" for="email">Correo electrónico</label>
+<input class="w-full px-4 py-3 border border-surface-border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all placeholder:text-gray-300" id="email" name="email" placeholder="nombre@creativastudios.com" required="" type="email"/>
+</div>
+<!-- Row 3: Password -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-text-secondary" for="password">Contraseña</label>
+<div class="relative">
+<input class="w-full px-4 py-3 border border-surface-border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all" id="password" name="password" required="" type="password"/>
+</div>
+</div>
+<!-- Row 4: Confirm Password -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold uppercase tracking-wider text-text-secondary" for="confirm_password">Confirmar contraseña</label>
+<input class="w-full px-4 py-3 border border-surface-border rounded focus:ring-1 focus:ring-brand-teal focus:border-brand-teal outline-none transition-all" id="confirm_password" name="confirm_password" required="" type="password"/>
+</div>
+<!-- Show Password Checkbox -->
+<div class="flex items-center">
+<input class="w-4 h-4 text-brand-teal border-surface-border rounded focus:ring-brand-teal cursor-pointer" id="show_password" type="checkbox"/>
+<label class="ml-2 text-sm text-text-secondary cursor-pointer select-none" for="show_password">Mostrar contraseña</label>
+</div>
+<!-- Submit Button -->
+<button class="w-full bg-brand-teal hover:bg-brand-teal-hover text-white font-semibold py-4 rounded transition-all active:scale-[0.98] mt-2" type="submit">
+                        Crear cuenta
+                    </button>
+<!-- Login Link -->
+<div class="text-center mt-6">
+<a class="text-sm font-medium text-brand-teal hover:underline transition-all" href="#">¿Ya tienes cuenta? Inicia sesión</a>
+</div>
+</form>
+<!-- Footer Helper Text -->
+<footer class="mt-12 pt-8 border-t border-surface-border text-center">
+<span class="inline-block px-3 py-1 bg-brand-mint text-[10px] font-bold tracking-[0.2em] text-brand-teal-hover rounded">
+                        SOLO DOMINIOS AUTORIZADOS
+                    </span>
+</footer>
+</div>
+</section>
+</main>
+<script>
+        // Micro-interactions and logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const showPasswordCheckbox = document.getElementById('show_password');
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirm_password');
+
+            showPasswordCheckbox.addEventListener('change', () => {
+                const type = showPasswordCheckbox.checked ? 'text' : 'password';
+                passwordField.type = type;
+                confirmPasswordField.type = type;
+            });
+
+            // Focus tracking for labels (optional visual flair)
+            const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    const label = input.parentElement.previousElementSibling;
+                    if (label) label.classList.add('text-brand-teal');
+                });
+                input.addEventListener('blur', () => {
+                    const label = input.parentElement.previousElementSibling;
+                    if (label) label.classList.remove('text-brand-teal');
+                });
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,214 @@
+{
+  "summary": {
+    "register": {
+      "id": "d7fdcc5e81df4405b53cbfdd60815701",
+      "title": "/register \u2014 Crear cuenta"
+    },
+    "home": {
+      "id": "825ea0a6696348f9b0e28821de1eb6a2",
+      "title": "/ \u2014 Inicio"
+    },
+    "oportunidades": {
+      "id": "2c7bb73feb7c428b8498158b637e8d46",
+      "title": "/oportunidades \u2014 Lista"
+    },
+    "detalle": {
+      "id": "ad1d3f4910ae41c5bd76bdf4f6bd75d4",
+      "title": "/oportunidades/[resultado] \u2014 Detalle"
+    }
+  },
+  "screens": {
+    "register": {
+      "designSystem": {
+        "designSystem": {
+          "displayName": "Leadiva Mint Pastel",
+          "theme": {
+            "bodyFont": "IBM_PLEX_SANS",
+            "colorMode": "LIGHT",
+            "colorVariant": "TONAL_SPOT",
+            "customColor": "#05aba9",
+            "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+            "headlineFont": "IBM_PLEX_SANS",
+            "labelFont": "IBM_PLEX_SANS"
+          }
+        },
+        "name": "assets/8031487489663830885",
+        "version": "1"
+      },
+      "deviceType": "DESKTOP",
+      "generatedBy": "figaro_agent",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzlhZTlhNzJhY2U2NjRlYzNiNDgyNzdjMTIzNWU1YWZkEgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/929484233158471895/files/cd046e34e4da453580101d30a982bfeb"
+      },
+      "id": "d7fdcc5e81df4405b53cbfdd60815701",
+      "name": "projects/929484233158471895/screens/d7fdcc5e81df4405b53cbfdd60815701",
+      "prompt": "Create a registration screen with a split layout. \nLEFT PANEL (~42% width, background #d9eedb):\n- Top: Official logo {{DATA:IMAGE:IMAGE_6}} (black circuit rocket) sized ~128px.\n- Below logo: Wordmark 'Leadiva' in a bold, professional font.\n- Subtitle: 'Inteligencia comercial para Creativa Studios'.\n- Bottom Footer: 'Acceso interno \u00b7 Creativa Studios'.\n- Style: No decorative circles, flat, no gradients.\n\nRIGHT PANEL (white background, center-aligned form max 400px):\n- Title: 'Crear cuenta'.\n- Subtitle: 'Acceso interno para el equipo de Creativa Studios'.\n- Fields: \n  - Row 1: 'Nombres', 'Apellidos' (two columns).\n  - Row 2: 'Correo electr\u00f3nico'.\n  - Row 3: 'Contrase\u00f1a'.\n  - Row 4: 'Confirmar contrase\u00f1a'.\n- Checkbox: 'Mostrar contrase\u00f1a'.\n- Button: Full-width CTA 'Crear cuenta' with background #05aba9 and white text.\n- Link: '\u00bfYa tienes cuenta? Inicia sesi\u00f3n'.\n- Helper text at bottom: 'SOLO DOMINIOS AUTORIZADOS'.\n\nGeneral Style: \n- Borders: #d5e8e0.\n- Text: Primary #1c1917, Secondary #5f6b66.\n- Font: IBM Plex Sans.\n- No gradients, glass, or shadows. Flat Institutional style.",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "screenType": "DESIGN",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsgvRt3ye9NeJopK1Ig3VJFnCgIyoVzPuQVmf7ZCz2bYuihquvAX_nazMVwl7Wo-lfZ_yzcZ5DJOYbb9xy8Cm58KgYK2YhtP3EjherMpUuiLpO8nMjp3GSkb1LTt0zCpRS_SS4p-xK07jyqwuZew3T_XyAQwV4MG9YS2sXfBsjIV9OszIJgca9SnGysYR-Atws1IN_D9mVOcTJdknmlEXWh6bXYY2IQkXVS_2Tsfo9PfFfSyBI3kRt_bQ",
+        "name": "projects/929484233158471895/files/cd24f74d5c84429892ff0cb3e6c50791"
+      },
+      "theme": {
+        "bodyFont": "IBM_PLEX_SANS",
+        "colorMode": "LIGHT",
+        "colorVariant": "TONAL_SPOT",
+        "customColor": "#05aba9",
+        "headlineFont": "IBM_PLEX_SANS",
+        "labelFont": "IBM_PLEX_SANS"
+      },
+      "title": "/register \u2014 Crear cuenta",
+      "width": "2560"
+    },
+    "home": {
+      "designSystem": {
+        "designSystem": {
+          "displayName": "Leadiva Mint Pastel",
+          "theme": {
+            "bodyFont": "IBM_PLEX_SANS",
+            "colorMode": "LIGHT",
+            "colorVariant": "TONAL_SPOT",
+            "customColor": "#05aba9",
+            "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+            "headlineFont": "IBM_PLEX_SANS",
+            "labelFont": "IBM_PLEX_SANS"
+          }
+        },
+        "name": "assets/8031487489663830885",
+        "version": "1"
+      },
+      "deviceType": "DESKTOP",
+      "generatedBy": "figaro_agent",
+      "height": "2098",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2IwMWQwYTc5NmY4NDQzMDZiZjkxZmQ4OWMwMmFjYWNlEgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/929484233158471895/files/10fd7051f09a48308dc67863b98ac8e3"
+      },
+      "id": "825ea0a6696348f9b0e28821de1eb6a2",
+      "name": "projects/929484233158471895/screens/825ea0a6696348f9b0e28821de1eb6a2",
+      "prompt": "Authenticated home dashboard at path '/'.\nTitle: / \u2014 Inicio\nLanguage: Spanish (Espa\u00f1ol).\nStyle: Flat Institutional, Leadiva Mint Pastel.\nBackground: #f4faf6.\nComponents:\n- SideNavBar: Use official rocket logo {{DATA:IMAGE:IMAGE_8}} (black/near-black) and Leadiva wordmark. Navigation: 'Inicio' (active state), 'Oportunidades'.\n- Main Content Header: Greeting '\u00a1Buenos d\u00edas, [Nombre]!' and a short sentence summarizing the pipeline status.\n- KPI Row (4 cards):\n    1. 'Oportunidades activas': Large number, mint accent (#d9eedb background for icon/tag).\n    2. 'Por verificar': Large number, peach accent (#fbcab9 background for icon/tag).\n    3. 'Pr\u00f3ximas a vencer': Large number, mint accent.\n    4. 'Score promedio': Rating or percentage, peach accent.\n- Table Section: 'Pr\u00f3ximas fechas l\u00edmite'. Compact, clean table with columns: T\u00edtulo, Organizaci\u00f3n, Estado (Status badges), Deadline.\n- CTA: Primary button 'Ver oportunidades' using teal (#05aba9).\nDesign Rules: White cards, borders #d5e8e0, flat UI, no gradients, no shadows, no skeuomorphism. Dense but readable.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_8}}\n  Description: Leadiva Logo Official\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "screenType": "DESIGN",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtQP3YkS3gGAMSrBFxd9L7YPSQGtHKk0NuKhqzuN-m0-u0DTOCiJVk2e4iNTQiPLe-t8sXwK1sDKDaMPiDlBvfEEgcn87Eor4-b6_EYOUdSDAn-LVUQeAjtHXVJZAhVtbEN1PXUvXldsJtVcag4G7w_N_50a0T9WpLRyWwEF0ifY4hkcpa9bnmlwrnPoetL6p3KrtxRvFjPE0eoOt_Nlr9nea8k37gXzAljXwudJJ7XdeOJ3obc_tZs5w",
+        "name": "projects/929484233158471895/files/4f472e4308e44813a6fb42f78aff301b"
+      },
+      "theme": {
+        "bodyFont": "IBM_PLEX_SANS",
+        "colorMode": "LIGHT",
+        "colorVariant": "TONAL_SPOT",
+        "customColor": "#05aba9",
+        "headlineFont": "IBM_PLEX_SANS",
+        "labelFont": "IBM_PLEX_SANS"
+      },
+      "title": "/ \u2014 Inicio",
+      "width": "2560"
+    },
+    "oportunidades": {
+      "designSystem": {
+        "designSystem": {
+          "displayName": "Leadiva Mint Pastel",
+          "theme": {
+            "bodyFont": "IBM_PLEX_SANS",
+            "colorMode": "LIGHT",
+            "colorVariant": "TONAL_SPOT",
+            "customColor": "#05aba9",
+            "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+            "headlineFont": "IBM_PLEX_SANS",
+            "labelFont": "IBM_PLEX_SANS"
+          }
+        },
+        "name": "assets/8031487489663830885",
+        "version": "1"
+      },
+      "deviceType": "DESKTOP",
+      "generatedBy": "figaro_agent",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sXzY2ZTVjNjczOGUxMDQ5ZjliMWVhMzMxYzc0MjZhNDJlEgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/929484233158471895/files/948e8c3acae74251ab4adfd7d601a5f5"
+      },
+      "id": "2c7bb73feb7c428b8498158b637e8d46",
+      "name": "projects/929484233158471895/screens/2c7bb73feb7c428b8498158b637e8d46",
+      "prompt": "Create the Leadiva Oportunidades list screen (/oportunidades) in Spanish. \n\nDesign System Context:\n- Style: Flat Institutional, Leadiva Mint Pastel.\n- Background: #f4faf6 canvas.\n- Panels: White with #d5e8e0 borders.\n- Accent: #05aba9.\n- Constraints: No gradients, no shadows, no glassmorphism.\n\nSidebar:\n- Use official logo {{DATA:IMAGE:IMAGE_11}}.\n- Navigation: 'Inicio' and 'Oportunidades' (Active).\n\nContent:\n- Title: \"Oportunidades\".\n- Subtitle: \"Cat\u00e1logo de oportunidades comerciales detectadas y verificadas\".\n- Filters Bar: Search input, dropdowns for 'Estado', 'Fuente', 'Plazo'. Buttons: 'Filtrar' (Primary subtle), 'Limpiar' (Secondary).\n- Primary CTA (top right or in bar): \"Actualizar b\u00fasqueda\".\n- Data Table (Dense): \n    - Columns: T\u00edtulo, Organizaci\u00f3n, Fuente, Estado, Score, Deadline.\n    - Status badges (mint/peach/aqua flat).\n    - Rows should look clickable.\n    - Sample data (institutional/business style):\n        1. \"Modernizaci\u00f3n Red Ferroviaria\", \"Ministerio de Transporte\", \"Licitaci\u00f3n\", \"Abierta\", \"92\", \"20 Dic 2024\"\n        2. \"Suministro Hardware Educativo\", \"Sena\", \"Directo\", \"En Evaluaci\u00f3n\", \"78\", \"15 Ene 2025\"\n        3. \"Servicios Cloud\", \"Banca Nacional\", \"Referido\", \"Ganada\", \"95\", \"Concluido\"\n        4. \"Consultor\u00eda Eficiencia Energ\u00e9tica\", \"Ecopetrol\", \"Licitaci\u00f3n\", \"Por Vencer\", \"64\", \"Ma\u00f1ana\"\n\nTitle: \"/oportunidades \u2014 Lista\"\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_11}}\n  Description: Leadiva Logo Official\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "screenType": "DESIGN",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsouqtxl2yE4Yoy6J5bvNk2NVm874UIaADGeQ09-kuo49ast-mQ9EmnaVCWxrO2eFwKKif-Cn0-7CzqWeF2Rs-ieEvQr1_ySOxQ6DxSFY_Z3T9jXyMM9nJns9xw1GPXeD5GgFb3sYa4T07jwVjeOtuAMYqkqjY1_lqijcL9ccoxAywfaIimbvGZJpKaiQ6zpENloAfFIDZIGKrT6ToLE99O61q6uO-IqkZftxsnsYlyJDNSgg9Lyo0S",
+        "name": "projects/929484233158471895/files/a902047cbe934aec8771b8249bc8bc9c"
+      },
+      "theme": {
+        "bodyFont": "IBM_PLEX_SANS",
+        "colorMode": "LIGHT",
+        "colorVariant": "TONAL_SPOT",
+        "customColor": "#05aba9",
+        "headlineFont": "IBM_PLEX_SANS",
+        "labelFont": "IBM_PLEX_SANS"
+      },
+      "title": "/oportunidades \u2014 Lista",
+      "width": "2560"
+    },
+    "detalle": {
+      "designSystem": {
+        "designSystem": {
+          "displayName": "Leadiva Mint Pastel",
+          "theme": {
+            "bodyFont": "IBM_PLEX_SANS",
+            "colorMode": "LIGHT",
+            "colorVariant": "TONAL_SPOT",
+            "customColor": "#05aba9",
+            "designMd": "# Leadiva Flat \u2014 Mint Pastel Palette (user-provided strip)\n\nExact hex from reference strip (left \u2192 right):\n1. Soft coral #f9a79b\n2. Light peach #fbcab9  \u2190 companion LEFT of center\n3. Pale mint #d9eedb   \u2190 CENTER / brand core\n4. Light aqua #9ce5de  \u2190 companion RIGHT of center\n5. Deep teal #05aba9   \u2190 CTA / interactive (AA contrast)\n\n## Role mapping\n- Brand soft / selected / KPI accents / soft badges: #d9eedb (center mint)\n- Warm companion (zebra tint, secondary soft panels, warm chips): #fbcab9\n- Cool companion (secondary buttons, borders accent, tags): #9ce5de\n- Primary CTA, links, active nav bar, focus ring: #05aba9 (deep teal from same strip)\n- CTA hover: darken teal \u2248 #048f8d\n- Optional warm accent for soft coral status open: #f9a79b\n\n## Surfaces\n- surface.base: #f4faf6 (mint-tinted canvas)\n- surface.raised: #ffffff\n- surface.border: #d5e8e0\n\n## Text\n- text.primary: #1c1917\n- text.secondary: #5f6b66\n\n## Status\n- open: #05aba9 (or soft fill #d9eedb + text #048f8d)\n- evaluating: use warm peach text on soft #fbcab9\n- won: #05aba9 / mint family\n- lost: keep semantic red #dc2626\n- expiring: soft coral #f9a79b border/text\n- inactive: #a8a29e\n\n## Rules\nFlat Institutional. No blue, no purple, no coral-as-primary CTA.\nCenter the UI around mint #d9eedb with peach + aqua companions.\nCTAs must use deep teal #05aba9 for white text contrast.\n1px borders, no skeuomorphism.\n",
+            "headlineFont": "IBM_PLEX_SANS",
+            "labelFont": "IBM_PLEX_SANS"
+          }
+        },
+        "name": "assets/8031487489663830885",
+        "version": "1"
+      },
+      "deviceType": "DESKTOP",
+      "generatedBy": "figaro_agent",
+      "height": "2756",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ6Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpZCiVodG1sX2YzNmFkNTEyMjY0NzRmODNiZGZmMzg1NzQ0NzI1Y2ViEgsSBxCV1fjBpRoYAZIBIgoKcHJvamVjdF9pZBIUQhI5Mjk0ODQyMzMxNTg0NzE4OTU&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/929484233158471895/files/b7fa30090a8546bf8d835a2ee3837b14"
+      },
+      "id": "ad1d3f4910ae41c5bd76bdf4f6bd75d4",
+      "name": "projects/929484233158471895/screens/ad1d3f4910ae41c5bd76bdf4f6bd75d4",
+      "prompt": "Create a high-fidelity opportunity detail screen for Leadiva in Spanish. \nRoute: /oportunidades/[resultado].\nDesign System: Leadiva Mint Pastel (Primary #05aba9, BG #f4faf6). \nLogo: Use {{DATA:IMAGE:IMAGE_13}} (Leadiva Logo Official) in the sidebar.\nStyle: Flat Institutional. No shadows, no gradients, no glassmorphism. Clean borders and flat panels.\n\nLayout & Content:\n1. SideNav: Tabs for 'Inicio' and 'Oportunidades'. Sidebar should have the logo and 'Leadiva' branding.\n2. Breadcrumbs: 'Oportunidades / Detalle del resultado'.\n3. Header Section:\n   - Title: 'Modernizaci\u00f3n del Sistema de Gesti\u00f3n de Residuos - Alcald\u00eda de San Salvador'\n   - Subtitle: 'Alcald\u00eda Municipal de San Salvador, El Salvador'\n   - Status Badge: 'ABIERTA' (Teal/Mint style)\n   - Score: '92/100' (High compatibility)\n4. Action Bar (Top Right):\n   - Button 'Verificar' (Outline)\n   - Button 'Descartar' (Outline, subtle)\n   - Button 'Convertir a lead' (Primary solid #05aba9)\n5. Main Grid (3/4 width):\n   - Summary Card: Description of the tender, services requested (software implementation, hardware supply), and key requirements (ISO certification, 5+ years experience).\n   - Metadata Card: Source (COMPRASAL), Country (El Salvador), Publication Date (12 Oct 2023), Deadline (15 Nov 2023), Source URL (external link icon).\n   - AI Compatibility: Explanation of the 92 score (Match with Creativa Studios expertise in gov-tech and scaling).\n   - Verification Status: 'Pendiente de validaci\u00f3n t\u00e9cnica'.\n6. Sidebar/Secondary Column (1/4 width):\n   - Timeline/Activity: 'Detectado por IA (Hace 2h)', 'Verificaci\u00f3n autom\u00e1tica completada', 'Asignado para revisi\u00f3n manual'.\n\nTitle the screen: /oportunidades/[resultado] \u2014 Detalle\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_13}}\n  Description: Leadiva Logo Official\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+      "screenMetadata": {
+        "agentType": "PRO_AGENT",
+        "status": "COMPLETE"
+      },
+      "screenType": "DESIGN",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLuWG0Q682pzBmhcOcWN_kHmslDmHmY1Xwg3nINdgoCdVjT7shaqt1NM1dU68ObBhlUARL8_2cPuZVTIxDGWB6gfX9MHsOx6ah1O1pI7tw09P8bH5wyUew3t8wrQivhRvhAPohQq4Y1OSMlvJ7klqqMoJnI9FUZ0fF9aRdm7SaTGCVDqGW1bTG7P6Mp5-itESV9rJaMS8Yt0ygji1NpPmFZSqnWajDl5DoYhg4A1kZjNgnbLityooEIFng",
+        "name": "projects/929484233158471895/files/1dcd8144585848648a10d1b1482952f5"
+      },
+      "theme": {
+        "bodyFont": "IBM_PLEX_SANS",
+        "colorMode": "LIGHT",
+        "colorVariant": "TONAL_SPOT",
+        "customColor": "#05aba9",
+        "headlineFont": "IBM_PLEX_SANS",
+        "labelFont": "IBM_PLEX_SANS"
+      },
+      "title": "/oportunidades/[resultado] \u2014 Detalle",
+      "width": "2560"
+    }
+  }
+}

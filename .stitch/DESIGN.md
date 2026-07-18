@@ -4,7 +4,7 @@
 > **Estado:** Flat Design Institucional / Enterprise Clean con paleta mint pastel (aprobada en Stitch).  
 > **Stitch:** proyecto **Leadiva Flat Institutional** (`projects/929484233158471895`). Design system **Leadiva Mint Pastel** (`assets/8031487489663830885`).
 
-**Última actualización:** 2026-07-15
+**Última actualización:** 2026-07-17
 
 ---
 
@@ -71,18 +71,44 @@ Leadiva es un SaaS interno light con lenguaje **Flat Institutional**:
 
 ---
 
-## 4. Radios
+## 4. Logo
+
+- Fuente: `public/leadiva.svg`
+- Asset Stitch: `9223236306029932549` (Leadiva Logo Official)
+- Local: `.stitch/assets/leadiva-logo.png`
+
+---
+
+## 5. Rutas de producto (únicas pantallas canónicas)
+
+| Ruta | Screen ID | Título Stitch |
+| --- | --- | --- |
+| `/login` | `8285cca75b1745c3979acf51b4734e19` | `/login — Iniciar sesión` |
+| `/register` | `d7fdcc5e81df4405b53cbfdd60815701` | `/register — Crear cuenta` |
+| `/` | `367309a2a41d47769fec2984c9d371ee` | `/ — Inicio (menu perfil abierto)` — landing; menú en sidebar al click en perfil |
+| Menú perfil | `00ed51a4ddbf40259d3e762e9280933b` | Componente: click en DM → Perfil / Configuración / Cerrar sesión |
+| Modal Perfil | `5f642d4fe8d046fab9a19cf902668835` | Click en Perfil del menú → modal con Foto/Avatar, Nombres, Apellidos, Correo |
+| `/oportunidades` | `3f380f21890c4a83bc5d187552c6d69c` | `/oportunidades — Lista` — cards + sidebar historial + Pregunta a Leadiva |
+| `/oportunidades/[resultadoId]` | `d8109bc6d6064ad199052e00733b2623` | `/oportunidades/[resultadoId] — Detalle` — título, descripción, sitio web, fecha límite, monto |
+
+Capturas: `.stitch/screenshots/flat-institutional/{login,register,home,oportunidades,detalle}-mint.png`
+
+Proyecto: https://stitch.withgoogle.com/projects/929484233158471895
+
+Cualquier otra pantalla en el canvas Stitch es legacy y debe eliminarse manualmente en la UI (la API MCP no expone `delete_screen`). Lista: `.stitch/delete-screens-manual.json`.
+
+---
+
+## 6. Radios
 
 | Token | Valor | Clase |
 | --- | --- | --- |
 | `--radius-md` | `0.5rem` (8px) | `rounded-md` |
 | `--radius-sm` | `0.375rem` | `rounded-sm` |
 
-Aliases legacy `rounded-skeu*` siguen mapeados a 8px pero preferir `rounded-md`.
-
 ---
 
-## 5. Elevación
+## 7. Elevación
 
 - Cards / paneles / sidebar: **sin sombra** — `border border-surface-border`.
 - Modales, dropdowns, toasts, drawer móvil: `shadow-md` / `shadow-sm`.
@@ -90,7 +116,7 @@ Aliases legacy `rounded-skeu*` siguen mapeados a 8px pero preferir `rounded-md`.
 
 ---
 
-## 6. Componentes
+## 8. Componentes
 
 Preferir primitivos Leadiva (`SkeuButton`, `SkeuCard`, `SkeuInput`, …) — estilos ya flat; el prefijo `Skeu` es legacy de nombre.
 
@@ -116,20 +142,7 @@ Header `bg-accent-mint/60`, zebra `even:bg-surface-base`, hover `hover:bg-accent
 
 ---
 
-## 7. Pantallas Stitch (mint)
-
-| Pantalla | Screen ID |
-| --- | --- |
-| Dashboard | `43ad10c87a2444a4b33a6e97becf2e06` |
-| Leads | `83d2653bd32e4ac4adaa50ac0983662c` |
-
-Capturas: `.stitch/screenshots/flat-institutional/dashboard-mint.png`, `leads-mint.png`
-
-Proyecto: https://stitch.withgoogle.com/projects/929484233158471895
-
----
-
-## 8. Stack
+## 9. Stack
 
 - Next.js App Router · Tailwind CSS v4 (`@theme` en `globals.css`)
 - **No** usar `tailwind.config.ts` para tokens

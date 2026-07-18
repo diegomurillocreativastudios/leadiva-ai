@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#05aba9",
+                        "primary-dark": "#048f8d",
+                        mint: "#d9eedb",
+                        peach: "#fbcab9",
+                        aqua: "#9ce5de",
+                        coral: "#f9a79b",
+                        surface: "#f4faf6",
+                        border: "#d5e8e0",
+                        "text-primary": "#1c1917",
+                        "text-secondary": "#5f6b66"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Ibm Plex Sans"],
+                        display: ["Ibm Plex Sans"],
+                        body: ["Ibm Plex Sans"],
+                        label: ["Ibm Plex Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Ibm Plex Sans', sans-serif;
+            background-color: #f4faf6;
+            color: #1c1917;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-hidden">
+<!-- App Shell (Blurred/Dimmed Background) -->
+<div class="flex h-screen w-full relative">
+<!-- SideNavBar Component (Shared Component Logic) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f4faf6] border-r border-[#d5e8e0] flex flex-col py-6 px-4 z-10">
+<div class="flex items-center gap-2 text-xl font-headline font-black text-[#1c1917] mb-8">
+<img alt="Leadiva Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYGf5UtaQ2rGX2Ypit48c6jb8WI_P_thU_7yg7H6YdysgAgdJ39znqIOGJ8ah0RSoKMX5bSl-g6hwQ3J7DpqyeMLcpFYnL06ACBA4CQkDT4qR1GfssAVhoFs3VRACkkE1rNLpGjmBC4sopeoii7d1vhn4RMBj9DVIeQ3I1AAym9ij-DCepBQtw_9he5IQYsCX-dZ-ji_TK0sMHoo4a_y4UZf-3qxtDKtbfo581jcysxyyoc75fu7GXD5HdUM-SWImd26LiBgi1gw"/>
+<span>Leadiva</span>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="px-2 py-1 text-xs font-bold text-[#5f6b66] uppercase tracking-wider mb-2">Menú Principal</div>
+<a class="flex items-center gap-3 px-3 py-2 text-[#5f6b66] hover:text-[#05aba9] hover:bg-[#d9eedb]/50 rounded transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-sm font-medium">Dashboard</span>
+</a>
+<!-- Active State for Profile/Account -->
+<a class="flex items-center gap-3 px-3 py-2 text-[#05aba9] bg-[#d9eedb] font-bold border-r-2 border-[#05aba9] rounded-sm" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-body text-sm font-medium">Configuración</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#5f6b66] hover:text-[#05aba9] hover:bg-[#d9eedb]/50 rounded transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body text-sm font-medium">Búsquedas anteriores</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#5f6b66] hover:text-[#05aba9] hover:bg-[#d9eedb]/50 rounded transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-body text-sm font-medium">Explorar</span>
+</a>
+</nav>
+<!-- Sidebar Footer -->
+<div class="mt-auto pt-6 border-t border-[#d5e8e0]">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-mint flex items-center justify-center text-[#05aba9] font-bold border border-[#d5e8e0]">
+                        DM
+                    </div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#1c1917]">Diego Murillo Correa</span>
+<span class="text-xs text-[#5f6b66]">Institutional Platform</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component Logic) -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-white/80 backdrop-blur-md border-b border-[#d5e8e0] flex items-center justify-between px-8 z-20">
+<div class="flex items-center gap-4">
+<span class="text-[#05aba9] font-headline text-lg font-bold">Portal de Licitaciones</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<input class="w-64 bg-surface border border-border rounded px-4 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Buscar..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-[#5f6b66] text-lg">search</span>
+</div>
+<button class="p-2 text-[#5f6b66] hover:text-[#05aba9] transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-[#5f6b66] hover:text-[#05aba9] transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area (Home Screen Mockup) -->
+<main class="ml-64 pt-16 w-full min-h-screen flex flex-col items-center justify-center px-12">
+<div class="max-w-3xl w-full text-center space-y-8 opacity-40">
+<h1 class="text-4xl font-headline font-black text-text-primary">
+                    ¿Qué tipo de oportunidades/licitaciones estás buscando?
+                </h1>
+<div class="relative w-full max-w-2xl mx-auto">
+<input class="w-full h-16 px-6 rounded-xl border-2 border-border bg-white text-lg focus:border-primary focus:ring-0 transition-all shadow-sm" placeholder="Ej: Servicios de consultoría TI en Bogotá..." type="text"/>
+<button class="absolute right-3 top-3 bottom-3 px-8 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark transition-colors">
+                        Buscar
+                    </button>
+</div>
+<div class="flex flex-wrap justify-center gap-3">
+<span class="px-4 py-2 bg-mint text-primary-dark font-medium rounded-full text-sm">Construcción</span>
+<span class="px-4 py-2 bg-peach/30 text-text-primary font-medium rounded-full text-sm">Salud Pública</span>
+<span class="px-4 py-2 bg-aqua/30 text-text-primary font-medium rounded-full text-sm">Suministros</span>
+<span class="px-4 py-2 bg-mint text-primary-dark font-medium rounded-full text-sm">Infraestructura</span>
+</div>
+</div>
+</main>
+</div>
+<!-- Overlay Dimmer -->
+<div aria-hidden="true" class="fixed inset-0 bg-[#1c1917]/25 backdrop-blur-[1px] z-[99]"></div>
+<!-- Modal Container -->
+<div class="fixed inset-0 flex items-center justify-center z-[100] px-4">
+<div class="bg-white w-full max-w-[750px] rounded-lg border border-border shadow-xl animate-in fade-in zoom-in duration-300">
+<!-- Modal Header -->
+<div class="flex items-center justify-between px-6 py-4 border-b border-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<h2 class="text-sm font-bold text-text-primary uppercase tracking-wide">Perfil</h2>
+</div>
+<button class="text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Content (Wireframe logic) -->
+<div class="p-8 flex flex-col md:flex-row gap-8">
+<!-- Left Column: Avatar Container -->
+<div class="w-full md:w-[35%]">
+<div class="aspect-square bg-mint rounded-xl border border-border flex flex-col items-center justify-center gap-3 group relative cursor-pointer overflow-hidden">
+<div class="text-5xl font-black text-primary/80">DM</div>
+<span class="text-xs font-bold text-primary-dark uppercase">Cambiar Foto</span>
+<!-- Subtle overlay on hover -->
+<div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">add_a_photo</span>
+</div>
+</div>
+<p class="mt-4 text-xs text-text-secondary leading-relaxed">
+                        Sube una foto clara para que tus colaboradores puedan identificarte fácilmente en los reportes de licitación.
+                    </p>
+</div>
+<!-- Right Column: Form Fields -->
+<div class="w-full md:w-[65%] space-y-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-text-secondary uppercase tracking-tighter">Nombres</label>
+<input class="w-full px-4 py-2.5 bg-white border border-border rounded focus:ring-1 focus:ring-primary focus:border-primary text-sm font-medium text-text-primary" type="text" value="Diego"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-text-secondary uppercase tracking-tighter">Apellidos</label>
+<input class="w-full px-4 py-2.5 bg-white border border-border rounded focus:ring-1 focus:ring-primary focus:border-primary text-sm font-medium text-text-primary" type="text" value="Murillo Correa"/>
+</div>
+</div>
+<div class="space-y-1.5 pt-2">
+<label class="text-xs font-bold text-text-secondary uppercase tracking-tighter">Correo electrónico</label>
+<div class="w-full px-4 py-3 bg-surface border border-border/50 rounded flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary text-lg">mail</span>
+<span class="text-sm text-text-primary font-medium">usuario@creativastudios.us</span>
+<span class="ml-auto material-symbols-outlined text-text-secondary/50 text-sm">lock</span>
+</div>
+<p class="text-[10px] text-text-secondary italic">El correo institucional no puede ser modificado por el usuario.</p>
+</div>
+<div class="p-4 bg-peach/10 border-l-4 border-peach rounded-r flex gap-3">
+<span class="material-symbols-outlined text-coral">info</span>
+<div class="space-y-1">
+<p class="text-xs font-bold text-text-primary">Rol de Acceso</p>
+<p class="text-[11px] text-text-secondary">Tu cuenta tiene permisos de Administrador Regional para la plataforma Leadiva.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-8 py-6 bg-surface border-t border-border flex items-center justify-end gap-3 rounded-b-lg">
+<button class="px-5 py-2 text-sm font-bold text-text-secondary hover:text-text-primary transition-colors">
+                    Cancelar
+                </button>
+<button class="px-8 py-2 bg-primary text-white text-sm font-bold rounded shadow-sm hover:bg-primary-dark transition-all transform active:scale-[0.98]">
+                    Guardar cambios
+                </button>
+</div>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.querySelector('.bg-white.w-full.max-w-\\[750px\\]');
+            const overlay = document.querySelector('.fixed.inset-0.bg-\\[\\#1c1917\\]\\/25');
+            const closeBtn = document.querySelector('button .material-symbols-outlined:contains("close")')?.parentElement;
+            const cancelBtn = document.querySelector('button:contains("Cancelar")');
+
+            const closeModal = () => {
+                modal.classList.add('scale-95', 'opacity-0');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    // In a real app we would remove elements from DOM
+                    console.log('Modal dismissed');
+                }, 300);
+            };
+
+            // Adding listeners if elements exist
+            [closeBtn, cancelBtn].forEach(btn => {
+                if(btn) btn.onclick = closeModal;
+            });
+            
+            overlay.onclick = closeModal;
+        });
+
+        // Simple helper for button interaction
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('opacity-80'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('opacity-80'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('opacity-80'));
+        });
+    </script>
+</body></html>

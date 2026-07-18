@@ -2,20 +2,15 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { registerAction, type ActionState } from "@/features/auth/actions";
+import { LeadivaLogo } from "@/components/shared/leadiva-logo";
 import { Label } from "@/components/ui/label";
 import { SkeuButton } from "@/components/ui/skeu-button";
-import {
-  SkeuCard,
-  SkeuCardContent,
-  SkeuCardDescription,
-  SkeuCardFooter,
-  SkeuCardHeader,
-  SkeuCardTitle,
-} from "@/components/ui/skeu-card";
 import { SkeuInput } from "@/components/ui/skeu-input";
 import { SkeuToggle } from "@/components/ui/skeu-toggle";
+import { useActionToast } from "@/lib/use-action-toast";
 
 const initialState: ActionState = {};
 
@@ -36,6 +31,7 @@ const emptyFields: RegisterFields = {
 };
 
 export function RegisterForm() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(
     registerAction,
     initialState,
@@ -43,6 +39,10 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [fields, setFields] = useState<RegisterFields>(emptyFields);
   const passwordInputType = showPassword ? "text" : "password";
+
+  useActionToast(state, () => {
+    router.push("/login");
+  });
 
   function updateField<K extends keyof RegisterFields>(
     key: K,
@@ -52,26 +52,40 @@ export function RegisterForm() {
   }
 
   return (
-    <SkeuCard className="w-full max-w-md">
-      <SkeuCardHeader>
-        <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">
-          Leadiva
+    <div className="w-full">
+      <div className="mb-5 flex flex-col items-center gap-2 text-center">
+        <LeadivaLogo size="xl" tone="teal" priority className="size-36" />
+        <p className="font-heading text-3xl font-bold tracking-tight text-text-primary">
+          Leadiva{" "}
+          <span className="text-accent-coral">AI</span>
         </p>
-        <SkeuCardTitle className="text-xl">Crear cuenta</SkeuCardTitle>
-        <SkeuCardDescription>
-          Acceso interno para el equipo de Creativa Studios.
-        </SkeuCardDescription>
-      </SkeuCardHeader>
-      <form action={formAction}>
-        <SkeuCardContent className="space-y-4">
+      </div>
+
+      <div className="rounded-md border border-surface-border bg-surface-raised p-6 sm:p-7">
+        <header className="mb-5 text-center">
+          <h1 className="font-heading text-xl font-semibold tracking-tight text-text-primary">
+            Crear cuenta
+          </h1>
+        </header>
+
+        <form action={formAction} className="space-y-5">
           {state.error ? (
-            <p className="text-sm text-danger" role="alert">
-              {state.error}
-            </p>
+            <div
+              role="alert"
+              className="rounded-md border border-danger/25 bg-danger/5 px-3.5 py-2.5"
+            >
+              <p className="text-sm text-danger">{state.error}</p>
+            </div>
           ) : null}
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">Nombres</Label>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="firstName"
+                className="font-semibold text-text-primary"
+              >
+                Nombres
+              </Label>
               <SkeuInput
                 id="firstName"
                 name="firstName"
@@ -80,21 +94,33 @@ export function RegisterForm() {
                 onChange={(event) =>
                   updateField("firstName", event.target.value)
                 }
+                className="h-11 focus:border-accent focus:ring-1 focus:ring-accent"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Apellidos</Label>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="lastName"
+                className="font-semibold text-text-primary"
+              >
+                Apellidos
+              </Label>
               <SkeuInput
                 id="lastName"
                 name="lastName"
                 required
                 value={fields.lastName}
-                onChange={(event) => updateField("lastName", event.target.value)}
+                onChange={(event) =>
+                  updateField("lastName", event.target.value)
+                }
+                className="h-11 focus:border-accent focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="font-semibold text-text-primary">
+              Correo electrónico
+            </Label>
             <SkeuInput
               id="email"
               name="email"
@@ -102,10 +128,17 @@ export function RegisterForm() {
               required
               value={fields.email}
               onChange={(event) => updateField("email", event.target.value)}
+              className="h-11 focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="password"
+              className="font-semibold text-text-primary"
+            >
+              Contraseña
+            </Label>
             <SkeuInput
               id="password"
               name="password"
@@ -115,10 +148,17 @@ export function RegisterForm() {
               autoComplete="new-password"
               value={fields.password}
               onChange={(event) => updateField("password", event.target.value)}
+              className="h-11 focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="confirmPassword"
+              className="font-semibold text-text-primary"
+            >
+              Confirmar contraseña
+            </Label>
             <SkeuInput
               id="confirmPassword"
               name="confirmPassword"
@@ -130,32 +170,38 @@ export function RegisterForm() {
               onChange={(event) =>
                 updateField("confirmPassword", event.target.value)
               }
+              className="h-11 focus:border-accent focus:ring-1 focus:ring-accent"
             />
           </div>
+
           <SkeuToggle
             id="showPassword"
             checked={showPassword}
             onCheckedChange={setShowPassword}
             label="Mostrar contraseña"
           />
-        </SkeuCardContent>
-        <SkeuCardFooter className="flex-col gap-3">
+
           <SkeuButton
-            className="w-full"
+            className="mt-1 h-11 w-full font-bold"
             variant="primary"
+            size="lg"
             type="submit"
             disabled={pending}
           >
             {pending ? "Creando…" : "Registrarme"}
           </SkeuButton>
-          <p className="text-sm text-text-secondary">
-            ¿Ya tienes cuenta?{" "}
-            <Link className="font-medium text-accent underline-offset-2 hover:underline" href="/login">
-              Inicia sesión
-            </Link>
-          </p>
-        </SkeuCardFooter>
-      </form>
-    </SkeuCard>
+        </form>
+      </div>
+
+      <p className="mt-5 text-center text-sm text-text-secondary">
+        ¿Ya tienes cuenta?{" "}
+        <Link
+          className="font-semibold text-accent transition-colors hover:underline"
+          href="/login"
+        >
+          Inicia sesión
+        </Link>
+      </p>
+    </div>
   );
 }

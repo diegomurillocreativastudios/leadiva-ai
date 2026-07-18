@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva - Iniciar sesión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                soft: "#d9eedb", // Center mint
+                peach: "#fbcab9",
+                aqua: "#9ce5de",
+                teal: "#05aba9", // Primary CTA
+                tealDark: "#048f8d",
+                coral: "#f9a79b"
+              },
+              surface: {
+                base: "#f4faf6",
+                raised: "#ffffff",
+                border: "#d5e8e0"
+              },
+              text: {
+                primary: "#1c1917",
+                secondary: "#5f6b66"
+              }
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            fontFamily: {
+              headline: ["IBM Plex Sans", "sans-serif"],
+              display: ["IBM Plex Sans", "sans-serif"],
+              body: ["IBM Plex Sans", "sans-serif"],
+              label: ["IBM Plex Sans", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background-color: #f4faf6;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Checkbox Styling to match Flat Institutional */
+        input[type="checkbox"] {
+            color: #05aba9;
+            border-color: #d5e8e0;
+            border-radius: 0.125rem;
+        }
+        input[type="checkbox"]:focus {
+            ring-color: #05aba9;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col items-center justify-center">
+<!-- TopNavBar (Shell) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 py-4 w-full bg-[#f4faf6] dark:bg-stone-900 border-b border-[#d5e8e0] z-50">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-display font-bold text-[#05aba9]">Leadiva</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#5f6b66] font-body text-sm hover:bg-[#d9eedb] transition-colors px-4 py-2 rounded">Ayuda</button>
+<button class="text-[#05aba9] font-body text-sm font-bold border-b-2 border-[#05aba9] px-4 py-2">Entrar</button>
+</div>
+</header>
+<main class="w-full h-full flex flex-row overflow-hidden pt-16">
+<!-- LEFT SIDE: Branding (~42%) -->
+<section class="hidden lg:flex lg:w-[42%] bg-[#d9eedb] flex-col justify-between p-16 relative overflow-hidden">
+<div class="flex flex-col">
+<!-- Logo -->
+<div class="mb-6">
+<img alt="Leadiva Logo" class="h-28 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkSp2EIuyPF40Z-_nBIt2WRfM-v96NPpDwfNUAGmwEyUXMeC0cdBZCWJI0oWUVj31eNJv6RQiFCng2Iz5xgzHDX4MGsP32OdrczSlUWfpKgs_0lepXycC5OIssc2GV6hmPneIqH3dD69rIQzqu4O3EghEUM-IsVy_CKxngtOVO91XpULfBbKHrfu0zBQ4rFePr1QQoqw6IPIf7f6HjCoOH4spi7EmW0H_hudZ6Y0ApqyvqEISMljg3dVehM8ihDUj05R_QUfPjXg"/>
+</div>
+<!-- Brand Wordmark -->
+<h1 class="text-4xl font-bold text-[#1c1917] tracking-tight mb-2">Leadiva</h1>
+<p class="text-lg text-[#5f6b66] font-medium">Inteligencia comercial para Creativa Studios</p>
+</div>
+<!-- Footer Section Left -->
+<div class="mt-auto">
+<div class="w-12 h-[2px] bg-[#05aba9] mb-4"></div>
+<p class="text-[#5f6b66] text-sm font-medium tracking-wide">Acceso interno · Creativa Studios</p>
+</div>
+</section>
+<!-- RIGHT SIDE: Login Form (~58%) -->
+<section class="w-full lg:w-[58%] bg-white flex flex-col justify-center items-center px-8 lg:px-24">
+<div class="w-full max-w-md">
+<!-- Header -->
+<header class="mb-10">
+<h2 class="text-3xl font-bold text-[#1c1917] mb-2">Iniciar sesión</h2>
+<p class="text-[#5f6b66]">Usa tu correo corporativo de Creativa</p>
+</header>
+<!-- Login Form -->
+<form class="space-y-6" id="loginForm">
+<!-- Email Field -->
+<div class="space-y-1.5">
+<label class="block text-sm font-semibold text-[#1c1917]" for="email">Correo electrónico</label>
+<input class="block w-full px-4 py-3 bg-white border border-[#d5e8e0] text-[#1c1917] focus:ring-1 focus:ring-[#05aba9] focus:border-[#05aba9] outline-none transition-all placeholder:text-stone-400" id="email" name="email" placeholder="usuario@creativastudios.com" required="" type="email"/>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<label class="block text-sm font-semibold text-[#1c1917]" for="password">Contraseña</label>
+<div class="relative">
+<input class="block w-full px-4 py-3 bg-white border border-[#d5e8e0] text-[#1c1917] focus:ring-1 focus:ring-[#05aba9] focus:border-[#05aba9] outline-none transition-all" id="password" name="password" required="" type="password"/>
+</div>
+</div>
+<!-- Options -->
+<div class="flex items-center justify-between">
+<label class="flex items-center cursor-pointer group">
+<input class="w-4 h-4 text-[#05aba9] border-[#d5e8e0] focus:ring-[#05aba9]" id="togglePassword" type="checkbox"/>
+<span class="ml-2 text-sm text-[#5f6b66] group-hover:text-[#1c1917] transition-colors">Mostrar contraseña</span>
+</label>
+</div>
+<!-- CTA Button -->
+<button class="w-full bg-[#05aba9] hover:bg-[#048f8d] text-white font-bold py-3.5 px-4 rounded transition-colors active:opacity-80" type="submit">
+                        Entrar
+                    </button>
+</form>
+<!-- Helper Footer -->
+<div class="mt-8 pt-8 border-t border-[#d5e8e0] flex flex-col gap-4">
+<p class="text-sm text-center">
+<span class="text-[#5f6b66]">¿No tienes cuenta?</span>
+<a class="text-[#05aba9] font-bold hover:underline ml-1 transition-all" href="#">Regístrate</a>
+</p>
+<div class="text-center">
+<span class="text-[10px] font-bold tracking-[0.1em] text-[#a8a29e] uppercase">Solo dominios autorizados</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Shell -->
+<footer class="fixed bottom-0 w-full flex justify-between items-center px-8 py-4 w-full bg-[#f4faf6] dark:bg-stone-900 border-t border-[#d5e8e0] z-50">
+<p class="font-body text-[11px] text-[#5f6b66]">© 2024 Leadiva. Todos los derechos reservados.</p>
+<nav class="flex gap-6">
+<a class="font-body text-[11px] text-[#5f6b66] hover:text-[#05aba9] cursor-pointer" href="#">Privacidad</a>
+<a class="font-body text-[11px] text-[#5f6b66] hover:text-[#05aba9] cursor-pointer" href="#">Términos</a>
+<a class="font-body text-[11px] text-[#5f6b66] hover:text-[#05aba9] cursor-pointer" href="#">Soporte</a>
+</nav>
+</footer>
+<script>
+        // Password Visibility Toggle Interaction
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('change', function() {
+            const type = this.checked ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+        });
+
+        // Simple Form Submission Interaction
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button');
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Verificando...</span>';
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                alert('Sistema Leadiva: Dominio verificado. Por favor verifica tu bandeja de entrada para el código de acceso MFA.');
+            }, 1500);
+        });
+    </script>
+</body></html>

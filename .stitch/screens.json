@@ -15,18 +15,176 @@
     "surface_raised": "#ffffff",
     "surface_border": "#d5e8e0"
   },
+  "routes": {
+    "/login": "8285cca75b1745c3979acf51b4734e19",
+    "/register": "d7fdcc5e81df4405b53cbfdd60815701",
+    "/": "367309a2a41d47769fec2984c9d371ee",
+    "/oportunidades": "3f380f21890c4a83bc5d187552c6d69c",
+    "/oportunidades/[resultadoId]": "d8109bc6d6064ad199052e00733b2623"
+  },
   "screens": {
-    "home": {
-      "screenId": "43ad10c87a2444a4b33a6e97becf2e06",
-      "name": "projects/929484233158471895/screens/43ad10c87a2444a4b33a6e97becf2e06",
-      "title": "Dashboard Resumen - Leadiva (Mint)",
-      "localScreenshot": ".stitch/screenshots/flat-institutional/dashboard-mint.png"
+    "login": {
+      "screenId": "8285cca75b1745c3979acf51b4734e19",
+      "route": "/login",
+      "title": "Iniciar Sesi\u00f3n - Leadiva Mint Official",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/login-mint.png"
     },
-    "leads": {
-      "screenId": "83d2653bd32e4ac4adaa50ac0983662c",
-      "name": "projects/929484233158471895/screens/83d2653bd32e4ac4adaa50ac0983662c",
-      "title": "Leads y Licitaciones - Leadiva (Mint)",
-      "localScreenshot": ".stitch/screenshots/flat-institutional/leads-mint.png"
+    "register": {
+      "screenId": "d7fdcc5e81df4405b53cbfdd60815701",
+      "route": "/register",
+      "title": "/register \u2014 Crear cuenta",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/register-mint.png"
+    },
+    "home": {
+      "screenId": "367309a2a41d47769fec2984c9d371ee",
+      "route": "/",
+      "title": "/ \u2014 Inicio (menu perfil abierto)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/home-mint.png",
+      "interaction": "profileMenuOpen",
+      "previousScreenId": "c479876d9d4b42ed96fa279f1a987c79",
+      "wireframeScreenId": "16368389383766733642"
+    },
+    "oportunidades": {
+      "screenId": "3f380f21890c4a83bc5d187552c6d69c",
+      "route": "/oportunidades",
+      "title": "/oportunidades \u2014 Lista",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/oportunidades-mint.png",
+      "wireframeScreenId": "4239728078227177183",
+      "previousScreenId": "2c7bb73feb7c428b8498158b637e8d46"
+    },
+    "detalle": {
+      "screenId": "d8109bc6d6064ad199052e00733b2623",
+      "route": "/oportunidades/[resultadoId]",
+      "title": "/oportunidades/[resultadoId] \u2014 Detalle",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/detalle-mint.png",
+      "wireframeScreenId": "8525775090643413854",
+      "previousScreenId": "ad1d3f4910ae41c5bd76bdf4f6bd75d4"
+    },
+    "logoOfficial": {
+      "screenId": "9223236306029932549",
+      "title": "Leadiva Logo Official",
+      "localAsset": ".stitch/assets/leadiva-logo.png",
+      "source": "public/leadiva.svg",
+      "assetOnly": true
+    },
+    "homeWireframe": {
+      "screenId": "16368389383766733642",
+      "title": "Wireframe / \u2014 Home",
+      "localAsset": ".stitch/assets/home-wireframe.png",
+      "assetOnly": true
+    },
+    "oportunidadesWireframe": {
+      "screenId": "4239728078227177183",
+      "title": "Wireframe /oportunidades",
+      "localAsset": ".stitch/assets/oportunidades-wireframe.png",
+      "assetOnly": true
+    },
+    "detalleWireframe": {
+      "screenId": "8525775090643413854",
+      "title": "Wireframe /oportunidades/[resultadoId]",
+      "localAsset": ".stitch/assets/detalle-wireframe.png",
+      "assetOnly": true
+    },
+    "profileMenuWireframe": {
+      "screenId": "2653987352702845298",
+      "title": "Wireframe menu perfil",
+      "localAsset": ".stitch/assets/profile-menu-wireframe.png",
+      "assetOnly": true
+    },
+    "homeProfileMenuOpen": {
+      "screenId": "367309a2a41d47769fec2984c9d371ee",
+      "route": "/",
+      "title": "/ \u2014 Inicio (menu perfil abierto)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/home-mint.png",
+      "note": "Estado abierto del men\u00fa al hacer click en el perfil de la sidebar"
+    },
+    "profileMenu": {
+      "screenId": "00ed51a4ddbf40259d3e762e9280933b",
+      "title": "Componente \u2014 Menu perfil (click)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/profile-menu-mint.png",
+      "component": true,
+      "appliesTo": [
+        "/",
+        "/oportunidades",
+        "/oportunidades/[resultadoId]"
+      ]
+    },
+    "profileModalWireframe": {
+      "screenId": "4469537549687993531",
+      "title": "Wireframe modal Perfil",
+      "localAsset": ".stitch/assets/profile-modal-wireframe.png",
+      "assetOnly": true
+    },
+    "profileModal": {
+      "screenId": "5f642d4fe8d046fab9a19cf902668835",
+      "title": "Modal \u2014 Perfil (desde menu)",
+      "localScreenshot": ".stitch/screenshots/flat-institutional/profile-modal-mint.png",
+      "interaction": "click Perfil in profile menu opens this modal",
+      "appliesTo": [
+        "/",
+        "/oportunidades",
+        "/oportunidades/[resultadoId]"
+      ],
+      "wireframeScreenId": "4469537549687993531"
     }
-  }
+  },
+  "legacyScreensToDeleteInUi": [
+    {
+      "screenId": "09f9790fb5a74467b5eaac51e6a7973a",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva (Coral)"
+    },
+    {
+      "screenId": "0c7f16883303434dad116f88b137ea1d",
+      "hidden": true,
+      "title": "Dashboard Resumen - Leadiva"
+    },
+    {
+      "screenId": "18c0b09dd59a40e8a00f022a0d4510a4",
+      "hidden": true,
+      "title": "Leadiva Logo"
+    },
+    {
+      "screenId": "2ce5eae1e51043b486d127ca18f7a2d2",
+      "hidden": true,
+      "title": "Iniciar Sesi\u00f3n - Leadiva"
+    },
+    {
+      "screenId": "43ad10c87a2444a4b33a6e97becf2e06",
+      "hidden": true,
+      "title": "Dashboard Resumen - Leadiva (Mint)"
+    },
+    {
+      "screenId": "49818abb822944019926f55d41fd6c09",
+      "hidden": true,
+      "title": "Iniciar Sesi\u00f3n - Creativa Studios"
+    },
+    {
+      "screenId": "83d2653bd32e4ac4adaa50ac0983662c",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva (Mint)"
+    },
+    {
+      "screenId": "89f6cce9dc474a8dba37ff681015c194",
+      "hidden": true,
+      "title": "Resumen del Dashboard - Leadiva"
+    },
+    {
+      "screenId": "94b428e6942249ac87a1ef40a513afef",
+      "hidden": true,
+      "title": "Leads y Licitaciones - Leadiva"
+    },
+    {
+      "screenId": "d5ee748ae6b349d2aace3a89c94b1472",
+      "hidden": false,
+      "title": "Remove the white background from this logo to make it transparent. Keep only the black line-art rocket and circuit icon. The output should be a clean, high-resolution PNG with a transparent background. No changes to the icon geometry or stroke weight."
+    }
+  ],
+  "stillVisibleExtras": [
+    {
+      "screenId": "d5ee748ae6b349d2aace3a89c94b1472",
+      "hidden": false,
+      "title": "Remove the white background from this logo to make it transparent. Keep only the black line-art rocket and circuit icon. The output should be a clean, high-resolution PNG with a transparent background. No changes to the icon geometry or stroke weight."
+    }
+  ]
 }

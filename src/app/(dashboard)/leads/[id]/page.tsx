@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { ExternalLink } from "@/components/shared/external-link";
 import {
@@ -33,9 +33,6 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
-  if (!session.user.interestCategories?.length) {
-    redirect("/onboarding");
-  }
 
   const { id } = await params;
   const [lead, assignees] = await Promise.all([

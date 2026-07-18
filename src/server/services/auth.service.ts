@@ -24,7 +24,7 @@ export async function registerUser(input: RegisterInput) {
   if (!isAllowedEmailDomain(email)) {
     throw new AuthServiceError(
       "DOMAIN_NOT_ALLOWED",
-      "Solo se permiten correos de dominios Creativa.",
+      "No pudimos validar este correo. Revísalo e inténtalo de nuevo.",
     );
   }
 

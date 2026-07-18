@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva — Oportunidades</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                coral: "#f9a79b",
+                peach: "#fbcab9",
+                mint: "#d9eedb",
+                aqua: "#9ce5de",
+                teal: "#05aba9",
+                darkTeal: "#048f8d"
+              },
+              surface: {
+                base: "#f4faf6",
+                raised: "#ffffff",
+                border: "#d5e8e0"
+              },
+              text: {
+                primary: "#1c1917",
+                secondary: "#5f6b66"
+              }
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            fontFamily: {
+              headline: ["IBM Plex Sans", "sans-serif"],
+              display: ["IBM Plex Sans", "sans-serif"],
+              body: ["IBM Plex Sans", "sans-serif"],
+              label: ["IBM Plex Sans", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background-color: #f4faf6;
+        color: #1c1917;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #d5e8e0;
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #9ce5de;
+      }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex">
+<!-- SIDEBAR -->
+<aside class="w-72 h-full bg-white border-r border-surface-border flex flex-col shrink-0 z-20">
+<!-- TOP ZONE: Logo & Brand -->
+<div class="p-6 border-b border-surface-border flex items-center gap-3">
+<img alt="Leadiva Rocket Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGVfO7guqQ5gNtjgKaBfRNYAFT3GWpbN2phi_NkQtBEFNjQ4xooMMzsncA7dKJxSZAI-MHQSNB5Aohu8MR8e10POyjZVGbfipVbRgAnjHPlN92pxWvrAA_btnIbYBB-iQufRDu8A1FnNe7D0omnx87npWbbxVM7336yR-1HQcwohAdoUDqrkHS7QyjV-NkUCecViKAFFJm5f6-b7HNxylwwqfUqqMFiqBkuFs0c74S4LYc-JlhsZe1B5A2vvY3OlLCjrJzteWLlA"/>
+<span class="text-xl font-bold tracking-tight text-text-primary">Leadiva</span>
+</div>
+<!-- MIDDLE ZONE: Recent Searches -->
+<div class="flex-1 overflow-y-auto py-6">
+<h3 class="px-6 mb-4 text-xs font-bold uppercase tracking-wider text-text-secondary opacity-70">Búsquedas anteriores</h3>
+<nav class="space-y-1">
+<a class="flex items-center px-6 py-3 text-sm text-text-primary hover:bg-brand-mint transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-brand-teal text-lg">history</span>
+<span class="truncate">Licitación Software El Salvador</span>
+</a>
+<a class="flex items-center px-6 py-3 text-sm text-text-primary hover:bg-brand-mint transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-brand-teal text-lg">history</span>
+<span class="truncate">RFP Consultoría IA Banca</span>
+</a>
+<a class="flex items-center px-6 py-3 text-sm text-text-primary hover:bg-brand-mint transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3 text-brand-teal text-lg">history</span>
+<span class="truncate">Términos de referencia COMPRASAL IT</span>
+</a>
+</nav>
+</div>
+<!-- BOTTOM ZONE: User Profile -->
+<div class="p-6 border-t border-surface-border flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-brand-mint border border-brand-teal/20 flex items-center justify-center text-brand-teal font-bold text-sm">
+                DM
+            </div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-primary truncate">Diego Murillo Correa</span>
+<span class="text-xs text-text-secondary">Institutional Access</span>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="flex-1 flex flex-col relative h-full">
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-8 pb-32">
+<header class="mb-8">
+<h1 class="text-2xl font-bold text-text-primary">Oportunidades de Mercado</h1>
+<p class="text-text-secondary mt-1">Explora las últimas licitaciones y solicitudes de propuestas identificadas.</p>
+</header>
+<div class="grid grid-cols-1 gap-4">
+<!-- Card 1 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Modernización Red Ferroviaria El Salvador</h2>
+<span class="bg-brand-mint text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Público</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Proyecto de actualización integral de sistemas de señalización y control para la red de transporte ferroviario de carga y pasajeros a nivel nacional.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 12/03/2025
+                    </div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Suministro Hardware Educativo</h2>
+<span class="bg-brand-mint text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Público</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Adquisición de terminales de computación y tablets para el programa de digitalización escolar en zonas rurales y centros urbanos prioritarios.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 28/11/2024
+                    </div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Servicios Cloud Banca Nacional</h2>
+<span class="bg-brand-peach text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Privado</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Migración de infraestructura crítica a entornos de nube híbrida con altos estándares de seguridad y redundancia para servicios financieros masivos.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 15/01/2025
+                    </div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Consultoría Eficiencia Energética Ecopetrol</h2>
+<span class="bg-brand-peach text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Privado</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Análisis y optimización de procesos de refinación para la reducción de huella de carbono y mejora del rendimiento energético en plantas industriales.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 04/04/2025
+                    </div>
+</div>
+<!-- Card 5 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Mantenimiento Red Eléctrica ETESAL</h2>
+<span class="bg-brand-mint text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Público</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Servicios preventivos y correctivos para subestaciones de alta tensión y líneas de transmisión en la zona paracentral del territorio.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 20/12/2024
+                    </div>
+</div>
+<!-- Card 6 -->
+<div class="bg-white border border-surface-border rounded-md p-5 flex flex-col gap-3 transition-colors hover:border-brand-teal/30">
+<div class="flex justify-between items-start">
+<h2 class="text-base font-bold text-text-primary">Equipamiento Laboratorio Nacional</h2>
+<span class="bg-brand-mint text-text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Público</span>
+</div>
+<p class="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        Suministro de instrumental analítico de alta precisión para investigación biotecnológica y control de calidad alimentaria nacional.
+                    </p>
+<div class="flex items-center text-xs text-text-secondary mt-1">
+<span class="material-symbols-outlined text-sm mr-1.5 opacity-60">event</span>
+                        Fecha límite: 10/02/2025
+                    </div>
+</div>
+</div>
+</div>
+<!-- STICKY BOTTOM INPUT BAR -->
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-surface-base via-surface-base/90 to-transparent">
+<div class="max-w-5xl mx-auto flex items-center bg-white border border-surface-border rounded-lg p-2 focus-within:ring-2 focus-within:ring-brand-teal/20 focus-within:border-brand-teal transition-all">
+<div class="flex-1 px-4">
+<input class="w-full border-none focus:ring-0 text-text-primary bg-transparent py-2 placeholder-text-secondary/50" placeholder="Pregunta a Leadiva" type="text"/>
+</div>
+<button class="bg-brand-teal hover:bg-brand-darkTeal text-white w-10 h-10 flex items-center justify-center rounded-md transition-transform active:scale-95 shadow-sm">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction: Smooth hover for cards
+        document.querySelectorAll('.grid > div').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+                card.style.transition = 'transform 0.2s ease, border-color 0.2s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input');
+        const searchContainer = searchInput.closest('div.flex');
+        searchInput.addEventListener('focus', () => {
+            searchContainer.classList.add('shadow-md');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchContainer.classList.remove('shadow-md');
+        });
+    </script>
+</body></html>

@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
 
 import { AppSidebar } from "@/components/shared/app-sidebar";
 
@@ -12,17 +11,6 @@ export function DashboardShell({
   userName: string;
   children: ReactNode;
 }) {
-  const pathname = usePathname();
-  const isOnboarding = pathname.startsWith("/onboarding");
-
-  if (isOnboarding) {
-    return (
-      <main className="min-h-screen bg-surface-base">
-        {children}
-      </main>
-    );
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-surface-base md:flex-row">
       <AppSidebar userName={userName} />

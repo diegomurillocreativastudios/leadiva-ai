@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Leadiva - Detalle de Oportunidad</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: "#05aba9",
+                            dark: "#048f8d",
+                            light: "#9ce5de"
+                        },
+                        mint: {
+                            DEFAULT: "#d9eedb",
+                            soft: "#f4faf6"
+                        },
+                        peach: {
+                            DEFAULT: "#fbcab9",
+                            coral: "#f9a79b"
+                        },
+                        surface: {
+                            base: "#f4faf6",
+                            raised: "#ffffff",
+                            border: "#d5e8e0"
+                        },
+                        text: {
+                            primary: "#1c1917",
+                            secondary: "#5f6b66",
+                            inactive: "#a8a29e"
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Ibm Plex Sans", "sans-serif"],
+                        display: ["Ibm Plex Sans", "sans-serif"],
+                        body: ["Ibm Plex Sans", "sans-serif"],
+                        label: ["Ibm Plex Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Ibm Plex Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+<body class="bg-surface-base text-text-primary h-full overflow-hidden">
+<!-- Sidebar (Shared Component: SideNavBar inspired) -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-surface-raised border-r border-surface-border flex flex-col z-20">
+<!-- TOP: Logo Section -->
+<div class="p-6 border-b border-surface-border flex items-center gap-3">
+<img alt="Leadiva Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUer_bZ3zy5f7oUPQ2sticGPwewPyYj17wD-gzUqHCVvKXRo3qLXx7rAsxMrzOh-A700b-fJdmDdqu7_mREhLwP5_oKUeskTzQsRQYMVpbM0i9ZdPJNrA2bJt_paVxaSyWW87inbbTLcp79cyo7c7vYRk8lww-662K3gDYfQCaSE511ZarN2qzhWxJrxXINqyK1F_EOgHM4XmPsVwswrp5cKJuEsKfPFYh5g9yZdg5L25m8u9wKG8INK9sW3hP63jfBKB7sUfTKg"/>
+<span class="text-xl font-headline font-bold text-primary tracking-tight">Leadiva</span>
+</div>
+<!-- MIDDLE: Previous Opportunities -->
+<div class="flex-1 overflow-y-auto py-6">
+<h3 class="px-6 mb-4 text-xs font-bold text-text-secondary uppercase tracking-widest">Oportunidades anteriores</h3>
+<nav class="space-y-1">
+<a class="flex items-center px-6 py-3 text-sm text-text-secondary hover:bg-mint hover:text-primary transition-colors duration-200" href="#">
+<span class="truncate">Modernización Red Ferroviaria</span>
+</a>
+<a class="flex items-center px-6 py-3 text-sm text-text-secondary hover:bg-mint hover:text-primary transition-colors duration-200" href="#">
+<span class="truncate">Suministro Hardware</span>
+</a>
+<a class="flex items-center px-6 py-3 text-sm text-text-secondary hover:bg-mint hover:text-primary transition-colors duration-200 border-r-2 border-primary bg-mint/30 font-medium" href="#">
+<span class="truncate text-primary">Servicios Cloud</span>
+</a>
+</nav>
+</div>
+<!-- BOTTOM: User Identity -->
+<div class="p-6 border-t border-surface-border">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-peach flex items-center justify-center text-primary font-bold text-sm">
+                    DM
+                </div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-primary">Diego Murillo Correa</span>
+<span class="text-xs text-text-secondary">Institutional Lead</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen p-12 flex justify-center">
+<!-- DETAIL PANEL (Single Focused Card) -->
+<div class="max-w-4xl w-full bg-surface-raised border border-surface-border rounded-md p-10 flex flex-col gap-8 self-start">
+<!-- Title & Status -->
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="px-2 py-1 bg-mint text-primary text-[10px] font-bold tracking-widest rounded uppercase">Público</span>
+</div>
+<h1 class="text-3xl font-headline font-bold text-text-primary leading-tight">
+                    Modernización del Sistema de Gestión de Residuos - Alcaldía de San Salvador
+                </h1>
+</div>
+<!-- Description -->
+<div class="space-y-3">
+<h2 class="text-sm font-bold text-text-secondary uppercase tracking-wider">Descripción del Proyecto</h2>
+<p class="text-text-secondary leading-relaxed max-w-2xl">
+                    Este proyecto contempla la actualización integral tecnológica de los procesos de recolección y disposición final de desechos sólidos. Se requiere la implementación de sensores IoT en contenedores, optimización de rutas mediante IA y una plataforma de monitoreo en tiempo real para la ciudadanía. La propuesta debe alinearse con los estándares internacionales de sostenibilidad y reducción de huella de carbono.
+                </p>
+</div>
+<!-- Meta Information Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12 border-t border-surface-border pt-8">
+<!-- Website -->
+<div class="space-y-1">
+<span class="text-xs font-bold text-text-secondary uppercase tracking-widest block">Sitio web</span>
+<a class="text-primary hover:text-primary-dark font-medium transition-colors inline-flex items-center gap-1" href="https://www.comprasalsv.gob.sv/oportunidad/lic-2024-001" target="_blank">
+                        https://www.comprasalsv.gob.sv/oportunidad/lic-2024-001
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+</a>
+</div>
+<!-- Deadline -->
+<div class="space-y-1">
+<span class="text-xs font-bold text-text-secondary uppercase tracking-widest block">Fecha límite</span>
+<span class="text-text-primary font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-peach-coral">event</span>
+                        20/12/2024
+                    </span>
+</div>
+<!-- Amount -->
+<div class="space-y-1">
+<span class="text-xs font-bold text-text-secondary uppercase tracking-widest block">Monto Estimado</span>
+<span class="text-2xl font-bold text-primary">
+                        $1,250,000.00 <span class="text-sm font-normal text-text-secondary">USD</span>
+</span>
+</div>
+<!-- ID/Reference -->
+<div class="space-y-1">
+<span class="text-xs font-bold text-text-secondary uppercase tracking-widest block">Referencia ID</span>
+<span class="text-text-primary font-mono text-sm">LIC-2024-SV-001</span>
+</div>
+</div>
+<!-- Extra Whitespace for Focus (per wireframe) -->
+<div class="mt-16 h-32"></div>
+</div>
+</main>
+<!-- Micro-interaction script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animation for page entrance
+            const panel = document.querySelector('main > div');
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(10px)';
+            panel.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            
+            setTimeout(() => {
+                panel.style.opacity = '1';
+                panel.style.transform = 'translateY(0)';
+            }, 100);
+
+            // Hover effects on sidebar logic already handled by Tailwind but could be enhanced
+            const navItems = document.querySelectorAll('aside nav a');
+            navItems.forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    item.style.paddingLeft = '1.75rem';
+                });
+                item.addEventListener('mouseleave', () => {
+                    item.style.paddingLeft = '1.5rem';
+                });
+                item.style.transition = 'all 0.2s ease-in-out';
+            });
+        });
+    </script>
+</body></html>

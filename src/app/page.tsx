@@ -9,9 +9,5 @@ export default async function RootPage() {
     redirect("/login");
   }
 
-  if (!session.user.interestCategories?.length) {
-    redirect("/onboarding");
-  }
-
   redirect("/home");
 }

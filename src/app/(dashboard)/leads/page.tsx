@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -36,9 +35,6 @@ export default async function LeadsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await requireSession();
-  if (!session.user.interestCategories?.length) {
-    redirect("/onboarding");
-  }
 
   const params = await searchParams;
   const filters = parseLeadFilters(params);
