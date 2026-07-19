@@ -9,76 +9,89 @@ import {
   useTransition,
   type FormEvent,
 } from "react";
-import { ArrowRight, Loader2, Search } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  BriefcaseBusiness,
+  Code2,
+  Loader2,
+  Search,
+  Server,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { SkeuButton } from "@/components/ui/skeu-button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   FOCUS_HOME_SEARCH_FLAG,
   NEW_HOME_SEARCH_EVENT,
   pickHomeGreetingParts,
   type HomeGreetingParts,
 } from "@/lib/home-greetings";
+import {
+  HOME_COMPRASAL_CATEGORIES,
+  buildComprasalCategoryQuery,
+  type HomeComprasalCategoryId,
+} from "@/lib/home-comprasal-categories";
 import { homeSearchHref } from "@/lib/home-search-href";
 import {
-  HOME_SEARCH_SOURCES,
+  isPartialSearchResponse,
+  readSearchHttpPayload,
+} from "@/lib/search-http-response";
+import {
+  GROUNDED_HOME_QUERY_MAX_LENGTH,
   defaultHomeSearchSource,
-  homeSearchSourceIds,
   resolveHomeSearchRequest,
   type HomeSearchSourceId,
 } from "@/lib/home-search-source";
 import { cn } from "@/lib/utils";
 
-type SearchResponse = {
-  executionId?: string;
-  error?: string;
-  message?: string;
-  configured?: boolean;
-  status?: string;
-  candidatesCreated?: number;
-  candidatesUpdated?: number;
-  candidatesDiscarded?: number;
-  candidatesFound?: number;
-  candidatesVerified?: number;
-};
-
-function isHomeSearchSourceId(value: string): value is HomeSearchSourceId {
-  return (homeSearchSourceIds as readonly string[]).includes(value);
-}
+const CATEGORY_ICONS = {
+  code: Code2,
+  brain: Brain,
+  server: Server,
+  briefcase: BriefcaseBusiness,
+} as const satisfies Record<
+  (typeof HOME_COMPRASAL_CATEGORIES)[number]["icon"],
+  LucideIcon
+>;
 
 export function AskLeadivaPrompt({
   variant = "hero",
   userName = "",
+  source = defaultHomeSearchSource,
 }: {
   /** `hero` shows the intro greeting; `docked` is input-only at the bottom. */
   variant?: "hero" | "docked";
   userName?: string;
+  source?: HomeSearchSourceId;
 } = {}) {
   const router = useRouter();
   const inputId = useId();
-  const sourceId = useId();
+  const categoriesLegendId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const [source, setSource] = useState<HomeSearchSourceId>(
-    defaultHomeSearchSource,
-  );
+  const [selectedCategories, setSelectedCategories] = useState<
+    HomeComprasalCategoryId[]
+  >([]);
   const [pending, startTransition] = useTransition();
   const [greeting, setGreeting] = useState<HomeGreetingParts | null>(null);
   const docked = variant === "docked";
-  const searchRequest = resolveHomeSearchRequest(source, query.trim());
-  const minimumQueryLength = source === "COMPRASAL" ? 2 : 3;
+  const isComprasal = source === "COMPRASAL";
+  const comprasalQuery = buildComprasalCategoryQuery(selectedCategories);
+  const groundedQuery = query.trim().slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH);
+  const effectiveQuery = isComprasal ? comprasalQuery : groundedQuery;
+  const searchRequest = resolveHomeSearchRequest(source, effectiveQuery);
   const canSubmit =
     !pending &&
-    (!searchRequest.requiresQuery || query.trim().length >= minimumQueryLength);
+    (isComprasal
+      ? selectedCategories.length > 0
+      : groundedQuery.length >= 3);
 
   function focusSearchIfEmpty() {
+    if (isComprasal) {
+      return;
+    }
     const input = inputRef.current;
     if (!input || input.value.trim().length > 0) {
       return;
@@ -97,8 +110,9 @@ export function AskLeadivaPrompt({
 
     function onNewSearch() {
       setQuery("");
+      setSelectedCategories([]);
       requestAnimationFrame(() => {
-        inputRef.current?.focus();
+        focusSearchIfEmpty();
       });
     }
 
@@ -114,16 +128,30 @@ export function AskLeadivaPrompt({
       cancelAnimationFrame(greetingFrame);
       window.removeEventListener(NEW_HOME_SEARCH_EVENT, onNewSearch);
     };
-  }, [docked, userName]);
+  }, [docked, isComprasal, userName]);
+
+  function toggleCategory(categoryId: HomeComprasalCategoryId) {
+    setSelectedCategories((current) =>
+      current.includes(categoryId)
+        ? current.filter((id) => id !== categoryId)
+        : [...current, categoryId],
+    );
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const trimmed = query.trim();
-    const request = resolveHomeSearchRequest(source, trimmed);
+    const requestQuery = isComprasal
+      ? buildComprasalCategoryQuery(selectedCategories)
+      : query.trim().slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH);
+    const request = resolveHomeSearchRequest(source, requestQuery);
 
-    const minimumLength = source === "COMPRASAL" ? 2 : 3;
-    if (request.requiresQuery && trimmed.length < minimumLength) {
-      toast.error(`Escribe al menos ${minimumLength} caracteres para buscar.`);
+    if (isComprasal && selectedCategories.length === 0) {
+      toast.error("Selecciona al menos una categoría para buscar.");
+      return;
+    }
+
+    if (!isComprasal && requestQuery.length < 3) {
+      toast.error("Escribe al menos 3 caracteres para buscar.");
       return;
     }
 
@@ -139,7 +167,7 @@ export function AskLeadivaPrompt({
               }
             : {}),
         });
-        const json = (await response.json()) as SearchResponse;
+        const json = await readSearchHttpPayload(response);
 
         if (!response.ok && response.status !== 207) {
           toast.error(json.error ?? json.message ?? "Error en la búsqueda", {
@@ -158,18 +186,28 @@ export function AskLeadivaPrompt({
           return;
         }
 
-        toast.success("Búsqueda completada", {
-          id: toastId,
-          description: `${json.candidatesFound ?? 0} candidatos · ${json.candidatesVerified ?? 0} verificados`,
-          action: json.executionId
-            ? {
-                label: "Ver resultados",
-                onClick: () => router.push(homeSearchHref(json.executionId)),
-              }
-            : undefined,
-        });
+        const partial = isPartialSearchResponse(response.status, json.status);
+        const notify = partial ? toast.warning : toast.success;
+        notify(
+          partial
+            ? "Búsqueda completada parcialmente"
+            : "Búsqueda completada",
+          {
+            id: toastId,
+            description: partial
+              ? "Algunos resultados no pudieron procesarse."
+              : `${json.candidatesFound ?? 0} candidatos · ${json.candidatesVerified ?? 0} verificados`,
+            action: json.executionId
+              ? {
+                  label: "Ver resultados",
+                  onClick: () => router.push(homeSearchHref(json.executionId)),
+                }
+              : undefined,
+          },
+        );
 
         setQuery("");
+        setSelectedCategories([]);
         if (json.executionId) {
           router.push(homeSearchHref(json.executionId));
           router.refresh();
@@ -212,104 +250,142 @@ export function AskLeadivaPrompt({
         </h1>
       ) : null}
 
-      <div
-        className={cn(
-          "flex items-center gap-3 border border-surface-border bg-surface-raised px-4 transition-colors duration-150",
-          "focus-within:border-accent focus-within:ring-1 focus-within:ring-accent",
-          docked ? "h-12 rounded-2xl" : "h-16 rounded-2xl",
-          pending && "opacity-80",
-        )}
-      >
-        <Search
+      {isComprasal ? (
+        <div className="space-y-4">
+          <fieldset disabled={pending} className="min-w-0">
+            <legend id={categoriesLegendId} className="sr-only">
+              Categorías COMPRASAL
+            </legend>
+            <div
+              role="group"
+              aria-labelledby={categoriesLegendId}
+              className={cn(
+                "grid grid-cols-1 gap-3 sm:grid-cols-2",
+                pending && "opacity-80",
+              )}
+            >
+              {HOME_COMPRASAL_CATEGORIES.map((category) => {
+                const Icon = CATEGORY_ICONS[category.icon];
+                const checked = selectedCategories.includes(category.id);
+                const checkboxId = `${inputId}-${category.id}`;
+
+                return (
+                  <label
+                    key={category.id}
+                    htmlFor={checkboxId}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-xl border bg-surface-raised px-4 py-3.5",
+                      "border-surface-border transition-colors duration-150",
+                      "hover:bg-accent-mint/40",
+                      "has-focus-visible:ring-2 has-focus-visible:ring-accent/40",
+                      checked && "border-accent bg-accent-mint/70",
+                      docked && "px-3 py-3",
+                    )}
+                  >
+                    <input
+                      id={checkboxId}
+                      type="checkbox"
+                      checked={checked}
+                      disabled={pending}
+                      onChange={() => toggleCategory(category.id)}
+                      className="size-4 shrink-0 accent-accent"
+                    />
+                    <Icon
+                      className={cn(
+                        "shrink-0 text-accent",
+                        docked ? "size-4" : "size-5",
+                      )}
+                      aria-hidden
+                    />
+                    <span
+                      className={cn(
+                        "font-medium text-text-primary select-none",
+                        docked ? "text-sm" : "text-sm md:text-base",
+                      )}
+                    >
+                      {category.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+          <div className="flex justify-end">
+            <SkeuButton
+              type="submit"
+              variant="primary"
+              size={docked ? "sm" : "lg"}
+              disabled={!canSubmit}
+              aria-label={pending ? "Buscando" : "Buscar oportunidades"}
+              className="gap-2"
+            >
+              {pending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <ArrowRight className="size-4" aria-hidden />
+              )}
+              Buscar
+            </SkeuButton>
+          </div>
+        </div>
+      ) : (
+        <div
           className={cn(
-            "shrink-0 text-accent",
-            docked ? "size-5" : "size-6",
+            "flex items-center gap-3 border border-surface-border bg-surface-raised px-4 transition-colors duration-150",
+            "focus-within:border-accent focus-within:ring-1 focus-within:ring-accent",
+            docked ? "h-12 rounded-2xl" : "h-16 rounded-2xl",
+            pending && "opacity-80",
           )}
-          aria-hidden
-        />
-        <label htmlFor={inputId} className="sr-only">
-          Pregunta a Leadiva AI
-        </label>
-        <input
-          ref={inputRef}
-          id={inputId}
-          name="query"
-          type="text"
-          autoFocus={!docked}
-          autoComplete="off"
-          disabled={pending}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Pregunta a Leadiva AI"
-          className={cn(
-            "min-w-0 flex-1 bg-transparent text-text-primary outline-none placeholder:text-text-secondary/70 disabled:cursor-not-allowed",
-            docked ? "text-base" : "text-lg",
-          )}
-        />
-        <label htmlFor={sourceId} className="sr-only">
-          Origen de la búsqueda
-        </label>
-        <Select
-          value={source}
-          disabled={pending}
-          onValueChange={(value) => {
-            if (isHomeSearchSourceId(value)) {
-              setSource(value);
-            }
-          }}
         >
-          <SelectTrigger
-            id={sourceId}
-            size="sm"
-            aria-label="Origen de la búsqueda"
+          <Search
             className={cn(
-              "shrink-0 border-surface-border bg-surface-pressed font-medium text-text-primary shadow-none",
-              "hover:bg-accent-mint/70 focus-visible:border-accent focus-visible:ring-accent/40",
-              "data-placeholder:text-text-secondary",
-              "[&_svg]:text-text-secondary",
-              docked
-                ? "h-8 max-w-38 rounded-full px-3 text-xs"
-                : "h-10 max-w-44 rounded-full px-3.5 text-sm",
+              "shrink-0 text-accent",
+              docked ? "size-5" : "size-6",
             )}
+            aria-hidden
+          />
+          <label htmlFor={inputId} className="sr-only">
+            Pregunta a Leadiva AI
+          </label>
+          <input
+            ref={inputRef}
+            id={inputId}
+            name="query"
+            type="text"
+            autoFocus={!docked}
+            autoComplete="off"
+            disabled={pending}
+            maxLength={GROUNDED_HOME_QUERY_MAX_LENGTH}
+            value={query}
+            onChange={(event) =>
+              setQuery(
+                event.target.value.slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH),
+              )
+            }
+            placeholder="Pregunta a Leadiva AI"
+            className={cn(
+              "min-w-0 flex-1 bg-transparent text-text-primary outline-none placeholder:text-text-secondary/70 disabled:cursor-not-allowed",
+              docked ? "text-base" : "text-lg",
+            )}
+          />
+          <span className="shrink-0 text-xs text-text-secondary tabular-nums">
+            {query.length}/{GROUNDED_HOME_QUERY_MAX_LENGTH}
+          </span>
+          <SkeuButton
+            type="submit"
+            variant="primary"
+            size={docked ? "icon-sm" : "icon"}
+            disabled={!canSubmit}
+            aria-label={pending ? "Buscando" : "Buscar oportunidades"}
           >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent
-            align="end"
-            position="popper"
-            className="min-w-44 rounded-xl border-surface-border bg-surface-raised p-1.5 text-text-primary shadow-md"
-          >
-            {HOME_SEARCH_SOURCES.map((option) => (
-              <SelectItem
-                key={option.id}
-                value={option.id}
-                className={cn(
-                  "cursor-pointer rounded-lg py-2 pr-8 pl-2.5 text-text-primary",
-                  "focus:!bg-accent-mint focus:!text-text-primary",
-                  "focus:**:!text-text-primary focus:[&_svg]:!text-text-primary",
-                  "data-[highlighted]:!bg-accent-mint data-[highlighted]:!text-text-primary",
-                  "data-[highlighted]:**:!text-text-primary data-[highlighted]:[&_svg]:!text-text-primary",
-                )}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <SkeuButton
-          type="submit"
-          variant="primary"
-          size={docked ? "icon-sm" : "icon"}
-          disabled={!canSubmit}
-          aria-label={pending ? "Buscando" : "Buscar oportunidades"}
-        >
-          {pending ? (
-            <Loader2 className="animate-spin" aria-hidden />
-          ) : (
-            <ArrowRight aria-hidden />
-          )}
-        </SkeuButton>
-      </div>
+            {pending ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <ArrowRight aria-hidden />
+            )}
+          </SkeuButton>
+        </div>
+      )}
     </form>
   );
 }

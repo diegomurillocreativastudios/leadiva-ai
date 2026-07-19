@@ -20,6 +20,7 @@ import {
   topDiscardReasons,
 } from "@/features/projects/private-search-labels";
 import { searchStatusLabel } from "@/features/projects/search-activity-status";
+import { buildSearchExecutionTitle } from "@/lib/search-execution-title";
 import { cn } from "@/lib/utils";
 
 const FILTERS: Array<{ value: SearchActivityFilter; label: string }> = [
@@ -217,7 +218,11 @@ export function ExecutionDetailView({
               id="execution-detail-title"
               className="font-heading text-base font-semibold"
             >
-              {detail.execution.query ?? "Búsqueda del sector privado"}
+              {buildSearchExecutionTitle({
+                userQuery: detail.execution.query,
+                sourceType: detail.execution.sourceType,
+                at: detail.execution.createdAt,
+              }) ?? "Búsqueda del sector privado"}
             </h3>
             <Badge variant="secondary">
               {searchStatusLabel(detail.execution.status)}

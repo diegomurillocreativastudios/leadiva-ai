@@ -6,6 +6,8 @@ import {
   MAX_USER_SEARCH_HISTORY_LIMIT,
 } from "@/server/services/search-execution.service";
 import { getUserProfile } from "@/server/services/auth.service";
+import { enrichComprasalListDeadlines } from "@/lib/enrich-comprasal-list-deadlines";
+import { buildSearchExecutionTitle } from "@/lib/search-execution-title";
 import { splitDisplayName } from "@/lib/user-role-label";
 import type { UserRole } from "@/server/db/schema/enums";
 import type { ProfileUser } from "@/features/dashboard/user-profile-modal";
@@ -14,18 +16,26 @@ import type { SearchExecutionDetail } from "@/features/projects/search-execution
 
 function previousSearchLabel(item: {
   query: string | null;
+  sourceType: string;
   profileName: string;
   createdAt: string;
 }) {
-  if (item.query) {
-    return item.query;
+  const formatted = buildSearchExecutionTitle({
+    userQuery: item.query,
+    sourceType: item.sourceType,
+    at: item.createdAt,
+  });
+  if (formatted) {
+    return formatted;
   }
 
-  const date = new Date(item.createdAt).toLocaleDateString("es-SV", {
-    day: "2-digit",
-    month: "short",
-  });
-  return `${item.profileName} · ${date}`;
+  return (
+    buildSearchExecutionTitle({
+      userQuery: item.profileName,
+      sourceType: item.sourceType,
+      at: item.createdAt,
+    }) ?? item.profileName
+  );
 }
 
 export async function loadAskLeadivaHome(params: {
@@ -50,11 +60,14 @@ export async function loadAskLeadivaHome(params: {
     }),
   ]);
 
-  const detail = selectedExecutionId
+  const loadedDetail = selectedExecutionId
     ? await getUserSearchExecutionDetail({
         executionId: selectedExecutionId,
         userId: params.userId,
       })
+    : null;
+  const detail = loadedDetail
+    ? await enrichComprasalListDeadlines(loadedDetail)
     : null;
 
   const fallbackName = splitDisplayName(params.sessionName);

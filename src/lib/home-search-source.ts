@@ -8,6 +8,9 @@ export type HomeSearchSourceId = (typeof homeSearchSourceIds)[number];
 
 export const defaultHomeSearchSource: HomeSearchSourceId = "COMPRASAL";
 
+/** Max length for Sector privado / LinkedIn free-text queries. */
+export const GROUNDED_HOME_QUERY_MAX_LENGTH = 100;
+
 export const HOME_SEARCH_SOURCES = [
   { id: "COMPRASAL", label: "Comprasal" },
   { id: "PRIVATE_WEB", label: "Sector privado" },

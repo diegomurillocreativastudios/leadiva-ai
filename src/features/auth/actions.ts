@@ -206,13 +206,17 @@ export async function convertToLeadAction(formData: FormData) {
   }
 
   try {
-    const lead = await convertSearchResultToLead({
+    await convertSearchResultToLead({
       searchResultId: parsed.data.searchResultId,
       userId: session.user.id,
     });
     redirect("/");
   } catch (error) {
-    if (error instanceof Error && error.message === "RESULT_REJECTED") {
+    if (
+      error instanceof Error &&
+      (error.message === "RESULT_REJECTED" ||
+        error.message === "RESULT_DISMISSED")
+    ) {
       throw new Error("Este proyecto fue descartado y no puede convertirse");
     }
     if (error instanceof Error && error.message === "RESULT_NOT_VERIFIED") {
@@ -238,7 +242,7 @@ export async function discardProjectAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  const session = await requireSession();
   const parsed = discardProjectSchema.safeParse({
     searchResultId: formData.get("searchResultId"),
     reason: formData.get("reason"),
@@ -250,7 +254,11 @@ export async function discardProjectAction(
     };
   }
 
-  await discardSearchResult(parsed.data.searchResultId, parsed.data.reason);
+  await discardSearchResult(
+    parsed.data.searchResultId,
+    session.user.id,
+    parsed.data.reason,
+  );
   redirect("/");
 }
 
@@ -279,6 +287,7 @@ export async function bulkDiscardProjectsAction(
 
   const result = await discardSearchResults(
     parsed.data.searchResultIds,
+    session.user.id,
     `${parsed.data.reason} (por ${session.user.email})`,
   );
 
@@ -314,6 +323,7 @@ export async function bulkConvertProjectsAction(
     return {
       error:
         result.errors[0]?.error === "RESULT_REJECTED" ||
+          result.errors[0]?.error === "RESULT_DISMISSED" ||
           result.errors[0]?.error === "RESULT_NOT_VERIFIED"
           ? "No se pudieron convertir (rechazados o inválidos)"
           : "No se pudieron convertir los proyectos seleccionados",

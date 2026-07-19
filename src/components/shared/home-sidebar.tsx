@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ChevronUp,
@@ -37,6 +37,14 @@ import {
 } from "@/lib/home-greetings";
 import { getUserRoleLabel } from "@/lib/user-role-label";
 import { cn } from "@/lib/utils";
+
+type HomeSidebarProps = {
+  user: ProfileUser;
+  previousSearches: PreviousSearchLink[];
+  selectedExecutionId?: string | null;
+  /** Renders beside the brand in the mobile top bar. */
+  sourceSelect?: ReactNode;
+};
 
 export type { PreviousSearchLink };
 
@@ -242,13 +250,16 @@ function SidebarBody({
 }) {
   return (
     <>
-      <div className="shrink-0 px-4 pb-3">
+      <div className="shrink-0 px-4 pb-4">
         <Link
           href="/"
           onClick={onNavigate}
-          className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="flex w-full items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <LeadivaBrand size="sm" />
+          <LeadivaBrand
+            size="md"
+            className="justify-center gap-3 [&_[role=img]]:size-11 [&>span]:text-2xl"
+          />
         </Link>
       </div>
       <div className="shrink-0 border-t border-surface-border px-4 pt-4 pb-3">
@@ -284,11 +295,8 @@ export function HomeSidebar({
   user,
   previousSearches,
   selectedExecutionId = null,
-}: {
-  user: ProfileUser;
-  previousSearches: PreviousSearchLink[];
-  selectedExecutionId?: string | null;
-}) {
+  sourceSelect,
+}: HomeSidebarProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -313,8 +321,13 @@ export function HomeSidebar({
 
   return (
     <>
-      <div className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-surface-border bg-surface-raised px-4 py-3 md:hidden">
+      <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-surface-border bg-surface-raised px-4 py-3 md:hidden">
         <LeadivaBrand size="sm" />
+        {sourceSelect ? (
+          <div className="min-w-0 flex-1">{sourceSelect}</div>
+        ) : (
+          <div className="flex-1" />
+        )}
         <SkeuButton
           type="button"
           variant="default"

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import { getServerEnv } from "@/env/server";
 import { db } from "@/server/db";
@@ -71,7 +71,15 @@ async function ensureComprasalProfiles(userId?: string) {
   const existing = await db
     .select()
     .from(searchProfiles)
-    .where(eq(searchProfiles.sourceType, "COMPRASAL"));
+    .where(
+      and(
+        eq(searchProfiles.sourceType, "COMPRASAL"),
+        or(
+          isNull(searchProfiles.profileKey),
+          ne(searchProfiles.profileKey, "AVAILABLE_SEARCH"),
+        ),
+      ),
+    );
 
   if (existing.length === 0) {
     const inserted = await db
@@ -122,7 +130,11 @@ export async function remapStoredComprasalFromRaw(
     })
     .from(searchResults)
     .where(
-      and(eq(searchResults.sourceType, "COMPRASAL"), searchResultNotDeleted()),
+      and(
+        eq(searchResults.sourceType, "COMPRASAL"),
+        searchResultNotDeleted(),
+        sql`coalesce(${searchResults.externalId}, '') not like 'available:%'`,
+      ),
     );
 
   let skipped = 0;
@@ -292,6 +304,10 @@ async function assertNoOverlappingSync() {
     .where(
       and(
         eq(searchProfiles.sourceType, "COMPRASAL"),
+        or(
+          isNull(searchProfiles.profileKey),
+          ne(searchProfiles.profileKey, "AVAILABLE_SEARCH"),
+        ),
         eq(searchExecutions.status, "RUNNING"),
         gt(searchExecutions.startedAt, fiveMinutesAgo),
       ),
@@ -380,6 +396,7 @@ async function upsertComprasalCandidate(params: {
       and(
         eq(searchResults.normalizedUrl, mapped.normalizedUrl),
         searchResultNotDeleted(),
+        sql`coalesce(${searchResults.externalId}, '') not like 'available:%'`,
       ),
     )
     .limit(1);

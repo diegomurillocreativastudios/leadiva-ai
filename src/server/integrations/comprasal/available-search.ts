@@ -55,6 +55,37 @@ const GENERIC_PROCUREMENT_TERMS = new Set([
   "suministros",
 ]);
 
+/**
+ * Layperson phrasing that describes intent, not the product/service itself.
+ * Dropped from required terms when a stronger signal term remains.
+ */
+const OPTIONAL_QUERY_INTENT_TERMS = new Set([
+  ...GENERIC_PROCUREMENT_TERMS,
+  "buscar",
+  "busqueda",
+  "busquedas",
+  "contrato",
+  "contratos",
+  "convocatoria",
+  "convocatorias",
+  "encontrar",
+  "licitacion",
+  "licitaciones",
+  "necesidad",
+  "necesidades",
+  "necesito",
+  "oferta",
+  "ofertas",
+  "oportunidad",
+  "oportunidades",
+  "proyecto",
+  "proyectos",
+  "requerimiento",
+  "requerimientos",
+  "solicitud",
+  "solicitudes",
+]);
+
 export const COMPRASAL_SEARCH_SCORING = {
   termWeights: {
     title: 18,
@@ -71,9 +102,9 @@ export const COMPRASAL_SEARCH_SCORING = {
   },
   exactCodeBonus: 35,
   coverageBonus: 20,
-  multiTermMinimumScore: 30,
-  multiTermMinimumCoverage: 0.6,
-  prefixMinimumLength: 4,
+  minimumExactTermLength: 3,
+  prefixMinimumLength: 6,
+  singleTermWeakFieldMinimumScore: 45,
   maximumScore: 100,
 } as const;
 
@@ -108,21 +139,27 @@ export function normalizeComprasalSearchText(value: string): string {
 }
 
 function isMeaningfulTerm(term: string): boolean {
-  if (QUERY_STOP_WORDS.has(term) || GENERIC_PROCUREMENT_TERMS.has(term)) {
+  if (QUERY_STOP_WORDS.has(term)) {
     return false;
   }
   if (SHORT_TECH_TERM_SET.has(term)) {
     return true;
   }
-  return term.length >= COMPRASAL_SEARCH_SCORING.prefixMinimumLength;
+  return term.length >= COMPRASAL_SEARCH_SCORING.minimumExactTermLength;
 }
 
 export function parseComprasalSearchQuery(query: string): ComprasalSearchQuery {
   const normalized = normalizeComprasalSearchText(query);
-  const terms = [
+  const meaningfulTerms = [
     ...new Set(normalized.split(" ").filter((term) => isMeaningfulTerm(term))),
   ];
-  return { normalized, terms };
+  const signalTerms = meaningfulTerms.filter(
+    (term) => !OPTIONAL_QUERY_INTENT_TERMS.has(term),
+  );
+  return {
+    normalized,
+    terms: signalTerms.length > 0 ? signalTerms : meaningfulTerms,
+  };
 }
 
 export function hasSignificantComprasalQuery(query: string): boolean {
@@ -142,7 +179,8 @@ function termMatchesWords(term: string, words: readonly string[]): boolean {
   return words.some(
     (word) =>
       word === term ||
-      (term.length >= COMPRASAL_SEARCH_SCORING.prefixMinimumLength &&
+      (!GENERIC_PROCUREMENT_TERMS.has(term) &&
+        term.length >= COMPRASAL_SEARCH_SCORING.prefixMinimumLength &&
         word.startsWith(term)),
   );
 }
@@ -185,15 +223,18 @@ export function scoreComprasalAvailableProcess(
   );
   const activityWords = fieldWords(process.activityNames.join(" "));
   const matchedTerms: string[] = [];
+  const titleOrCodeMatches = new Set<string>();
   let score = 0;
 
   for (const term of query.terms) {
     const weights: number[] = [];
     if (termMatchesWords(term, titleWords)) {
       weights.push(COMPRASAL_SEARCH_SCORING.termWeights.title);
+      titleOrCodeMatches.add(term);
     }
     if (termMatchesWords(term, codeWords)) {
       weights.push(COMPRASAL_SEARCH_SCORING.termWeights.code);
+      titleOrCodeMatches.add(term);
     }
     if (termMatchesWords(term, institutionWords)) {
       weights.push(COMPRASAL_SEARCH_SCORING.termWeights.institution);
@@ -239,12 +280,16 @@ export function scoreComprasalAvailableProcess(
   }
 
   score = Math.min(COMPRASAL_SEARCH_SCORING.maximumScore, score);
+  // Multi-term layperson queries use OR over signal terms: any title/code hit
+  // accepts, and fuller coverage only improves ranking.
   const accept =
     exactCodeMatch ||
     (query.terms.length === 1
-      ? matchedTerms.length === 1
-      : coverage >= COMPRASAL_SEARCH_SCORING.multiTermMinimumCoverage &&
-        score >= COMPRASAL_SEARCH_SCORING.multiTermMinimumScore);
+      ? matchedTerms.length === 1 &&
+        (titleOrCodeMatches.has(query.terms[0] ?? "") ||
+          score >=
+            COMPRASAL_SEARCH_SCORING.singleTermWeakFieldMinimumScore)
+      : titleOrCodeMatches.size >= 1);
 
   return { accept, score, coverage, matchedTerms, exactCodeMatch };
 }

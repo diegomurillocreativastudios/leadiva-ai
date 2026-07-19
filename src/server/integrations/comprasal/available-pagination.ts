@@ -8,15 +8,18 @@ export type ComprasalAvailablePaginationConfig = {
   perPage: number;
   maxPages: number;
   maxRows: number;
+  timeBudgetMs?: number;
 };
 
 export type ComprasalAvailableSnapshotMetrics = {
+  requestsExecuted: number;
   pagesFetched: number;
   rowsFetched: number;
   invalidRows: number;
   duplicateRows: number;
   totalRows: number;
   defensiveLimitReached: "MAX_PAGES" | "MAX_ROWS" | null;
+  snapshotIssue: string | null;
 };
 
 export type ComprasalAvailableSnapshot = {
@@ -28,6 +31,7 @@ export class ComprasalAvailablePaginationError extends Error {
   constructor(
     message: string,
     public readonly metrics: ComprasalAvailableSnapshotMetrics,
+    public readonly partialSnapshot: ComprasalAvailableSnapshot | null = null,
   ) {
     super(message);
     this.name = "ComprasalAvailablePaginationError";
@@ -36,29 +40,80 @@ export class ComprasalAvailablePaginationError extends Error {
 
 export async function loadComprasalAvailableSnapshot(params: {
   config: ComprasalAvailablePaginationConfig;
-  fetchPage: (page: number, perPage: number) => Promise<ComprasalAvailablePage>;
+  fetchPage: (
+    page: number,
+    perPage: number,
+    recordRetry: () => void,
+  ) => Promise<ComprasalAvailablePage>;
 }): Promise<ComprasalAvailableSnapshot> {
   const { config } = params;
   const metrics: ComprasalAvailableSnapshotMetrics = {
+    requestsExecuted: 0,
     pagesFetched: 0,
     rowsFetched: 0,
     invalidRows: 0,
     duplicateRows: 0,
     totalRows: 0,
     defensiveLimitReached: null,
+    snapshotIssue: null,
   };
   const byId = new Map<number, ComprasalAvailableProcess>();
   const idByCode = new Map<string, number>();
+  const deadline = config.timeBudgetMs
+    ? Date.now() + config.timeBudgetMs
+    : null;
+
+  let expectedTotalRows: number | null = null;
+  let expectedLastPage: number | null = null;
 
   for (let requestedPage = 1; requestedPage <= config.maxPages; requestedPage += 1) {
-    const page = await params.fetchPage(requestedPage, config.perPage);
+    if (deadline !== null && Date.now() >= deadline) {
+      metrics.snapshotIssue = "TIME_BUDGET_EXCEEDED";
+      throw new ComprasalAvailablePaginationError(
+        "COMPRASAL available snapshot exceeded its time budget",
+        metrics,
+      );
+    }
+    metrics.requestsExecuted += 1;
     metrics.pagesFetched += 1;
+    let page: ComprasalAvailablePage;
+    try {
+      page = await params.fetchPage(requestedPage, config.perPage, () => {
+        metrics.requestsExecuted += 1;
+      });
+    } catch {
+      metrics.snapshotIssue = "PAGE_REQUEST_FAILED";
+      throw new ComprasalAvailablePaginationError(
+        "COMPRASAL available page request failed",
+        metrics,
+      );
+    }
     metrics.rowsFetched += page.rows.length;
     metrics.totalRows = page.totalRows;
-
+    if (deadline !== null && Date.now() >= deadline) {
+      metrics.snapshotIssue = "TIME_BUDGET_EXCEEDED";
+      throw new ComprasalAvailablePaginationError(
+        "COMPRASAL available snapshot exceeded its time budget",
+        metrics,
+      );
+    }
     if (page.currentPage !== requestedPage || page.perPage !== config.perPage) {
+      metrics.snapshotIssue = "PAGINATION_HEADERS_MISMATCH";
       throw new ComprasalAvailablePaginationError(
         "COMPRASAL pagination headers do not match the requested page",
+        metrics,
+      );
+    }
+    if (expectedTotalRows === null) {
+      expectedTotalRows = page.totalRows;
+      expectedLastPage = page.lastPage;
+    } else if (
+      page.totalRows !== expectedTotalRows ||
+      page.lastPage !== expectedLastPage
+    ) {
+      metrics.snapshotIssue = "TOTAL_CHANGED";
+      throw new ComprasalAvailablePaginationError(
+        "COMPRASAL pagination total changed during snapshot",
         metrics,
       );
     }
@@ -73,6 +128,34 @@ export async function loadComprasalAvailableSnapshot(params: {
       metrics.defensiveLimitReached = "MAX_PAGES";
       throw new ComprasalAvailablePaginationError(
         "COMPRASAL available snapshot exceeded maxPages",
+        metrics,
+      );
+    }
+
+    if (page.totalRows === 0) {
+      if (page.rows.length > 0) {
+        metrics.snapshotIssue = "ZERO_TOTAL_WITH_ROWS";
+        throw new ComprasalAvailablePaginationError(
+          "COMPRASAL returned rows with a zero total",
+          metrics,
+        );
+      }
+      return { processes: [], metrics };
+    }
+
+    const isExpectedLastPage = requestedPage === page.lastPage;
+    const expectedRowsOnPage = isExpectedLastPage
+      ? page.totalRows - page.perPage * (page.lastPage - 1)
+      : page.perPage;
+    if (page.rows.length !== expectedRowsOnPage) {
+      metrics.snapshotIssue =
+        isExpectedLastPage
+          ? "TRUNCATED_LAST_PAGE"
+          : page.rows.length === 0
+            ? "EMPTY_PAGE_BEFORE_TOTAL"
+            : "TRUNCATED_INTERMEDIATE_PAGE";
+      throw new ComprasalAvailablePaginationError(
+        "COMPRASAL returned an incomplete snapshot page",
         metrics,
       );
     }
@@ -105,16 +188,32 @@ export async function loadComprasalAvailableSnapshot(params: {
       newIdentities += 1;
     }
 
-    const reachedTotal = metrics.rowsFetched >= page.totalRows;
-    const reachedLastPage = page.lastPage === 0 || requestedPage >= page.lastPage;
-    if (page.rows.length === 0 || reachedTotal || reachedLastPage) {
-      return { processes: [...byId.values()], metrics };
-    }
-    if (newIdentities === 0) {
+    const reachedTotal = metrics.rowsFetched === page.totalRows;
+    if (newIdentities === 0 && page.rows.length > 0) {
+      metrics.snapshotIssue = "REPEATED_PAGE";
       throw new ComprasalAvailablePaginationError(
         "COMPRASAL pagination made no identity progress",
         metrics,
       );
+    }
+    if (isExpectedLastPage) {
+      if (!reachedTotal) {
+        metrics.snapshotIssue = "ROW_TOTAL_MISMATCH";
+        throw new ComprasalAvailablePaginationError(
+          "COMPRASAL snapshot row count did not reach total_rows",
+          metrics,
+        );
+      }
+      const snapshot = { processes: [...byId.values()], metrics };
+      if (metrics.invalidRows > 0) {
+        metrics.snapshotIssue = "INVALID_ROWS";
+        throw new ComprasalAvailablePaginationError(
+          "COMPRASAL snapshot contained invalid rows",
+          metrics,
+          snapshot,
+        );
+      }
+      return snapshot;
     }
   }
 
@@ -139,6 +238,22 @@ export function createComprasalAvailableSnapshotCache(params: {
   let cached: { snapshot: ComprasalAvailableSnapshot; fetchedAt: number } | null = null;
   let inFlight: Promise<ComprasalAvailableSnapshot> | null = null;
 
+  function cloneSnapshot(snapshot: ComprasalAvailableSnapshot) {
+    return structuredClone(snapshot);
+  }
+
+  function freezeSnapshot(snapshot: ComprasalAvailableSnapshot) {
+    Object.freeze(snapshot.metrics);
+    for (const process of snapshot.processes) {
+      Object.freeze(process.currentStage);
+      Object.freeze(process.activityNames);
+      Object.freeze(process.rawData);
+      Object.freeze(process);
+    }
+    Object.freeze(snapshot.processes);
+    return Object.freeze(snapshot);
+  }
+
   return {
     async get(
       load: () => Promise<ComprasalAvailableSnapshot>,
@@ -146,7 +261,7 @@ export function createComprasalAvailableSnapshotCache(params: {
       const currentTime = now();
       if (cached && currentTime - cached.fetchedAt < params.ttlMs) {
         return {
-          snapshot: cached.snapshot,
+          snapshot: cloneSnapshot(cached.snapshot),
           cacheHit: true,
           cacheAgeMs: Math.max(0, currentTime - cached.fetchedAt),
         };
@@ -154,15 +269,24 @@ export function createComprasalAvailableSnapshotCache(params: {
 
       if (inFlight) {
         const snapshot = await inFlight;
-        return { snapshot, cacheHit: true, cacheAgeMs: 0 };
+        return {
+          snapshot: cloneSnapshot(snapshot),
+          cacheHit: true,
+          cacheAgeMs: 0,
+        };
       }
 
       const promise = load();
       inFlight = promise;
       try {
         const snapshot = await promise;
-        cached = { snapshot, fetchedAt: now() };
-        return { snapshot, cacheHit: false, cacheAgeMs: 0 };
+        const cacheCopy = freezeSnapshot(cloneSnapshot(snapshot));
+        cached = { snapshot: cacheCopy, fetchedAt: now() };
+        return {
+          snapshot: cloneSnapshot(cacheCopy),
+          cacheHit: false,
+          cacheAgeMs: 0,
+        };
       } finally {
         if (inFlight === promise) {
           inFlight = null;

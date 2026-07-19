@@ -55,9 +55,9 @@ export function RegisterForm() {
     <div className="w-full">
       <LeadivaBrand
         size="xl"
-        orientation="stacked"
+        orientation="horizontal"
         priority
-        className="mb-5 [&_[role=img]]:size-36"
+        className="mb-6 w-full justify-center gap-4 [&_[role=img]]:size-20 sm:[&_[role=img]]:size-24 [&>span]:text-4xl sm:[&>span]:text-5xl"
       />
 
       <div className="rounded-md border border-surface-border bg-surface-raised p-6 sm:p-7">

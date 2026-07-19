@@ -58,7 +58,35 @@ describe("POST /api/jobs/search-comprasal", () => {
 
   it("requires a signed-in user", async () => {
     mocks.auth.mockResolvedValue(null);
-    expect((await POST(request({ sourceType: "COMPRASAL", query: "software" }))).status).toBe(401);
+    const response = await POST(
+      request({ sourceType: "COMPRASAL", query: "software" }),
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "Unauthorized" });
+  });
+
+  it("rejects malformed non-JSON input without returning parser details", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/jobs/search-comprasal", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{not-json",
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Invalid body" });
+  });
+
+  it("returns 207 for a partially completed search", async () => {
+    mocks.search.mockResolvedValue({
+      executionId: "00000000-0000-4000-8000-000000000201",
+      status: "PARTIALLY_COMPLETED",
+      candidatesFound: 1,
+    });
+    const response = await POST(
+      request({ sourceType: "COMPRASAL", query: "software" }),
+    );
+    expect(response.status).toBe(207);
   });
 
   it("returns 502 without breaking the response contract when COMPRASAL fails", async () => {
@@ -70,5 +98,18 @@ describe("POST /api/jobs/search-comprasal", () => {
     const response = await POST(request({ sourceType: "COMPRASAL", query: "software" }));
     expect(response.status).toBe(502);
     expect(await response.json()).toMatchObject({ status: "FAILED" });
+  });
+
+  it("does not expose internal details from an unexpected backend error", async () => {
+    mocks.search.mockRejectedValue(
+      new Error("password=secret database host=internal"),
+    );
+    const response = await POST(
+      request({ sourceType: "COMPRASAL", query: "software" }),
+    );
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error: "No se pudo completar la búsqueda en COMPRASAL",
+    });
   });
 });

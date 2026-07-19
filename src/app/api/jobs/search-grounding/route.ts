@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getServerEnv } from "@/env/server";
+import { GROUNDED_HOME_QUERY_MAX_LENGTH } from "@/lib/home-search-source";
 import { auth } from "@/server/auth";
 import { mapPrivateSearchError } from "@/server/integrations/vertex-ai/response";
 import { runGroundedSearch } from "@/server/integrations/vertex-ai/service";
@@ -12,7 +13,12 @@ export const maxDuration = 300;
 const bodySchema = z
   .object({
     sourceType: z.enum(["PRIVATE_WEB", "LINKEDIN"]).default("PRIVATE_WEB"),
-    query: z.string().trim().min(3).max(300).optional(),
+    query: z
+      .string()
+      .trim()
+      .min(3)
+      .max(GROUNDED_HOME_QUERY_MAX_LENGTH)
+      .optional(),
   })
   .strict();
 

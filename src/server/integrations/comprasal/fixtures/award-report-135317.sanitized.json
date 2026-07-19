@@ -1,0 +1,63 @@
+{
+  "data": {
+    "adjudicacion": {
+      "nombre_contrato": "SERVICIO DE TRANSPORTE PARA EVENTOS",
+      "forma_contratacion": "Comparación de precios",
+      "plazo_contractual": 60,
+      "monto_planificado": "8000.00",
+      "monto_certificado": "8000",
+      "fecha_publicacion": "2024-10-07T20:44:54.000Z",
+      "fecha_apertura": "2024-10-09T14:30:00.000Z",
+      "fecha_cierre": "2024-10-09T22:30:00.000Z",
+      "estado_proceso": "Liquidado",
+      "fecha_firma": "2024-10-18T14:30:00.000Z"
+    },
+    "cifrados": [
+      { "cifrado_presupuestario": "2024-00-00-0-000000" }
+    ],
+    "ofertasOferentes": [
+      {
+        "nombre_comercial": "PROVEEDOR A",
+        "fecha_carga": "2024-10-09T21:10:28.848Z"
+      },
+      {
+        "nombre_comercial": "PROVEEDOR B",
+        "fecha_carga": "2024-10-09T21:57:55.644Z"
+      },
+      {
+        "nombre_comercial": "PROVEEDOR A",
+        "fecha_carga": "2024-10-10T18:37:58.718Z"
+      }
+    ],
+    "modificacionesContractuales": [],
+    "etapas": [
+      {
+        "etapa": "Etapa 1",
+        "monto_total": 8000,
+        "fecha_mostrar": "2025-09-30T19:24:48.976Z"
+      }
+    ],
+    "pagos": [
+      {
+        "etapa": "Etapa 1",
+        "monto_total": "8000",
+        "fecha_mostrar": "2025-09-30T19:24:48.976Z"
+      }
+    ],
+    "beneficiarios": [
+      {
+        "created_at": "2025-04-09T18:13:32.186Z",
+        "persona": {
+          "primer_nombre": "PERSONA",
+          "segundo_nombre": "EJEMPLO",
+          "tercer_nombre": null,
+          "primer_apellido": "APELLIDO",
+          "segundo_apellido": null,
+          "apellido_casada": null
+        },
+        "pais": { "gentilicio": "salvadoreño/a" }
+      }
+    ]
+  },
+  "message": "Informe cargado correctamente."
+}

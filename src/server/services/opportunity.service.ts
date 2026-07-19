@@ -34,6 +34,7 @@ import {
   type ProjectSortOption,
 } from "@/lib/project-catalog";
 import { extractDomain, normalizeUrl, slugify } from "@/lib/normalization";
+import { getSearchResultConversionError } from "@/lib/search-result-conversion";
 import { isGenericOrListingSourceUrl } from "@/lib/source-url-specificity";
 import type { LeadFiltersInput } from "@/schemas/leads";
 import type { ProjectFiltersResolved } from "@/schemas/projects";
@@ -53,6 +54,7 @@ import {
   searchExecutions,
   searchProfiles,
   searchResults,
+  userSearchResultStates,
   users,
 } from "@/server/db/schema";
 import type { OpportunityStatus } from "@/server/db/schema/enums";
@@ -529,31 +531,74 @@ export async function getSearchResultById(id: string) {
   };
 }
 
-export async function discardSearchResult(id: string, reason: string) {
-  await db
-    .update(searchResults)
-    .set({
-      verificationStatus: "REJECTED",
-      discardReason: reason,
-      deletedAt: new Date(),
+export async function discardSearchResult(
+  id: string,
+  userId: string,
+  reason: string,
+) {
+  const [state] = await db
+    .insert(userSearchResultStates)
+    .values({
+      userId,
+      searchResultId: id,
+      state: "DISMISSED",
+      dismissedAt: new Date(),
+      dismissReason: reason,
+      updatedAt: new Date(),
     })
-    .where(and(eq(searchResults.id, id), searchResultNotDeleted()));
+    .onConflictDoUpdate({
+      target: [
+        userSearchResultStates.userId,
+        userSearchResultStates.searchResultId,
+      ],
+      set: {
+        state: "DISMISSED",
+        dismissedAt: new Date(),
+        dismissReason: reason,
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ id: userSearchResultStates.searchResultId });
+
+  return { discarded: state ? 1 : 0 };
 }
 
-export async function discardSearchResults(ids: string[], reason: string) {
-  if (ids.length === 0) {
+export async function discardSearchResults(
+  ids: string[],
+  userId: string,
+  reason: string,
+) {
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) {
     return { discarded: 0 };
   }
 
+  const now = new Date();
   const updated = await db
-    .update(searchResults)
-    .set({
-      verificationStatus: "REJECTED",
-      discardReason: reason,
-      deletedAt: new Date(),
+    .insert(userSearchResultStates)
+    .values(
+      uniqueIds.map((searchResultId) => ({
+        userId,
+        searchResultId,
+        state: "DISMISSED" as const,
+        dismissedAt: now,
+        dismissReason: reason,
+        updatedAt: now,
+      })),
+    )
+    .onConflictDoUpdate({
+      target: [
+        userSearchResultStates.userId,
+        userSearchResultStates.searchResultId,
+      ],
+      set: {
+        state: "DISMISSED",
+        dismissedAt: now,
+        dismissReason: reason,
+        updatedAt: now,
+      },
     })
-    .where(and(inArray(searchResults.id, ids), searchResultNotDeleted()))
-    .returning({ id: searchResults.id });
+    .returning({ id: userSearchResultStates.searchResultId });
 
   return { discarded: updated.length };
 }
@@ -631,15 +676,23 @@ export async function convertSearchResultToLead(params: {
     throw new Error("RESULT_NOT_FOUND");
   }
 
-  if (result.verificationStatus === "REJECTED") {
-    throw new Error("RESULT_REJECTED");
-  }
-
-  if (
-    (result.sourceType === "PRIVATE_WEB" || result.sourceType === "LINKEDIN") &&
-    result.verificationStatus !== "VERIFIED"
-  ) {
-    throw new Error("RESULT_NOT_VERIFIED");
+  const [privateState] = await db
+    .select({ state: userSearchResultStates.state })
+    .from(userSearchResultStates)
+    .where(
+      and(
+        eq(userSearchResultStates.userId, params.userId),
+        eq(userSearchResultStates.searchResultId, result.id),
+      ),
+    )
+    .limit(1);
+  const conversionError = getSearchResultConversionError({
+    sourceType: result.sourceType,
+    verificationStatus: result.verificationStatus,
+    userState: privateState?.state ?? null,
+  });
+  if (conversionError) {
+    throw new Error(conversionError);
   }
 
   const [existingLead] = await db

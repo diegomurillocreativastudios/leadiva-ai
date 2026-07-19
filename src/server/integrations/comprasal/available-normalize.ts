@@ -1,5 +1,6 @@
 import {
   comprasalAvailableProcessSchema,
+  isComprasalIsoDateTime,
   type ComprasalAvailableProcessRecord,
 } from "./available-schemas";
 import { normalizeComprasalSearchText } from "./available-search";
@@ -22,6 +23,12 @@ export type ComprasalAvailableProcess = {
     endsAt: string;
   };
   publishedAt: string | null;
+  publicationStage: {
+    id: number;
+    name: string;
+    startsAt: string;
+    endsAt: string;
+  } | null;
   deadlineAt: string;
   activityNames: string[];
   rawData: Record<string, unknown>;
@@ -29,19 +36,20 @@ export type ComprasalAvailableProcess = {
 
 const PUBLICATION_STAGE_NAME = "publicacion de convocatoria en comprasal";
 
-function isIsoDate(value: string): boolean {
-  return !Number.isNaN(Date.parse(value));
-}
-
-function findPublishedAt(
+function findPublicationStage(
   process: ComprasalAvailableProcessRecord,
-): string | null {
+): ComprasalAvailableProcess["publicationStage"] {
   const publicationStage = process.etapas.find(
     (stage) =>
       normalizeComprasalSearchText(stage.nombre) === PUBLICATION_STAGE_NAME,
   );
-  return publicationStage && isIsoDate(publicationStage.fecha_hora_inicio)
-    ? publicationStage.fecha_hora_inicio
+  return publicationStage
+    ? {
+        id: publicationStage.id,
+        name: publicationStage.nombre,
+        startsAt: publicationStage.fecha_hora_inicio,
+        endsAt: publicationStage.fecha_hora_fin,
+      }
     : null;
 }
 
@@ -57,15 +65,16 @@ export function normalizeComprasalAvailableProcess(
   const currentStage = process.EtapaPorProcesos[0];
   if (
     !currentStage ||
-    !isIsoDate(currentStage.fecha_hora_inicio) ||
-    !isIsoDate(currentStage.fecha_hora_fin)
+    !isComprasalIsoDateTime(currentStage.fecha_hora_inicio) ||
+    !isComprasalIsoDateTime(currentStage.fecha_hora_fin)
   ) {
     return null;
   }
 
+  const publicationStage = findPublicationStage(process);
   return {
     id: process.id,
-    externalId: String(process.id),
+    externalId: `available:${process.id}`,
     title: process.nombre_proceso,
     code: process.codigo_proceso,
     version: process.version,
@@ -80,7 +89,8 @@ export function normalizeComprasalAvailableProcess(
       startsAt: currentStage.fecha_hora_inicio,
       endsAt: currentStage.fecha_hora_fin,
     },
-    publishedAt: findPublishedAt(process),
+    publishedAt: publicationStage?.startsAt ?? null,
+    publicationStage,
     deadlineAt: currentStage.fecha_hora_fin,
     activityNames: process.actividades.map((activity) => activity.a.nombre),
     rawData: process as Record<string, unknown>,

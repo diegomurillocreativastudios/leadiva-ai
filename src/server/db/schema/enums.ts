@@ -50,6 +50,11 @@ export const verificationStatuses = [
 
 export type VerificationStatus = (typeof verificationStatuses)[number];
 
+export const userSearchResultStateValues = ["ACTIVE", "DISMISSED"] as const;
+
+export type UserSearchResultState =
+  (typeof userSearchResultStateValues)[number];
+
 export const workModes = [
   "ONSITE",
   "REMOTE",

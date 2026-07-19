@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
+
 import { AskLeadivaPrompt } from "@/features/dashboard/ask-leadiva-prompt";
 import { HomeSearchResultDetail } from "@/features/dashboard/home-search-result-detail";
 import { HomeSearchResults } from "@/features/dashboard/home-search-results";
+import { HomeSearchSourceSelect } from "@/features/dashboard/home-search-source-select";
 import type { ProfileUser } from "@/features/dashboard/user-profile-modal";
 import type { SearchExecutionDetail } from "@/features/projects/search-execution-activity";
 import {
@@ -8,6 +13,10 @@ import {
   type PreviousSearchLink,
 } from "@/components/shared/home-sidebar";
 import type { HomeSearchResultDetailView } from "@/lib/home-search-result-detail";
+import {
+  defaultHomeSearchSource,
+  type HomeSearchSourceId,
+} from "@/lib/home-search-source";
 import { cn } from "@/lib/utils";
 
 export function AskLeadivaHome({
@@ -23,8 +32,32 @@ export function AskLeadivaHome({
   detail?: SearchExecutionDetail | null;
   selectedLead?: HomeSearchResultDetailView | null;
 }) {
+  const [source, setSource] = useState<HomeSearchSourceId>(
+    defaultHomeSearchSource,
+  );
   const showingLead = Boolean(selectedExecutionId && selectedLead);
   const showingResults = Boolean(selectedExecutionId && detail && !selectedLead);
+  const hideComprasalSearchControls =
+    source === "COMPRASAL" &&
+    Boolean(detail && detail.candidates.length > 1);
+
+  function renderDockedPrompt() {
+    if (hideComprasalSearchControls) {
+      return null;
+    }
+
+    return (
+      <div className="sticky bottom-0 shrink-0 bg-surface-base px-6 pt-2 pb-5">
+        <div className="mx-auto w-full max-w-5xl">
+          <AskLeadivaPrompt
+            variant="docked"
+            userName={user.firstName}
+            source={source}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-base md:flex-row">
@@ -32,6 +65,13 @@ export function AskLeadivaHome({
         user={user}
         previousSearches={previousSearches}
         selectedExecutionId={selectedExecutionId}
+        sourceSelect={
+          <HomeSearchSourceSelect
+            value={source}
+            onValueChange={setSource}
+            size="sm"
+          />
+        }
       />
       <main
         className={cn(
@@ -41,56 +81,52 @@ export function AskLeadivaHome({
             : "items-center justify-center px-6 py-10",
         )}
       >
+        <div className="absolute top-0 left-0 z-10 hidden items-center px-4 pt-6 md:flex">
+          <HomeSearchSourceSelect
+            value={source}
+            onValueChange={setSource}
+          />
+        </div>
+
         {showingLead && selectedLead && selectedExecutionId ? (
           <>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-8 pb-4">
+            <div
+              className={cn(
+                "min-h-0 flex-1 overflow-y-auto px-6 pt-8 md:pt-20",
+                hideComprasalSearchControls ? "pb-8" : "pb-4",
+              )}
+            >
               <HomeSearchResultDetail
                 executionId={selectedExecutionId}
                 detail={selectedLead}
               />
             </div>
-            <div className="sticky bottom-0 shrink-0 bg-surface-base px-6 pt-2 pb-5">
-              <div className="mx-auto w-full max-w-5xl">
-                <AskLeadivaPrompt
-                  variant="docked"
-                  userName={user.firstName}
-                />
-              </div>
-            </div>
+            {renderDockedPrompt()}
           </>
         ) : showingResults && detail ? (
           <>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-8 pb-4">
+            <div
+              className={cn(
+                "min-h-0 flex-1 overflow-y-auto px-6 pt-8 md:pt-20",
+                hideComprasalSearchControls ? "pb-8" : "pb-4",
+              )}
+            >
               <HomeSearchResults detail={detail} />
             </div>
-            <div className="sticky bottom-0 shrink-0 bg-surface-base px-6 pt-2 pb-5">
-              <div className="mx-auto w-full max-w-5xl">
-                <AskLeadivaPrompt
-                  variant="docked"
-                  userName={user.firstName}
-                />
-              </div>
-            </div>
+            {renderDockedPrompt()}
           </>
         ) : selectedExecutionId && !detail ? (
           <>
-            <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-10">
+            <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-10 md:pt-20">
               <p className="max-w-md text-center text-sm text-text-secondary">
                 No se encontró esa búsqueda. Selecciona otra del historial o
                 inicia una nueva.
               </p>
             </div>
-            <div className="sticky bottom-0 shrink-0 bg-surface-base px-6 pt-2 pb-5">
-              <div className="mx-auto w-full max-w-5xl">
-                <AskLeadivaPrompt
-                  variant="docked"
-                  userName={user.firstName}
-                />
-              </div>
-            </div>
+            {renderDockedPrompt()}
           </>
         ) : (
-          <AskLeadivaPrompt userName={user.firstName} />
+          <AskLeadivaPrompt userName={user.firstName} source={source} />
         )}
       </main>
     </div>

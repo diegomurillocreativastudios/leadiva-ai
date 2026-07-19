@@ -58,12 +58,30 @@ const serverEnvSchema = z.object({
     .min(1_000)
     .max(3_600_000)
     .default(300_000),
+  COMPRASAL_AWARD_REPORT_CACHE_TTL_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(3_600_000)
+    .default(300_000),
   COMPRASAL_AVAILABLE_MAX_ROWS: z.coerce
     .number()
     .int()
     .min(1)
     .max(100_000)
     .default(10_000),
+  COMPRASAL_AVAILABLE_MAX_MATCHES: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1_000)
+    .default(250),
+  COMPRASAL_AVAILABLE_TIME_BUDGET_MS: z.coerce
+    .number()
+    .int()
+    .min(10_000)
+    .max(290_000)
+    .default(240_000),
   JOB_SYNC_SECRET: z.string().min(16).optional(),
   GCP_PROJECT_ID: z.string().optional(),
   GCP_LOCATION: z.string().default("us-central1"),
@@ -160,8 +178,14 @@ export function getServerEnv(): ServerEnv {
       process.env.COMPRASAL_AVAILABLE_MAX_PAGES,
     COMPRASAL_AVAILABLE_CACHE_TTL_MS:
       process.env.COMPRASAL_AVAILABLE_CACHE_TTL_MS,
+    COMPRASAL_AWARD_REPORT_CACHE_TTL_MS:
+      process.env.COMPRASAL_AWARD_REPORT_CACHE_TTL_MS,
     COMPRASAL_AVAILABLE_MAX_ROWS:
       process.env.COMPRASAL_AVAILABLE_MAX_ROWS,
+    COMPRASAL_AVAILABLE_MAX_MATCHES:
+      process.env.COMPRASAL_AVAILABLE_MAX_MATCHES,
+    COMPRASAL_AVAILABLE_TIME_BUDGET_MS:
+      process.env.COMPRASAL_AVAILABLE_TIME_BUDGET_MS,
     JOB_SYNC_SECRET: process.env.JOB_SYNC_SECRET,
     GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,
     GCP_LOCATION: process.env.GCP_LOCATION,

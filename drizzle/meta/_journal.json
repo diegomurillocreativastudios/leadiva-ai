@@ -50,6 +50,20 @@
       "when": 1784397722177,
       "tag": "0006_simplify_user_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784480657682,
+      "tag": "0007_marvelous_thunderbolts",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784480808786,
+      "tag": "0008_slimy_toad_men",
+      "breakpoints": true
     }
   ]
 }

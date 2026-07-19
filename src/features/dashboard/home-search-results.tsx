@@ -5,6 +5,7 @@ import type { SearchExecutionDetail } from "@/features/projects/search-execution
 import { homeSearchResultHref } from "@/lib/home-search-href";
 import { homeSearchResultLeadKey } from "@/lib/home-search-result-id";
 import { homeSearchResultSector } from "@/lib/home-search-result-sector";
+import { buildSearchExecutionTitle } from "@/lib/search-execution-title";
 import { cn } from "@/lib/utils";
 
 function formatDeadline(value: string | null): string {
@@ -26,7 +27,11 @@ export function HomeSearchResults({
 }) {
   const candidates = detail.candidates;
   const queryTitle =
-    detail.execution.query ?? "Resultados de la búsqueda";
+    buildSearchExecutionTitle({
+      userQuery: detail.execution.query,
+      sourceType: detail.execution.sourceType,
+      at: detail.execution.createdAt,
+    }) ?? "Resultados de la búsqueda";
 
   return (
     <section
@@ -97,7 +102,10 @@ export function HomeSearchResults({
                     {description}
                   </p>
                   <p className="mt-3 text-xs text-text-secondary">
-                    Fecha límite:{" "}
+                    {detail.execution.sourceType === "COMPRASAL"
+                      ? "Cierre"
+                      : "Fecha límite"}
+                    :{" "}
                     <span className="font-medium text-text-primary">
                       {formatDeadline(candidate.deadlineAt)}
                     </span>

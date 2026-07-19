@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  GROUNDED_HOME_QUERY_MAX_LENGTH,
   HOME_SEARCH_SOURCES,
   defaultHomeSearchSource,
   homeSearchSourceLabel,
@@ -9,6 +10,10 @@ import {
 import { homeSearchHref } from "@/lib/home-search-href";
 
 describe("home-search-source", () => {
+  it("limits grounded free-text queries to 100 characters", () => {
+    expect(GROUNDED_HOME_QUERY_MAX_LENGTH).toBe(100);
+  });
+
   it("exposes the three selectable sources in order", () => {
     expect(HOME_SEARCH_SOURCES.map((source) => source.id)).toEqual([
       "COMPRASAL",

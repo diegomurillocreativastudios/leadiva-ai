@@ -1,11 +1,28 @@
 import { z } from "zod";
 
+const ISO_8601_WITH_TIMEZONE =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
+
+export function isComprasalIsoDateTime(value: string): boolean {
+  return (
+    ISO_8601_WITH_TIMEZONE.test(value) && !Number.isNaN(Date.parse(value))
+  );
+}
+
+const comprasalIsoDateTimeSchema = z
+  .string()
+  .trim()
+  .refine(
+    isComprasalIsoDateTime,
+    "Expected an ISO 8601 timestamp with Z or an explicit offset",
+  );
+
 export const comprasalAvailableStageSchema = z
   .object({
     id: z.number().int(),
     nombre: z.string().trim().min(1),
-    fecha_hora_fin: z.string().trim().min(1),
-    fecha_hora_inicio: z.string().trim().min(1),
+    fecha_hora_fin: comprasalIsoDateTimeSchema,
+    fecha_hora_inicio: comprasalIsoDateTimeSchema,
   })
   .passthrough();
 

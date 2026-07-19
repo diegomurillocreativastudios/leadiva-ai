@@ -1,6 +1,15 @@
 import "server-only";
 
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import {
   buildSearchExecutionSummary,
@@ -19,8 +28,10 @@ import {
 import { db } from "@/server/db";
 import {
   searchExecutions,
+  searchExecutionResults,
   searchProfiles,
   searchResults,
+  userSearchResultStates,
 } from "@/server/db/schema";
 import { searchResultNotDeleted } from "@/server/db/soft-delete";
 
@@ -107,7 +118,31 @@ export function readExecutionCandidateResultIds(metrics: Metrics): string[] {
         return typeof id === "string" && UUID_PATTERN.test(id) ? [id] : [];
       }),
     ),
-  ];
+  ].slice(0, MAX_EXECUTION_RESULTS);
+}
+
+const MAX_EXECUTION_RESULTS = 1000;
+
+function visibleExecutionSourceCondition() {
+  return or(
+    inArray(searchProfiles.sourceType, ["PRIVATE_WEB", "LINKEDIN"]),
+    and(
+      eq(searchProfiles.sourceType, "COMPRASAL"),
+      sql`${searchExecutions.metrics}->>'searchMode' = 'AVAILABLE_SEARCH'`,
+    ),
+  );
+}
+
+export function isInteractiveUserSearchExecution(
+  sourceType: string | null,
+  metrics: Metrics,
+): boolean {
+  return (
+    sourceType === "PRIVATE_WEB" ||
+    sourceType === "LINKEDIN" ||
+    (sourceType === "COMPRASAL" &&
+      metricString(metrics, "searchMode") === "AVAILABLE_SEARCH")
+  );
 }
 
 /** Sidebar / history list cap — high enough for MVP full history + own scroll. */
@@ -143,35 +178,38 @@ export async function listUserSearchExecutions(params: {
     .where(
       and(
         eq(searchProfiles.createdByUserId, params.userId),
-        inArray(searchProfiles.sourceType, [
-          "PRIVATE_WEB",
-          "LINKEDIN",
-          "COMPRASAL",
-        ]),
+        visibleExecutionSourceCondition(),
         sql`coalesce((${searchExecutions.metrics}->>'hiddenFromHistory')::boolean, false) = false`,
       ),
     )
     .orderBy(desc(searchExecutions.createdAt))
     .limit(limit);
 
-  return rows.map((row) => {
-    const summary = buildSearchExecutionSummary({
-      metrics: row.metrics as Record<string, unknown> | null,
-      candidatesFound: row.candidatesFound,
-      candidatesDiscarded: row.candidatesDiscarded,
+  return rows
+    .filter((row) =>
+      isInteractiveUserSearchExecution(
+        row.sourceType,
+        row.metrics as Metrics,
+      ),
+    )
+    .map((row) => {
+      const summary = buildSearchExecutionSummary({
+        metrics: row.metrics as Record<string, unknown> | null,
+        candidatesFound: row.candidatesFound,
+        candidatesDiscarded: row.candidatesDiscarded,
+      });
+      return {
+        ...executionView(row),
+        summary: {
+          candidatesFound: summary.candidatesFound,
+          candidatesVerified: summary.candidatesVerified,
+          candidatesCreated: summary.candidatesCreated,
+          candidatesUpdated: summary.candidatesUpdated,
+          candidatesUnchanged: summary.candidatesUnchanged,
+          saved: summary.saved,
+        },
+      };
     });
-    return {
-      ...executionView(row),
-      summary: {
-        candidatesFound: summary.candidatesFound,
-        candidatesVerified: summary.candidatesVerified,
-        candidatesCreated: summary.candidatesCreated,
-        candidatesUpdated: summary.candidatesUpdated,
-        candidatesUnchanged: summary.candidatesUnchanged,
-        saved: summary.saved,
-      },
-    };
-  });
 }
 
 export async function getUserSearchExecutionDetail(params: {
@@ -201,11 +239,18 @@ export async function getUserSearchExecutionDetail(params: {
       and(
         eq(searchExecutions.id, params.executionId),
         eq(searchProfiles.createdByUserId, params.userId),
+        visibleExecutionSourceCondition(),
       ),
     )
     .limit(1);
 
-  if (!row) {
+  if (
+    !row ||
+    !isInteractiveUserSearchExecution(
+      row.sourceType,
+      row.metrics as Metrics,
+    )
+  ) {
     return null;
   }
 
@@ -214,8 +259,7 @@ export async function getUserSearchExecutionDetail(params: {
     return null;
   }
 
-  const executionCandidateIds = readExecutionCandidateResultIds(metrics);
-  const persisted = await db
+  const associated = await db
     .select({
       id: searchResults.id,
       title: searchResults.title,
@@ -225,19 +269,82 @@ export async function getUserSearchExecutionDetail(params: {
       sourceDomain: searchResults.sourceDomain,
       deadlineAt: searchResults.deadlineAt,
       category: searchResults.category,
-      preliminaryScore: searchResults.preliminaryScore,
+      preliminaryScore: searchExecutionResults.preliminaryScore,
+      rank: searchExecutionResults.rank,
       verificationStatus: searchResults.verificationStatus,
       verificationReason: searchResults.verificationReason,
+      deletedAt: searchResults.deletedAt,
+      userState: userSearchResultStates.state,
     })
-    .from(searchResults)
-    .where(
+    .from(searchExecutionResults)
+    .innerJoin(
+      searchResults,
+      eq(searchExecutionResults.searchResultId, searchResults.id),
+    )
+    .leftJoin(
+      userSearchResultStates,
       and(
-        executionCandidateIds.length > 0
-          ? inArray(searchResults.id, executionCandidateIds)
-          : eq(searchResults.searchExecutionId, row.id),
-        searchResultNotDeleted(),
+        eq(userSearchResultStates.searchResultId, searchResults.id),
+        eq(userSearchResultStates.userId, params.userId),
       ),
-    );
+    )
+    .where(
+      eq(searchExecutionResults.searchExecutionId, row.id),
+    )
+    .orderBy(asc(searchExecutionResults.rank), asc(searchResults.id))
+    .limit(MAX_EXECUTION_RESULTS);
+
+  const hasAssociations = associated.length > 0;
+  const executionCandidateIds = readExecutionCandidateResultIds(metrics);
+  const legacyPersisted = hasAssociations
+    ? []
+    : await db
+        .select({
+          id: searchResults.id,
+          title: searchResults.title,
+          organizationName: searchResults.organizationName,
+          summary: searchResults.snippet,
+          officialSourceUrl: searchResults.sourceUrl,
+          sourceDomain: searchResults.sourceDomain,
+          deadlineAt: searchResults.deadlineAt,
+          category: searchResults.category,
+          preliminaryScore: searchResults.preliminaryScore,
+          rank: sql<number | null>`null`,
+          verificationStatus: searchResults.verificationStatus,
+          verificationReason: searchResults.verificationReason,
+          deletedAt: searchResults.deletedAt,
+          userState: userSearchResultStates.state,
+        })
+        .from(searchResults)
+        .leftJoin(
+          userSearchResultStates,
+          and(
+            eq(userSearchResultStates.searchResultId, searchResults.id),
+            eq(userSearchResultStates.userId, params.userId),
+          ),
+        )
+        .where(
+          executionCandidateIds.length > 0
+            ? inArray(searchResults.id, executionCandidateIds)
+            : eq(searchResults.searchExecutionId, row.id),
+        )
+        .limit(MAX_EXECUTION_RESULTS);
+  const hiddenLegacyResultIds = new Set(
+    legacyPersisted
+      .filter(
+        (candidate) =>
+          Boolean(candidate.deletedAt) ||
+          candidate.verificationStatus === "REJECTED" ||
+          candidate.userState === "DISMISSED",
+      )
+      .map((candidate) => candidate.id),
+  );
+  const persisted = (hasAssociations ? associated : legacyPersisted).filter(
+    (candidate) =>
+      !candidate.deletedAt &&
+      candidate.verificationStatus !== "REJECTED" &&
+      candidate.userState !== "DISMISSED",
+  );
 
   const persistedCandidates = persisted
     .map((candidate, index) =>
@@ -266,21 +373,32 @@ export async function getUserSearchExecutionDetail(params: {
       Boolean(candidate),
     );
 
-  const merged = mergeCandidateViews([
-    ...persistedCandidates,
-    ...traceCandidates(metrics, row.id),
-  ]);
-
-  const attached = await attachSearchResultIdsToCandidates({
-    candidates: merged,
-  });
+  const merged = hasAssociations
+    ? persistedCandidates
+    : mergeCandidateViews([
+        ...persistedCandidates,
+        ...traceCandidates(metrics, row.id).filter(
+          (candidate) =>
+            !candidate.searchResultId ||
+            !hiddenLegacyResultIds.has(candidate.searchResultId),
+        ),
+      ]);
+  const attached = hasAssociations
+    ? merged
+    : await attachSearchResultIdsToCandidates({
+        candidates: merged,
+        executionId: row.id,
+      });
   const candidates =
     row.sourceType === "COMPRASAL"
       ? attached.sort(
           (left, right) =>
             (right.preliminaryScore ?? 0) - (left.preliminaryScore ?? 0) ||
             (left.deadlineAt ?? "").localeCompare(right.deadlineAt ?? "") ||
-            (left.title ?? "").localeCompare(right.title ?? ""),
+            (left.title ?? "").localeCompare(right.title ?? "") ||
+            (left.searchResultId ?? left.temporaryId).localeCompare(
+              right.searchResultId ?? right.temporaryId,
+            ),
         )
       : attached;
 
@@ -299,6 +417,7 @@ export async function getUserSearchExecutionDetail(params: {
 /** Links legacy home candidates to search_results rows by URL without mutating ownership. */
 async function attachSearchResultIdsToCandidates(params: {
   candidates: SearchExecutionCandidateView[];
+  executionId: string;
 }): Promise<SearchExecutionCandidateView[]> {
   if (params.candidates.every((candidate) => Boolean(candidate.searchResultId))) {
     return params.candidates;
@@ -327,6 +446,7 @@ async function attachSearchResultIdsToCandidates(params: {
     .where(
       and(
         searchResultNotDeleted(),
+        eq(searchResults.searchExecutionId, params.executionId),
         or(
           inArray(searchResults.sourceUrl, urls),
           inArray(searchResults.sourceOriginalUrl, urls),
@@ -381,6 +501,7 @@ async function getOwnedSearchExecution(params: {
     .select({
       id: searchExecutions.id,
       metrics: searchExecutions.metrics,
+      sourceType: searchProfiles.sourceType,
     })
     .from(searchExecutions)
     .innerJoin(
@@ -391,11 +512,14 @@ async function getOwnedSearchExecution(params: {
       and(
         eq(searchExecutions.id, params.executionId),
         eq(searchProfiles.createdByUserId, params.userId),
+        visibleExecutionSourceCondition(),
       ),
     )
     .limit(1);
 
-  return row ?? null;
+  return row && isInteractiveUserSearchExecution(row.sourceType, row.metrics)
+    ? row
+    : null;
 }
 
 export async function renameUserSearchExecution(params: {
@@ -450,6 +574,104 @@ export type UserSearchExecutionResultDetail = {
   amountStatus: string;
 };
 
+export type UserAssociatedSearchResultDetail = {
+  id: string;
+  searchExecutionId: string;
+  sourceType: string;
+  externalId: string | null;
+  title: string;
+  snippet: string | null;
+  sourceUrl: string;
+  organizationName: string | null;
+  publishedAt: Date | null;
+  deadlineAt: Date | null;
+  estimatedAmount: string | null;
+  currency: string | null;
+  amountStatus: string;
+  preliminaryScore: number | null;
+  rawData: Record<string, unknown> | null;
+};
+
+/**
+ * Strict access path for enriched details. Unlike the generic legacy view, this
+ * requires the execution-result association and never treats JSONB metrics as ACL.
+ */
+export async function getUserAssociatedSearchResultDetail(params: {
+  executionId: string;
+  resultId: string;
+  userId: string;
+}): Promise<UserAssociatedSearchResultDetail | null> {
+  const execution = await getOwnedSearchExecution({
+    executionId: params.executionId,
+    userId: params.userId,
+  });
+  if (!execution || isSearchExecutionHiddenFromHistory(execution.metrics)) {
+    return null;
+  }
+
+  const [result] = await db
+    .select({
+      id: searchResults.id,
+      sourceType: searchResults.sourceType,
+      externalId: searchResults.externalId,
+      title: searchResults.title,
+      snippet: searchResults.snippet,
+      sourceUrl: searchResults.sourceUrl,
+      organizationName: searchResults.organizationName,
+      publishedAt: searchResults.publishedAt,
+      deadlineAt: searchResults.deadlineAt,
+      estimatedAmount: searchResults.estimatedAmount,
+      currency: searchResults.currency,
+      amountStatus: searchResults.amountStatus,
+      preliminaryScore: searchExecutionResults.preliminaryScore,
+      rawData: searchResults.rawData,
+      userState: userSearchResultStates.state,
+    })
+    .from(searchExecutionResults)
+    .innerJoin(
+      searchResults,
+      eq(searchExecutionResults.searchResultId, searchResults.id),
+    )
+    .leftJoin(
+      userSearchResultStates,
+      and(
+        eq(userSearchResultStates.searchResultId, searchResults.id),
+        eq(userSearchResultStates.userId, params.userId),
+      ),
+    )
+    .where(
+      and(
+        eq(searchExecutionResults.searchExecutionId, params.executionId),
+        eq(searchExecutionResults.searchResultId, params.resultId),
+        searchResultNotDeleted(),
+        ne(searchResults.verificationStatus, "REJECTED"),
+      ),
+    )
+    .limit(1);
+
+  if (!result || result.userState === "DISMISSED") {
+    return null;
+  }
+
+  return {
+    id: result.id,
+    searchExecutionId: params.executionId,
+    sourceType: result.sourceType,
+    externalId: result.externalId,
+    title: result.title,
+    snippet: result.snippet,
+    sourceUrl: result.sourceUrl,
+    organizationName: result.organizationName,
+    publishedAt: result.publishedAt,
+    deadlineAt: result.deadlineAt,
+    estimatedAmount: result.estimatedAmount,
+    currency: result.currency,
+    amountStatus: result.amountStatus,
+    preliminaryScore: result.preliminaryScore,
+    rawData: result.rawData,
+  };
+}
+
 /** Returns a persisted search result owned by the user within a given execution. */
 export async function getUserSearchExecutionResultDetail(params: {
   executionId: string;
@@ -464,10 +686,56 @@ export async function getUserSearchExecutionResultDetail(params: {
     return null;
   }
 
+  const [anyAssociation, association] = await Promise.all([
+    db
+      .select({ searchResultId: searchExecutionResults.searchResultId })
+      .from(searchExecutionResults)
+      .where(
+        eq(searchExecutionResults.searchExecutionId, params.executionId),
+      )
+      .limit(1)
+      .then(([row]) => row ?? null),
+    db
+      .select({
+        searchResultId: searchExecutionResults.searchResultId,
+        userState: userSearchResultStates.state,
+      })
+      .from(searchExecutionResults)
+      .innerJoin(
+        searchResults,
+        eq(searchExecutionResults.searchResultId, searchResults.id),
+      )
+      .leftJoin(
+        userSearchResultStates,
+        and(
+          eq(userSearchResultStates.searchResultId, searchResults.id),
+          eq(userSearchResultStates.userId, params.userId),
+        ),
+      )
+      .where(
+        and(
+          eq(searchExecutionResults.searchExecutionId, params.executionId),
+          eq(searchExecutionResults.searchResultId, params.leadId),
+          searchResultNotDeleted(),
+          ne(searchResults.verificationStatus, "REJECTED"),
+        ),
+      )
+      .limit(1)
+      .then(([row]) => row ?? null),
+  ]);
+
+  if (anyAssociation && association?.userState === "DISMISSED") {
+    return null;
+  }
+  if (anyAssociation && !association) {
+    return null;
+  }
+
   const executionCandidateIds = readExecutionCandidateResultIds(
     execution.metrics as Metrics,
   );
   if (
+    !anyAssociation &&
     executionCandidateIds.length > 0 &&
     !executionCandidateIds.includes(params.leadId)
   ) {
@@ -485,20 +753,31 @@ export async function getUserSearchExecutionResultDetail(params: {
       estimatedAmount: searchResults.estimatedAmount,
       currency: searchResults.currency,
       amountStatus: searchResults.amountStatus,
+      userState: userSearchResultStates.state,
     })
     .from(searchResults)
+    .leftJoin(
+      userSearchResultStates,
+      and(
+        eq(userSearchResultStates.searchResultId, searchResults.id),
+        eq(userSearchResultStates.userId, params.userId),
+      ),
+    )
     .where(
       and(
         eq(searchResults.id, params.leadId),
-        executionCandidateIds.length > 0
-          ? inArray(searchResults.id, executionCandidateIds)
-          : eq(searchResults.searchExecutionId, params.executionId),
+        anyAssociation
+          ? eq(searchResults.id, association!.searchResultId)
+          : executionCandidateIds.length > 0
+            ? inArray(searchResults.id, executionCandidateIds)
+            : eq(searchResults.searchExecutionId, params.executionId),
         searchResultNotDeleted(),
+        ne(searchResults.verificationStatus, "REJECTED"),
       ),
     )
     .limit(1);
 
-  if (!result) {
+  if (!result || result.userState === "DISMISSED") {
     return null;
   }
 

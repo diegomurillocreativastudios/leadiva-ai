@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
+  index,
   integer,
   jsonb,
   numeric,
@@ -66,6 +68,7 @@ export const searchProfiles = pgTable("search_profiles", {
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
   sourceType: varchar("source_type", { length: 40 }).notNull(),
+  profileKey: varchar("profile_key", { length: 80 }),
   keywords: jsonb("keywords").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
   excludedKeywords: jsonb("excluded_keywords")
     .$type<string[]>()
@@ -87,7 +90,13 @@ export const searchProfiles = pgTable("search_profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (table) => [
+  uniqueIndex("search_profiles_user_key_uidx")
+    .on(table.createdByUserId, table.profileKey)
+    .where(
+      sql`${table.createdByUserId} is not null and ${table.profileKey} is not null`,
+    ),
+]);
 
 export const searchExecutions = pgTable("search_executions", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -177,10 +186,83 @@ export const searchResults = pgTable(
   (table) => [
     uniqueIndex("search_results_normalized_url_uidx")
       .on(table.normalizedUrl)
-      .where(sql`${table.deletedAt} is null`),
+      .where(
+        sql`${table.deletedAt} is null and ${table.sourceType} <> 'COMPRASAL'`,
+      ),
+    index("search_results_normalized_url_idx").on(table.normalizedUrl),
     uniqueIndex("search_results_source_external_uidx")
       .on(table.sourceType, table.externalId)
       .where(sql`${table.deletedAt} is null`),
+    uniqueIndex("search_results_comprasal_available_identity_uidx")
+      .on(table.sourceType, table.externalId)
+      .where(
+        sql`${table.sourceType} = 'COMPRASAL' and ${table.externalId} like 'available:%'`,
+      ),
+  ],
+);
+
+export const searchExecutionResults = pgTable(
+  "search_execution_results",
+  {
+    searchExecutionId: uuid("search_execution_id")
+      .notNull()
+      .references(() => searchExecutions.id, { onDelete: "cascade" }),
+    searchResultId: uuid("search_result_id")
+      .notNull()
+      .references(() => searchResults.id, { onDelete: "cascade" }),
+    preliminaryScore: integer("preliminary_score"),
+    rank: integer("rank").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("search_execution_results_execution_result_uidx").on(
+      table.searchExecutionId,
+      table.searchResultId,
+    ),
+    index("search_execution_results_execution_idx").on(
+      table.searchExecutionId,
+    ),
+    index("search_execution_results_result_idx").on(table.searchResultId),
+    check("search_execution_results_rank_check", sql`${table.rank} > 0`),
+    check(
+      "search_execution_results_score_check",
+      sql`${table.preliminaryScore} is null or (${table.preliminaryScore} >= 0 and ${table.preliminaryScore} <= 100)`,
+    ),
+  ],
+);
+
+export const userSearchResultStates = pgTable(
+  "user_search_result_states",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    searchResultId: uuid("search_result_id")
+      .notNull()
+      .references(() => searchResults.id, { onDelete: "cascade" }),
+    state: varchar("state", { length: 20 }).notNull().default("ACTIVE"),
+    dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
+    dismissReason: text("dismiss_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_search_result_states_user_result_uidx").on(
+      table.userId,
+      table.searchResultId,
+    ),
+    index("user_search_result_states_user_idx").on(table.userId),
+    index("user_search_result_states_result_idx").on(table.searchResultId),
+    check(
+      "user_search_result_states_state_check",
+      sql`${table.state} in ('ACTIVE', 'DISMISSED')`,
+    ),
   ],
 );
 

@@ -473,7 +473,11 @@ export async function runGroundedSearch(params: {
     customQuery: params.query,
   });
   const query = searchPlan.intents.map((intent) => intent.query).join("\n");
-  const executionTitle = buildSearchExecutionTitle(params.query);
+  const executionTitle = buildSearchExecutionTitle({
+    userQuery: params.query,
+    sourceType: params.sourceType,
+    at: new Date(),
+  });
 
   await assertNoOverlappingPrivateSearch(params.sourceType);
 
