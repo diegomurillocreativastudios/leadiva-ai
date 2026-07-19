@@ -6,7 +6,7 @@ export const homeSearchSourceIds = [
 
 export type HomeSearchSourceId = (typeof homeSearchSourceIds)[number];
 
-export const defaultHomeSearchSource: HomeSearchSourceId = "PRIVATE_WEB";
+export const defaultHomeSearchSource: HomeSearchSourceId = "COMPRASAL";
 
 export const HOME_SEARCH_SOURCES = [
   { id: "COMPRASAL", label: "Comprasal" },
@@ -22,9 +22,14 @@ type GroundedSearchBody = {
   query: string;
 };
 
+type ComprasalSearchBody = {
+  sourceType: "COMPRASAL";
+  query: string;
+};
+
 export type HomeSearchRequest = {
-  endpoint: "/api/jobs/sync-comprasal" | "/api/jobs/search-grounding";
-  body: GroundedSearchBody | undefined;
+  endpoint: "/api/jobs/search-comprasal" | "/api/jobs/search-grounding";
+  body: GroundedSearchBody | ComprasalSearchBody;
   loadingMessage: string;
   requiresQuery: boolean;
 };
@@ -40,10 +45,10 @@ export function resolveHomeSearchRequest(
 ): HomeSearchRequest {
   if (source === "COMPRASAL") {
     return {
-      endpoint: "/api/jobs/sync-comprasal",
-      body: undefined,
-      loadingMessage: "Sincronizando COMPRASAL…",
-      requiresQuery: false,
+      endpoint: "/api/jobs/search-comprasal",
+      body: { sourceType: "COMPRASAL", query },
+      loadingMessage: "Buscando en COMPRASAL…",
+      requiresQuery: true,
     };
   }
 

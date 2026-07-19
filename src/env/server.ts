@@ -40,6 +40,30 @@ const serverEnvSchema = z.object({
     .max(120_000)
     .default(45_000),
   COMPRASAL_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+  COMPRASAL_AVAILABLE_PER_PAGE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1_000)
+    .default(1_000),
+  COMPRASAL_AVAILABLE_MAX_PAGES: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1_000)
+    .default(100),
+  COMPRASAL_AVAILABLE_CACHE_TTL_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(3_600_000)
+    .default(300_000),
+  COMPRASAL_AVAILABLE_MAX_ROWS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100_000)
+    .default(10_000),
   JOB_SYNC_SECRET: z.string().min(16).optional(),
   GCP_PROJECT_ID: z.string().optional(),
   GCP_LOCATION: z.string().default("us-central1"),
@@ -130,6 +154,14 @@ export function getServerEnv(): ServerEnv {
     COMPRASAL_SYNC_MAX_PAGES: process.env.COMPRASAL_SYNC_MAX_PAGES,
     COMPRASAL_REQUEST_TIMEOUT_MS: process.env.COMPRASAL_REQUEST_TIMEOUT_MS,
     COMPRASAL_MAX_RETRIES: process.env.COMPRASAL_MAX_RETRIES,
+    COMPRASAL_AVAILABLE_PER_PAGE:
+      process.env.COMPRASAL_AVAILABLE_PER_PAGE,
+    COMPRASAL_AVAILABLE_MAX_PAGES:
+      process.env.COMPRASAL_AVAILABLE_MAX_PAGES,
+    COMPRASAL_AVAILABLE_CACHE_TTL_MS:
+      process.env.COMPRASAL_AVAILABLE_CACHE_TTL_MS,
+    COMPRASAL_AVAILABLE_MAX_ROWS:
+      process.env.COMPRASAL_AVAILABLE_MAX_ROWS,
     JOB_SYNC_SECRET: process.env.JOB_SYNC_SECRET,
     GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,
     GCP_LOCATION: process.env.GCP_LOCATION,

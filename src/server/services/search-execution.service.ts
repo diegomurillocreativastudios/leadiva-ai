@@ -91,6 +91,25 @@ function traceCandidates(
     );
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function readExecutionCandidateResultIds(metrics: Metrics): string[] {
+  const candidates = metrics?.executionCandidates;
+  if (!Array.isArray(candidates)) return [];
+  return [
+    ...new Set(
+      candidates.flatMap((candidate) => {
+        if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+          return [];
+        }
+        const id = (candidate as Record<string, unknown>).searchResultId;
+        return typeof id === "string" && UUID_PATTERN.test(id) ? [id] : [];
+      }),
+    ),
+  ];
+}
+
 /** Sidebar / history list cap — high enough for MVP full history + own scroll. */
 export const MAX_USER_SEARCH_HISTORY_LIMIT = 100;
 
@@ -124,7 +143,11 @@ export async function listUserSearchExecutions(params: {
     .where(
       and(
         eq(searchProfiles.createdByUserId, params.userId),
-        inArray(searchProfiles.sourceType, ["PRIVATE_WEB", "LINKEDIN"]),
+        inArray(searchProfiles.sourceType, [
+          "PRIVATE_WEB",
+          "LINKEDIN",
+          "COMPRASAL",
+        ]),
         sql`coalesce((${searchExecutions.metrics}->>'hiddenFromHistory')::boolean, false) = false`,
       ),
     )
@@ -191,6 +214,7 @@ export async function getUserSearchExecutionDetail(params: {
     return null;
   }
 
+  const executionCandidateIds = readExecutionCandidateResultIds(metrics);
   const persisted = await db
     .select({
       id: searchResults.id,
@@ -208,7 +232,9 @@ export async function getUserSearchExecutionDetail(params: {
     .from(searchResults)
     .where(
       and(
-        eq(searchResults.searchExecutionId, row.id),
+        executionCandidateIds.length > 0
+          ? inArray(searchResults.id, executionCandidateIds)
+          : eq(searchResults.searchExecutionId, row.id),
         searchResultNotDeleted(),
       ),
     );
@@ -241,14 +267,22 @@ export async function getUserSearchExecutionDetail(params: {
     );
 
   const merged = mergeCandidateViews([
-    ...traceCandidates(metrics, row.id),
     ...persistedCandidates,
+    ...traceCandidates(metrics, row.id),
   ]);
 
-  const candidates = await attachSearchResultIdsToCandidates({
-    executionId: row.id,
+  const attached = await attachSearchResultIdsToCandidates({
     candidates: merged,
   });
+  const candidates =
+    row.sourceType === "COMPRASAL"
+      ? attached.sort(
+          (left, right) =>
+            (right.preliminaryScore ?? 0) - (left.preliminaryScore ?? 0) ||
+            (left.deadlineAt ?? "").localeCompare(right.deadlineAt ?? "") ||
+            (left.title ?? "").localeCompare(right.title ?? ""),
+        )
+      : attached;
 
   return {
     execution: executionView(row),
@@ -262,11 +296,14 @@ export async function getUserSearchExecutionDetail(params: {
   };
 }
 
-/** Links home candidates to search_results rows by URL and repairs execution ownership. */
+/** Links legacy home candidates to search_results rows by URL without mutating ownership. */
 async function attachSearchResultIdsToCandidates(params: {
-  executionId: string;
   candidates: SearchExecutionCandidateView[];
 }): Promise<SearchExecutionCandidateView[]> {
+  if (params.candidates.every((candidate) => Boolean(candidate.searchResultId))) {
+    return params.candidates;
+  }
+
   const urls = [
     ...new Set(
       params.candidates
@@ -285,7 +322,6 @@ async function attachSearchResultIdsToCandidates(params: {
       sourceUrl: searchResults.sourceUrl,
       sourceOriginalUrl: searchResults.sourceOriginalUrl,
       sourceResolvedUrl: searchResults.sourceResolvedUrl,
-      searchExecutionId: searchResults.searchExecutionId,
     })
     .from(searchResults)
     .where(
@@ -301,17 +337,6 @@ async function attachSearchResultIdsToCandidates(params: {
 
   if (rows.length === 0) {
     return params.candidates;
-  }
-
-  const orphanIds = rows
-    .filter((row) => row.searchExecutionId !== params.executionId)
-    .map((row) => row.id);
-
-  if (orphanIds.length > 0) {
-    await db
-      .update(searchResults)
-      .set({ searchExecutionId: params.executionId })
-      .where(inArray(searchResults.id, orphanIds));
   }
 
   const idByUrl = new Map<string, string>();
@@ -439,6 +464,16 @@ export async function getUserSearchExecutionResultDetail(params: {
     return null;
   }
 
+  const executionCandidateIds = readExecutionCandidateResultIds(
+    execution.metrics as Metrics,
+  );
+  if (
+    executionCandidateIds.length > 0 &&
+    !executionCandidateIds.includes(params.leadId)
+  ) {
+    return null;
+  }
+
   const [result] = await db
     .select({
       id: searchResults.id,
@@ -455,19 +490,21 @@ export async function getUserSearchExecutionResultDetail(params: {
     .where(
       and(
         eq(searchResults.id, params.leadId),
-        eq(searchResults.searchExecutionId, params.executionId),
+        executionCandidateIds.length > 0
+          ? inArray(searchResults.id, executionCandidateIds)
+          : eq(searchResults.searchExecutionId, params.executionId),
         searchResultNotDeleted(),
       ),
     )
     .limit(1);
 
-  if (!result || !result.searchExecutionId) {
+  if (!result) {
     return null;
   }
 
   return {
     id: result.id,
-    searchExecutionId: result.searchExecutionId,
+    searchExecutionId: params.executionId,
     title: result.title,
     snippet: result.snippet,
     sourceUrl: result.sourceUrl,

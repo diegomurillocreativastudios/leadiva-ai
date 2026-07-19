@@ -5,6 +5,10 @@ import {
   parseComprasalListResponse,
   type ComprasalPageResult,
 } from "./parse-response";
+import {
+  parseComprasalAvailableResponse,
+  type ComprasalAvailablePage,
+} from "./available-schemas";
 import type { ComprasalProcess } from "./schemas";
 
 export type { ComprasalPageResult } from "./parse-response";
@@ -30,6 +34,50 @@ async function sleep(ms: number) {
   });
 }
 
+async function fetchComprasalJson(params: {
+  url: URL;
+  timeoutMs: number;
+  maxRetries: number;
+}): Promise<{ json: unknown; headers: Headers }> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= params.maxRetries; attempt += 1) {
+    try {
+      const response = await fetch(params.url, {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+        signal: AbortSignal.timeout(params.timeoutMs),
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        const retryable = response.status === 429 || response.status >= 500;
+        const error = new ComprasalClientError(
+          `COMPRASAL HTTP ${response.status}`,
+          response.status,
+          retryable,
+        );
+        if (!retryable || attempt === params.maxRetries) throw error;
+        lastError = error;
+        await sleep(400 * 2 ** attempt);
+        continue;
+      }
+      return { json: (await response.json()) as unknown, headers: response.headers };
+    } catch (error) {
+      const retryable =
+        error instanceof ComprasalClientError
+          ? error.retryable
+          : error instanceof Error &&
+            (error.name === "TimeoutError" ||
+              error.name === "AbortError" ||
+              /fetch failed|network/i.test(error.message));
+      lastError = error instanceof Error ? error : new Error("Unknown error");
+      if (!retryable || attempt === params.maxRetries) throw lastError;
+      await sleep(400 * 2 ** attempt);
+    }
+  }
+  throw lastError ?? new ComprasalClientError("COMPRASAL request failed");
+}
+
 export async function fetchComprasalPage(options?: {
   page?: number;
   perPage?: number;
@@ -53,57 +101,28 @@ export async function fetchComprasalPage(options?: {
     url.searchParams.set("id_institucion", String(options.idInstitucion));
   }
 
-  let lastError: Error | null = null;
+  const response = await fetchComprasalJson({ url, timeoutMs, maxRetries });
+  return parseComprasalListResponse(response.json, page, perPage);
+}
 
-  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "User-Agent": USER_AGENT,
-        },
-        signal: AbortSignal.timeout(timeoutMs),
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        const retryable = response.status === 429 || response.status >= 500;
-        const error = new ComprasalClientError(
-          `COMPRASAL HTTP ${response.status}`,
-          response.status,
-          retryable,
-        );
-        if (!retryable || attempt === maxRetries) {
-          throw error;
-        }
-        lastError = error;
-        await sleep(400 * 2 ** attempt);
-        continue;
-      }
-
-      const json: unknown = await response.json();
-      return parseComprasalListResponse(json, page, perPage);
-    } catch (error) {
-      const retryable =
-        error instanceof ComprasalClientError
-          ? error.retryable
-          : error instanceof Error &&
-            (error.name === "TimeoutError" ||
-              error.name === "AbortError" ||
-              /fetch failed|network/i.test(error.message));
-
-      lastError = error instanceof Error ? error : new Error("Unknown error");
-
-      if (!retryable || attempt === maxRetries) {
-        throw lastError;
-      }
-
-      await sleep(400 * 2 ** attempt);
-    }
-  }
-
-  throw lastError ?? new ComprasalClientError("COMPRASAL request failed");
+export async function fetchComprasalAvailablePage(options: {
+  page: number;
+  perPage: number;
+  timeoutMs?: number;
+  maxRetries?: number;
+}): Promise<ComprasalAvailablePage> {
+  const env = getServerEnv();
+  const url = new URL(
+    `${env.COMPRASAL_BASE_URL}/publico/obtener/procesos/disponibles`,
+  );
+  url.searchParams.set("page", String(options.page));
+  url.searchParams.set("per_page", String(options.perPage));
+  const response = await fetchComprasalJson({
+    url,
+    timeoutMs: options.timeoutMs ?? env.COMPRASAL_REQUEST_TIMEOUT_MS,
+    maxRetries: options.maxRetries ?? env.COMPRASAL_MAX_RETRIES,
+  });
+  return parseComprasalAvailableResponse(response.json, response.headers);
 }
 
 /** @deprecated prefer fetchComprasalPage */

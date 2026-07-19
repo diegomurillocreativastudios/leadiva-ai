@@ -73,9 +73,10 @@ export function AskLeadivaPrompt({
   const [greeting, setGreeting] = useState<HomeGreetingParts | null>(null);
   const docked = variant === "docked";
   const searchRequest = resolveHomeSearchRequest(source, query.trim());
+  const minimumQueryLength = source === "COMPRASAL" ? 2 : 3;
   const canSubmit =
     !pending &&
-    (!searchRequest.requiresQuery || query.trim().length >= 3);
+    (!searchRequest.requiresQuery || query.trim().length >= minimumQueryLength);
 
   function focusSearchIfEmpty() {
     const input = inputRef.current;
@@ -90,7 +91,9 @@ export function AskLeadivaPrompt({
       return;
     }
 
-    setGreeting(pickHomeGreetingParts(userName));
+    const greetingFrame = requestAnimationFrame(() => {
+      setGreeting(pickHomeGreetingParts(userName));
+    });
 
     function onNewSearch() {
       setQuery("");
@@ -108,6 +111,7 @@ export function AskLeadivaPrompt({
 
     window.addEventListener(NEW_HOME_SEARCH_EVENT, onNewSearch);
     return () => {
+      cancelAnimationFrame(greetingFrame);
       window.removeEventListener(NEW_HOME_SEARCH_EVENT, onNewSearch);
     };
   }, [docked, userName]);
@@ -117,8 +121,9 @@ export function AskLeadivaPrompt({
     const trimmed = query.trim();
     const request = resolveHomeSearchRequest(source, trimmed);
 
-    if (request.requiresQuery && trimmed.length < 3) {
-      toast.error("Escribe al menos 3 caracteres para buscar.");
+    const minimumLength = source === "COMPRASAL" ? 2 : 3;
+    if (request.requiresQuery && trimmed.length < minimumLength) {
+      toast.error(`Escribe al menos ${minimumLength} caracteres para buscar.`);
       return;
     }
 
@@ -149,23 +154,6 @@ export function AskLeadivaPrompt({
               "Vertex AI no configurado. Completa GCP_PROJECT_ID.",
             { id: toastId },
           );
-          router.refresh();
-          return;
-        }
-
-        if (source === "COMPRASAL") {
-          toast.success(
-            [
-              json.status === "PARTIALLY_COMPLETED"
-                ? "Sync parcial"
-                : "Sincronizado",
-              `${json.candidatesCreated ?? 0} creados`,
-              `${json.candidatesUpdated ?? 0} actualizados`,
-              `${json.candidatesDiscarded ?? 0} descartados`,
-            ].join(" · "),
-            { id: toastId },
-          );
-          setQuery("");
           router.refresh();
           return;
         }

@@ -6,6 +6,7 @@ import {
   homeSearchSourceLabel,
   resolveHomeSearchRequest,
 } from "@/lib/home-search-source";
+import { homeSearchHref } from "@/lib/home-search-href";
 
 describe("home-search-source", () => {
   it("exposes the three selectable sources in order", () => {
@@ -21,17 +22,20 @@ describe("home-search-source", () => {
     ]);
   });
 
-  it("defaults to sector privado", () => {
-    expect(defaultHomeSearchSource).toBe("PRIVATE_WEB");
-    expect(homeSearchSourceLabel("PRIVATE_WEB")).toBe("Sector privado");
+  it("defaults to COMPRASAL", () => {
+    expect(defaultHomeSearchSource).toBe("COMPRASAL");
+    expect(homeSearchSourceLabel("COMPRASAL")).toBe("Comprasal");
   });
 
-  it("resolves COMPRASAL to the sync endpoint without a query body", () => {
+  it("resolves COMPRASAL to its search endpoint with the submitted query", () => {
     expect(resolveHomeSearchRequest("COMPRASAL", "licitaciones software")).toEqual({
-      endpoint: "/api/jobs/sync-comprasal",
-      body: undefined,
-      loadingMessage: "Sincronizando COMPRASAL…",
-      requiresQuery: false,
+      endpoint: "/api/jobs/search-comprasal",
+      body: {
+        sourceType: "COMPRASAL",
+        query: "licitaciones software",
+      },
+      loadingMessage: "Buscando en COMPRASAL…",
+      requiresQuery: true,
     });
   });
 
@@ -53,13 +57,20 @@ describe("home-search-source", () => {
     });
   });
 
-  it("requires a query for grounded sources but not for COMPRASAL", () => {
-    expect(resolveHomeSearchRequest("COMPRASAL", "").requiresQuery).toBe(false);
+  it("requires a query for every source", () => {
+    expect(resolveHomeSearchRequest("COMPRASAL", "").requiresQuery).toBe(true);
     expect(resolveHomeSearchRequest("PRIVATE_WEB", "ab").requiresQuery).toBe(
       true,
     );
     expect(resolveHomeSearchRequest("LINKEDIN", "abc").requiresQuery).toBe(
       true,
+    );
+  });
+
+  it("navigates a completed COMPRASAL search by executionId", () => {
+    const response = { executionId: "00000000-0000-4000-8000-000000000201" };
+    expect(homeSearchHref(response.executionId)).toBe(
+      "/b/00000000-0000-4000-8000-000000000201",
     );
   });
 });
