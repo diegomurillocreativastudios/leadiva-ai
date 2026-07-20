@@ -31,11 +31,18 @@ const generalSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Leadiva",
+  title: {
+    default: "Leadiva AI",
+    template: "Leadiva AI | %s",
+  },
   description: "Inteligencia de oportunidades comerciales",
   icons: {
-    icon: "/leadiva.svg",
-    apple: "/leadiva.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

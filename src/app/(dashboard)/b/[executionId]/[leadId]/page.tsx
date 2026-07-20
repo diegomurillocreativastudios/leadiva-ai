@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -11,10 +12,15 @@ import {
 import { requireSession } from "@/server/auth/session";
 import { buildComprasalPublicProcessUrl } from "@/server/integrations/comprasal/available-mapper";
 import { loadUserComprasalAwardReportDetail } from "@/server/integrations/comprasal/award-report-service";
+import { loadUserComprasalPipDetail } from "@/server/integrations/comprasal/process-detail-service";
 import { getUserSearchExecutionResultDetail } from "@/server/services/search-execution.service";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
+
+export const metadata: Metadata = {
+  title: "Results",
+};
 
 const executionIdSchema = z.uuid();
 const leadKeySchema = z.string().trim().min(1).max(200);
@@ -47,11 +53,15 @@ export default async function SearchExecutionLeadDetailPage({
 
   const uuidLead = z.uuid().safeParse(leadKey.data);
   if (uuidLead.success) {
-    const awardDetail = await loadUserComprasalAwardReportDetail({
+    const detailParams = {
       executionId: executionId.data,
       resultId: uuidLead.data,
       userId: session.user.id,
-    });
+    };
+    const [awardDetail, pipDetail] = await Promise.all([
+      loadUserComprasalAwardReportDetail(detailParams),
+      loadUserComprasalPipDetail(detailParams),
+    ]);
 
     if (awardDetail?.kind === "COMPRASAL") {
       const result = awardDetail.result;
@@ -78,6 +88,16 @@ export default async function SearchExecutionLeadDetailPage({
             rawData: result.rawData,
             report: awardDetail.report,
             status: awardDetail.status,
+            pip:
+              pipDetail?.kind === "COMPRASAL" ? pipDetail.pip : null,
+            pipStatus:
+              pipDetail?.kind === "COMPRASAL"
+                ? pipDetail.status
+                : "TEMPORARY_ERROR",
+            pipDeadlineMismatch:
+              pipDetail?.kind === "COMPRASAL"
+                ? pipDetail.deadlineMismatch
+                : false,
           })}
         />
       );

@@ -54,9 +54,9 @@ export function HomeSearchSourceSelect({
           size="sm"
           aria-label="Origen de la búsqueda"
           className={cn(
-            "shrink-0 border-surface-border bg-surface-pressed font-medium text-text-primary shadow-none",
-            "hover:bg-accent-mint/70 focus-visible:border-accent focus-visible:ring-accent/40",
-            "data-placeholder:text-text-secondary",
+            "animate-pulse-border shrink-0 border-surface-border bg-surface-pressed font-medium text-text-primary shadow-none",
+            "hover:bg-accent-mint/70 focus-visible:animate-none focus-visible:border-accent focus-visible:ring-accent/40",
+            "data-[state=open]:animate-none data-placeholder:text-text-secondary",
             "[&_svg]:text-text-secondary",
             size === "sm"
               ? "h-8 max-w-38 rounded-full px-3 text-xs"

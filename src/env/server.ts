@@ -64,6 +64,12 @@ const serverEnvSchema = z.object({
     .min(1_000)
     .max(3_600_000)
     .default(300_000),
+  COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(3_600_000)
+    .default(300_000),
   COMPRASAL_AVAILABLE_MAX_ROWS: z.coerce
     .number()
     .int()
@@ -180,6 +186,8 @@ export function getServerEnv(): ServerEnv {
       process.env.COMPRASAL_AVAILABLE_CACHE_TTL_MS,
     COMPRASAL_AWARD_REPORT_CACHE_TTL_MS:
       process.env.COMPRASAL_AWARD_REPORT_CACHE_TTL_MS,
+    COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS:
+      process.env.COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS,
     COMPRASAL_AVAILABLE_MAX_ROWS:
       process.env.COMPRASAL_AVAILABLE_MAX_ROWS,
     COMPRASAL_AVAILABLE_MAX_MATCHES:

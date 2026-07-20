@@ -1,0 +1,128 @@
+{
+  "data": {
+    "id": 135317,
+    "codigo_proceso": "0000-2026-P0000",
+    "codigo_interno": "CP-EJEMPLO-2026",
+    "nombre_proceso": "PROCESO PÚBLICO DE EJEMPLO",
+    "fecha_inicio_proceso": "2026-04-01",
+    "fecha_contratacion": "2026-05-31",
+    "id_tipo_proceso": 1,
+    "id_institucion": 999,
+    "version": 2,
+    "created_at": "2026-05-26T22:01:16.326Z",
+    "fecha_publicacion": "2026-07-16T20:32:03.000Z",
+    "fecha_adjudicacion": null,
+    "proceso_publico": true,
+    "monto_adjudicado": null,
+    "Institucion": {
+      "id": 999,
+      "nombre": "INSTITUCIÓN PÚBLICA DE EJEMPLO"
+    },
+    "SeguimientoProceso": {
+      "id": 3,
+      "nombre": "En ejecución",
+      "color": "#2C49C9"
+    },
+    "FormaContratacion": {
+      "id": 12,
+      "nombre": "Comparación de precios"
+    },
+    "EstadoProceso": {
+      "id": 1,
+      "nombre": "Activo"
+    },
+    "EtapaPorProcesos": [
+      {
+        "id": 1843616,
+        "nombre": "Solicitud de contratación",
+        "fecha_hora_fin": null,
+        "fecha_hora_inicio": null
+      },
+      {
+        "id": 1843615,
+        "nombre": "Publicación de convocatoria en COMPRASAL",
+        "fecha_hora_fin": "2026-07-24T20:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-16T20:20:14.000Z"
+      },
+      {
+        "id": 1843625,
+        "nombre": "Entrega de solicitud de oferta",
+        "fecha_hora_fin": "2026-07-24T20:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-16T20:20:53.000Z"
+      },
+      {
+        "id": 1843614,
+        "nombre": "Conferencia informativa",
+        "fecha_hora_fin": "2026-07-17T18:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-17T14:00:00.000Z"
+      },
+      {
+        "id": 1843619,
+        "nombre": "Recepción de consultas",
+        "fecha_hora_fin": "2026-07-21T18:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-16T20:20:35.000Z"
+      },
+      {
+        "id": 1843620,
+        "nombre": "Emisión de aclaraciones",
+        "fecha_hora_fin": "2026-07-21T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-21T19:00:00.000Z"
+      },
+      {
+        "id": 1843617,
+        "nombre": "Recepción de ofertas",
+        "fecha_hora_fin": "2026-07-24T20:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-24T14:00:00.000Z"
+      },
+      {
+        "id": 1843618,
+        "nombre": "Evaluación de ofertas",
+        "fecha_hora_fin": "2026-07-31T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-27T14:00:00.000Z"
+      },
+      {
+        "id": 1843627,
+        "nombre": "Análisis de razonabilidad de precios",
+        "fecha_hora_fin": "2026-07-31T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-27T14:00:00.000Z"
+      },
+      {
+        "id": 1843622,
+        "nombre": "Adjudicación",
+        "fecha_hora_fin": "2026-08-07T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-08-03T14:00:00.000Z"
+      },
+      {
+        "id": 1843624,
+        "nombre": "Notificación de resultados",
+        "fecha_hora_fin": "2026-08-17T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-08-17T14:00:00.000Z"
+      },
+      {
+        "id": 1843626,
+        "nombre": "Recurso de revisión",
+        "fecha_hora_fin": "2026-08-19T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-08-18T14:00:00.000Z"
+      },
+      {
+        "id": 1843623,
+        "nombre": "Contratación",
+        "fecha_hora_fin": "2026-08-27T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-08-20T14:00:00.000Z"
+      },
+      {
+        "id": 1843621,
+        "nombre": "Emisión de adendas",
+        "fecha_hora_fin": "2026-07-23T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-16T20:20:00.000Z"
+      },
+      {
+        "id": 1843628,
+        "nombre": "Apertura de Ofertas",
+        "fecha_hora_fin": "2026-07-24T22:00:00.000Z",
+        "fecha_hora_inicio": "2026-07-24T20:00:00.000Z"
+      }
+    ]
+  },
+  "message": "Detalle de proceso público cargado correctamente."
+}

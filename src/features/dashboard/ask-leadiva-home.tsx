@@ -35,6 +35,7 @@ export function AskLeadivaHome({
   const [source, setSource] = useState<HomeSearchSourceId>(
     defaultHomeSearchSource,
   );
+  const isHomeView = !selectedExecutionId;
   const showingLead = Boolean(selectedExecutionId && selectedLead);
   const showingResults = Boolean(selectedExecutionId && detail && !selectedLead);
   const hideComprasalSearchControls =
@@ -66,40 +67,42 @@ export function AskLeadivaHome({
         previousSearches={previousSearches}
         selectedExecutionId={selectedExecutionId}
         sourceSelect={
-          <HomeSearchSourceSelect
-            value={source}
-            onValueChange={setSource}
-            size="sm"
-          />
+          isHomeView ? (
+            <HomeSearchSourceSelect
+              value={source}
+              onValueChange={setSource}
+              size="sm"
+            />
+          ) : undefined
         }
       />
       <main
         className={cn(
           "relative flex min-h-[calc(100vh-57px)] min-w-0 flex-1 flex-col md:min-h-screen",
+          showingLead && "h-[calc(100vh-57px)] overflow-hidden md:h-screen",
           showingResults || showingLead || selectedExecutionId
             ? "items-stretch"
             : "items-center justify-center px-6 py-10",
         )}
       >
-        <div className="absolute top-0 left-0 z-10 hidden items-center px-4 pt-6 md:flex">
-          <HomeSearchSourceSelect
-            value={source}
-            onValueChange={setSource}
-          />
-        </div>
+        {isHomeView ? (
+          <div className="absolute top-0 left-0 z-10 hidden items-center px-4 pt-6 md:flex">
+            <HomeSearchSourceSelect
+              value={source}
+              onValueChange={setSource}
+            />
+          </div>
+        ) : null}
 
         {showingLead && selectedLead && selectedExecutionId ? (
           <>
             <div
               className={cn(
-                "min-h-0 flex-1 overflow-y-auto px-6 pt-8 md:pt-20",
-                hideComprasalSearchControls ? "pb-8" : "pb-4",
+                "flex min-h-0 flex-1 flex-col overflow-hidden px-6 pt-4 md:pt-5",
+                hideComprasalSearchControls ? "pb-2" : "pb-0",
               )}
             >
-              <HomeSearchResultDetail
-                executionId={selectedExecutionId}
-                detail={selectedLead}
-              />
+              <HomeSearchResultDetail detail={selectedLead} />
             </div>
             {renderDockedPrompt()}
           </>

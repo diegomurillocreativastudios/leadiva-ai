@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -6,6 +7,10 @@ import { loadAskLeadivaHome } from "@/features/dashboard/load-ask-leadiva-home";
 import { requireSession } from "@/server/auth/session";
 
 const executionIdSchema = z.uuid();
+
+export const metadata: Metadata = {
+  title: "Oportunities",
+};
 
 export default async function SearchExecutionHomePage({
   params,

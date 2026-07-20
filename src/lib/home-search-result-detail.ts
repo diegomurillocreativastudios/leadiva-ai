@@ -1,6 +1,11 @@
 import { formatProjectBudgetLabel } from "@/features/projects/project-detail-fields";
 import type { ComprasalAwardReportLoadStatus } from "@/server/integrations/comprasal/award-report-service";
 import type { ComprasalAwardReport } from "@/server/integrations/comprasal/award-report-normalize";
+import type {
+  ComprasalPip,
+  ComprasalPipTemporalStatus,
+} from "@/server/integrations/comprasal/pip-normalize";
+import type { ComprasalPipLoadStatus } from "@/server/integrations/comprasal/process-detail-service";
 
 export type HomeSearchResultDetailInput = {
   title: string;
@@ -50,6 +55,27 @@ export type ComprasalAwardReportView = {
     reportedAtLabel: string | null;
   }>;
   emptyMessage: string | null;
+  pip: ComprasalPipView;
+};
+
+export type ComprasalPipView = {
+  loadStatus: ComprasalPipLoadStatus;
+  source: ComprasalPip["source"] | null;
+  sourceNotice: string | null;
+  offerDeadlineLabel: string | null;
+  deadlineMismatch: boolean;
+  emptyMessage: string | null;
+  showOfficialDuration: boolean;
+  stages: Array<{
+    name: string;
+    order: number;
+    startsAtLabel: string | null;
+    endsAtLabel: string | null;
+    officialDurationLabel: string | null;
+    temporalStatus: ComprasalPipTemporalStatus;
+    temporalStatusLabel: string;
+    isCurrent: boolean;
+  }>;
 };
 
 function formatDeadlineLabel(value: Date | string | null): string {
@@ -93,14 +119,15 @@ export function formatComprasalDateTime(
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("es-SV", {
+  const dateLabel = new Intl.DateTimeFormat("es-SV", {
     timeZone: "America/El_Salvador",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    dateStyle: "long",
   }).format(date);
+  const timeLabel = new Intl.DateTimeFormat("es-SV", {
+    timeZone: "America/El_Salvador",
+    timeStyle: "short",
+  }).format(date);
+  return `${dateLabel}, ${timeLabel}`;
 }
 
 export function formatComprasalAmount(
@@ -133,6 +160,66 @@ function reportEmptyMessage(status: ComprasalAwardReportLoadStatus): string | nu
   return null;
 }
 
+function pipTemporalStatusLabel(
+  status: ComprasalPipTemporalStatus,
+): string {
+  if (status === "COMPLETED") return "Finalizada según fechas";
+  if (status === "CURRENT") return "Etapa actual según fechas";
+  if (status === "UPCOMING") return "Próxima según fechas";
+  return "Estado no determinado";
+}
+
+function pipEmptyMessage(status: ComprasalPipLoadStatus): string | null {
+  if (status === "EMPTY") {
+    return "COMPRASAL no publicó el Plan de Implementación para este proceso.";
+  }
+  if (status === "TEMPORARY_ERROR") {
+    return "No fue posible cargar temporalmente el Plan de Implementación.";
+  }
+  if (status === "INVALID_RESPONSE" || status === "IDENTITY_ERROR") {
+    return "No fue posible cargar el Plan de Implementación.";
+  }
+  return null;
+}
+
+function makePipView(params: {
+  pip: ComprasalPip | null;
+  status: ComprasalPipLoadStatus;
+  deadlineMismatch: boolean;
+}): ComprasalPipView {
+  const stages = (params.pip?.stages ?? []).map((stage) => ({
+    name: stage.name,
+    order: stage.order,
+    startsAtLabel: formatComprasalDateTime(stage.startsAt),
+    endsAtLabel: formatComprasalDateTime(stage.endsAt),
+    officialDurationLabel:
+      stage.officialDurationDays === null
+        ? null
+        : `${stage.officialDurationDays} días`,
+    temporalStatus: stage.temporalStatus,
+    temporalStatusLabel: pipTemporalStatusLabel(stage.temporalStatus),
+    isCurrent: stage.temporalStatus === "CURRENT",
+  }));
+  return {
+    loadStatus: params.status,
+    source: params.pip?.source ?? null,
+    sourceNotice:
+      params.pip?.source === "STORED_SNAPSHOT"
+        ? "Información obtenida del último registro sincronizado."
+        : null,
+    offerDeadlineLabel: formatComprasalDateTime(
+      params.pip?.offerDeadlineAt ?? null,
+    ),
+    deadlineMismatch: params.deadlineMismatch,
+    emptyMessage:
+      stages.length === 0 ? pipEmptyMessage(params.status) : null,
+    showOfficialDuration: stages.some(
+      (stage) => stage.officialDurationLabel !== null,
+    ),
+    stages,
+  };
+}
+
 function makeReportView(params: {
   status: ComprasalAwardReportLoadStatus;
   report: ComprasalAwardReport | null;
@@ -142,7 +229,7 @@ function makeReportView(params: {
   deadlineAt: Date | null;
   preliminaryScore: number | null;
   currency: string | null;
-}): ComprasalAwardReportView {
+}): Omit<ComprasalAwardReportView, "pip"> {
   const report = params.report;
   const summary = report?.summary;
   const summaryFields: Array<{ label: string; value: string }> = [];
@@ -272,9 +359,12 @@ export function buildComprasalHomeSearchResultDetail(params: {
   rawData: Record<string, unknown> | null;
   report: ComprasalAwardReport | null;
   status: ComprasalAwardReportLoadStatus;
+  pip?: ComprasalPip | null;
+  pipStatus?: ComprasalPipLoadStatus;
+  pipDeadlineMismatch?: boolean;
 }): HomeSearchResultDetailView {
   const title = params.report?.summary.contractName ?? params.title;
-  const deadline = params.report?.summary.closesAt ?? params.deadlineAt;
+  const deadline = params.deadlineAt;
   const detail = buildHomeSearchResultDetail({
     title,
     snippet: params.snippet,
@@ -289,7 +379,14 @@ export function buildComprasalHomeSearchResultDetail(params: {
     ...detail,
     websiteLabel: "Ver proceso en COMPRASAL",
     deadlineLabel: formatComprasalDateTime(deadline) ?? "Sin fecha límite",
-    comprasal: makeReportView(params),
+    comprasal: {
+      ...makeReportView(params),
+      pip: makePipView({
+        pip: params.pip ?? null,
+        status: params.pipStatus ?? "EMPTY",
+        deadlineMismatch: params.pipDeadlineMismatch ?? false,
+      }),
+    },
   };
 }
 

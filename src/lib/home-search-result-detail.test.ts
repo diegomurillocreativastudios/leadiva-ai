@@ -4,6 +4,7 @@ import {
   buildComprasalHomeSearchResultDetail,
   buildHomeSearchResultDetail,
   formatComprasalAmount,
+  formatComprasalDateTime,
 } from "@/lib/home-search-result-detail";
 import type { ComprasalAwardReport } from "@/server/integrations/comprasal/award-report-normalize";
 
@@ -152,7 +153,7 @@ describe("buildHomeSearchResultDetail", () => {
     });
 
     expect(detail.title).toBe("Contrato remoto");
-    expect(detail.comprasal?.deadlineAtLabel).toMatch(/05:59/);
+    expect(detail.comprasal?.deadlineAtLabel).toMatch(/5:59/);
     expect(detail.comprasal?.summaryFields).toContainEqual({
       label: "Monto planificado",
       value: "900,719,925,474,099,312,345.678900",
@@ -163,5 +164,92 @@ describe("buildHomeSearchResultDetail", () => {
     expect(formatComprasalAmount("8000.00", null)).toBe("8,000.00");
     expect(formatComprasalAmount("8000.00", "USD")).toBe("8,000.00 USD");
     expect(formatComprasalAmount(null, "USD")).toBeNull();
+  });
+
+  it("formats the UTC instant in America/El_Salvador without double conversion", () => {
+    expect(formatComprasalDateTime("2026-07-20T16:00:00.000Z")).toBe(
+      "20 de julio de 2026, 10:00 a. m.",
+    );
+  });
+
+  it("keeps the stored deadline as the primary date when PIP disagrees", () => {
+    const detail = buildComprasalHomeSearchResultDetail({
+      title: "Proceso almacenado",
+      snippet: null,
+      sourceUrl: "https://www.comprasal.gob.sv/procesos-publicos/135317",
+      organizationName: "Institución",
+      publishedAt: null,
+      deadlineAt: new Date("2026-07-21T16:00:00.000Z"),
+      estimatedAmount: null,
+      currency: null,
+      amountStatus: "NOT_PUBLISHED",
+      preliminaryScore: 82,
+      rawData: { codigo_proceso: "C-135317" },
+      report: awardReport(),
+      status: "AVAILABLE",
+      pip: {
+        stages: [
+          {
+            id: "10",
+            name: "Recepción de ofertas",
+            order: 1,
+            startsAt: "2026-07-20T14:00:00.000Z",
+            endsAt: "2026-07-20T16:00:00.000Z",
+            officialDurationDays: null,
+            temporalStatus: "UPCOMING",
+          },
+        ],
+        currentStageId: null,
+        offerDeadlineAt: "2026-07-20T16:00:00.000Z",
+        source: "REMOTE_DETAIL",
+        fetchedAt: "2026-07-19T12:00:00.000Z",
+      },
+      pipStatus: "AVAILABLE",
+      pipDeadlineMismatch: true,
+    });
+
+    expect(detail.deadlineLabel).toBe(
+      "21 de julio de 2026, 10:00 a. m.",
+    );
+    expect(detail.comprasal?.pip).toMatchObject({
+      offerDeadlineLabel: "20 de julio de 2026, 10:00 a. m.",
+      deadlineMismatch: true,
+      showOfficialDuration: false,
+      stages: [
+        {
+          temporalStatusLabel: "Próxima según fechas",
+          officialDurationLabel: null,
+        },
+      ],
+    });
+  });
+
+  it("marks stored PIP data with the synchronized-snapshot notice", () => {
+    const detail = buildComprasalHomeSearchResultDetail({
+      title: "Proceso",
+      snippet: null,
+      sourceUrl: null,
+      organizationName: null,
+      publishedAt: null,
+      deadlineAt: null,
+      estimatedAmount: null,
+      currency: null,
+      amountStatus: "NOT_PUBLISHED",
+      preliminaryScore: null,
+      rawData: null,
+      report: null,
+      status: "NOT_AVAILABLE",
+      pip: {
+        stages: [],
+        currentStageId: null,
+        offerDeadlineAt: null,
+        source: "STORED_SNAPSHOT",
+        fetchedAt: null,
+      },
+      pipStatus: "FALLBACK",
+    });
+    expect(detail.comprasal?.pip.sourceNotice).toBe(
+      "Información obtenida del último registro sincronizado.",
+    );
   });
 });

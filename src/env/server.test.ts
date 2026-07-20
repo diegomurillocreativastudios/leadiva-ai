@@ -42,6 +42,16 @@ describe("COMPRASAL available configuration", () => {
     );
   });
 
+  it("rejects an invalid process-detail cache TTL", async () => {
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost/leadiva_test");
+    vi.stubEnv("AUTH_SECRET", "01234567890123456789012345678901");
+    vi.stubEnv("COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS", "999");
+    const { getServerEnv } = await import("./server");
+    expect(() => getServerEnv()).toThrow(
+      /COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS/,
+    );
+  });
+
   it("uses documented defaults when optional values are absent", async () => {
     vi.stubEnv("DATABASE_URL", "postgresql://localhost/leadiva_test");
     vi.stubEnv("AUTH_SECRET", "01234567890123456789012345678901");
@@ -49,6 +59,7 @@ describe("COMPRASAL available configuration", () => {
     vi.stubEnv("COMPRASAL_AVAILABLE_MAX_PAGES", undefined);
     vi.stubEnv("COMPRASAL_AVAILABLE_CACHE_TTL_MS", undefined);
     vi.stubEnv("COMPRASAL_AWARD_REPORT_CACHE_TTL_MS", undefined);
+    vi.stubEnv("COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS", undefined);
     vi.stubEnv("COMPRASAL_AVAILABLE_MAX_ROWS", undefined);
     vi.stubEnv("COMPRASAL_AVAILABLE_MAX_MATCHES", undefined);
     vi.stubEnv("COMPRASAL_AVAILABLE_TIME_BUDGET_MS", undefined);
@@ -59,6 +70,7 @@ describe("COMPRASAL available configuration", () => {
       COMPRASAL_AVAILABLE_MAX_PAGES: 100,
       COMPRASAL_AVAILABLE_CACHE_TTL_MS: 300000,
       COMPRASAL_AWARD_REPORT_CACHE_TTL_MS: 300000,
+      COMPRASAL_PROCESS_DETAIL_CACHE_TTL_MS: 300000,
       COMPRASAL_AVAILABLE_MAX_ROWS: 10000,
       COMPRASAL_AVAILABLE_MAX_MATCHES: 250,
       COMPRASAL_AVAILABLE_TIME_BUDGET_MS: 240000,

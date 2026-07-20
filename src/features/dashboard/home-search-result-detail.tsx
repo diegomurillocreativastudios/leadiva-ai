@@ -1,9 +1,11 @@
-import Link from "next/link";
-import { ArrowLeft, ExternalLinkIcon, Info } from "lucide-react";
+import { ExternalLinkIcon, Info } from "lucide-react";
 
 import { ExternalLink } from "@/components/shared/external-link";
-import { homeSearchHref } from "@/lib/home-search-href";
-import type { HomeSearchResultDetailView } from "@/lib/home-search-result-detail";
+import type {
+  ComprasalPipView,
+  HomeSearchResultDetailView,
+} from "@/lib/home-search-result-detail";
+import { cn } from "@/lib/utils";
 
 function DetailField({
   label,
@@ -15,15 +17,269 @@ function DetailField({
   if (!value) return null;
   return (
     <div>
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-text-secondary">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
         {label}
       </dt>
-      <dd className="mt-1 text-sm font-medium text-text-primary">{value}</dd>
+      <dd className="mt-1 text-sm font-semibold text-text-primary md:text-[15px]">
+        {value}
+      </dd>
     </div>
   );
 }
 
-function ComprasalResultDetail({
+function PipTemporalStatus({
+  stage,
+}: {
+  stage: ComprasalPipView["stages"][number];
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md border px-2 py-1 text-[11px] font-medium",
+        stage.temporalStatus === "CURRENT" &&
+          "border-accent/30 bg-accent-mint text-accent-dark",
+        stage.temporalStatus === "COMPLETED" &&
+          "border-surface-border bg-surface-base text-text-secondary",
+        stage.temporalStatus === "UPCOMING" &&
+          "border-surface-border bg-surface-raised text-text-primary",
+        stage.temporalStatus === "UNKNOWN" &&
+          "border-dashed border-surface-border text-text-secondary",
+      )}
+    >
+      {stage.temporalStatusLabel}
+    </span>
+  );
+}
+
+function ComprasalPipSection({ pip }: { pip: ComprasalPipView }) {
+  return (
+    <section aria-labelledby="comprasal-pip-title">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div>
+          <h2
+            id="comprasal-pip-title"
+            className="font-heading text-base font-semibold text-text-primary"
+          >
+            Plan de Implementación del Proceso
+          </h2>
+          <p className="mt-1 text-xs text-text-secondary">
+            El estado de cada etapa se calcula según sus fechas oficiales.
+          </p>
+        </div>
+        {pip.sourceNotice ? (
+          <p className="text-xs text-text-secondary">{pip.sourceNotice}</p>
+        ) : null}
+      </div>
+
+      {pip.offerDeadlineLabel ? (
+        <div className="mt-4 rounded-md border border-accent/25 bg-accent-mint/40 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-accent-dark">
+            Fecha límite de recepción de ofertas
+          </p>
+          <p className="mt-1 text-sm font-semibold text-text-primary">
+            {pip.offerDeadlineLabel}
+          </p>
+          {pip.deadlineMismatch ? (
+            <p className="mt-1 text-xs text-text-secondary">
+              El plan remoto difiere del registro sincronizado; la fecha
+              principal de la ficha se conserva sin cambios.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {pip.stages.length === 0 ? (
+        <div className="mt-4 rounded-md border border-dashed border-surface-border px-4 py-6 text-sm text-text-secondary">
+          {pip.emptyMessage ??
+            "COMPRASAL no publicó el Plan de Implementación para este proceso."}
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 hidden overflow-x-auto rounded-md border border-surface-border bg-surface-raised md:block">
+            <table className="w-full text-left text-sm">
+              <caption className="sr-only">
+                Etapas del Plan de Implementación del Proceso
+              </caption>
+              <thead className="border-b border-surface-border bg-surface-base text-xs text-text-secondary">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-medium">
+                    Etapa
+                  </th>
+                  <th scope="col" className="px-4 py-2.5 font-medium">
+                    Inicio
+                  </th>
+                  <th scope="col" className="px-4 py-2.5 font-medium">
+                    Finalización
+                  </th>
+                  {pip.showOfficialDuration ? (
+                    <th scope="col" className="px-4 py-2.5 font-medium">
+                      Duración oficial
+                    </th>
+                  ) : null}
+                  <th scope="col" className="px-4 py-2.5 font-medium">
+                    Estado
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-border">
+                {pip.stages.map((stage) => (
+                  <tr
+                    key={`${stage.order}-${stage.name}`}
+                    aria-current={stage.isCurrent ? "step" : undefined}
+                    className={cn(
+                      stage.isCurrent && "bg-accent-mint/25",
+                    )}
+                  >
+                    <th
+                      scope="row"
+                      className="min-w-52 px-4 py-3 font-medium text-text-primary"
+                    >
+                      <span className="mr-2 text-xs tabular-nums text-text-secondary">
+                        {stage.order}.
+                      </span>
+                      {stage.name}
+                    </th>
+                    <td className="min-w-44 px-4 py-3 text-text-secondary">
+                      {stage.startsAtLabel ?? "No publicada"}
+                    </td>
+                    <td className="min-w-44 px-4 py-3 text-text-secondary">
+                      {stage.endsAtLabel ?? "No publicada"}
+                    </td>
+                    {pip.showOfficialDuration ? (
+                      <td className="px-4 py-3 text-text-secondary">
+                        {stage.officialDurationLabel ?? "No publicada"}
+                      </td>
+                    ) : null}
+                    <td className="min-w-48 px-4 py-3">
+                      <PipTemporalStatus stage={stage} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ol className="mt-4 space-y-3 md:hidden">
+            {pip.stages.map((stage) => (
+              <li
+                key={`${stage.order}-${stage.name}`}
+                aria-current={stage.isCurrent ? "step" : undefined}
+                className={cn(
+                  "relative rounded-md border border-surface-border bg-surface-raised px-4 py-4",
+                  stage.isCurrent && "border-accent/35 bg-accent-mint/25",
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-surface-border bg-surface-base text-xs font-semibold tabular-nums text-text-secondary">
+                    {stage.order}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-text-primary">
+                      {stage.name}
+                    </h3>
+                    <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
+                      <div>
+                        <dt className="font-medium text-text-secondary">
+                          Inicio
+                        </dt>
+                        <dd className="mt-0.5 text-text-primary">
+                          {stage.startsAtLabel ?? "No publicada"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-text-secondary">
+                          Finalización
+                        </dt>
+                        <dd className="mt-0.5 text-text-primary">
+                          {stage.endsAtLabel ?? "No publicada"}
+                        </dd>
+                      </div>
+                      {stage.officialDurationLabel ? (
+                        <div>
+                          <dt className="font-medium text-text-secondary">
+                            Duración oficial
+                          </dt>
+                          <dd className="mt-0.5 text-text-primary">
+                            {stage.officialDurationLabel}
+                          </dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                    <div className="mt-3">
+                      <PipTemporalStatus stage={stage} />
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </section>
+  );
+}
+
+function ComprasalResultHeader({
+  detail,
+}: {
+  detail: HomeSearchResultDetailView;
+}) {
+  const comprasal = detail.comprasal;
+  if (!comprasal) return null;
+
+  return (
+    <header>
+      <div className="mb-2.5 flex flex-wrap items-center gap-2">
+        <span className="rounded-md border border-accent/25 bg-accent-mint px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-dark">
+          COMPRASAL
+        </span>
+        {comprasal.scoreLabel ? (
+          <span className="text-xs font-medium text-text-secondary">
+            Relevancia {comprasal.scoreLabel}
+          </span>
+        ) : null}
+      </div>
+      <h1
+        id="home-search-result-detail-title"
+        className="max-w-4xl font-heading text-2xl font-bold leading-tight tracking-tight text-text-primary md:text-[1.75rem]"
+      >
+        {detail.title}
+      </h1>
+      {detail.description !== "Sin descripción disponible" ? (
+        <p className="mt-2.5 max-w-3xl text-sm leading-6 text-text-secondary whitespace-pre-wrap">
+          {detail.description}
+        </p>
+      ) : null}
+
+      <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+        <DetailField label="Código" value={comprasal.code} />
+        <DetailField label="Institución" value={comprasal.institution} />
+        <DetailField label="Estado" value={comprasal.processStatus} />
+        <DetailField
+          label="Forma de contratación"
+          value={comprasal.contractingMethod}
+        />
+        <DetailField label="Fecha límite" value={comprasal.deadlineAtLabel} />
+        <DetailField
+          label="Fecha de publicación"
+          value={comprasal.publishedAtLabel}
+        />
+      </dl>
+
+      {detail.websiteUrl ? (
+        <ExternalLink
+          href={detail.websiteUrl}
+          className="mt-5 inline-flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent-mint px-3 py-2 text-sm font-medium no-underline hover:bg-accent-mint/70 hover:no-underline"
+        >
+          {detail.websiteLabel}
+          <ExternalLinkIcon className="size-3.5" aria-hidden />
+        </ExternalLink>
+      ) : null}
+    </header>
+  );
+}
+
+function ComprasalResultBody({
   detail,
 }: {
   detail: HomeSearchResultDetailView;
@@ -33,57 +289,7 @@ function ComprasalResultDetail({
 
   return (
     <div className="space-y-8">
-      <header className="border-b border-surface-border pb-6">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-accent/25 bg-accent-mint px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-accent-dark">
-            COMPRASAL
-          </span>
-          {comprasal.scoreLabel ? (
-            <span className="text-xs text-text-secondary">
-              Relevancia {comprasal.scoreLabel}
-            </span>
-          ) : null}
-        </div>
-        <h1
-          id="home-search-result-detail-title"
-          className="max-w-4xl font-heading text-xl font-semibold leading-tight text-text-primary md:text-2xl"
-        >
-          {detail.title}
-        </h1>
-        {detail.description !== "Sin descripción disponible" ? (
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-text-secondary whitespace-pre-wrap">
-            {detail.description}
-          </p>
-        ) : null}
-
-        <dl className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-          <DetailField label="Código" value={comprasal.code} />
-          <DetailField label="Institución" value={comprasal.institution} />
-          <DetailField label="Estado" value={comprasal.processStatus} />
-          <DetailField
-            label="Forma de contratación"
-            value={comprasal.contractingMethod}
-          />
-          <DetailField
-            label="Fecha límite"
-            value={comprasal.deadlineAtLabel}
-          />
-          <DetailField
-            label="Fecha de publicación"
-            value={comprasal.publishedAtLabel}
-          />
-        </dl>
-
-        {detail.websiteUrl ? (
-          <ExternalLink
-            href={detail.websiteUrl}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent-mint px-3 py-2 text-sm no-underline hover:bg-accent-mint/70 hover:no-underline"
-          >
-            {detail.websiteLabel}
-            <ExternalLinkIcon className="size-3.5" aria-hidden />
-          </ExternalLink>
-        ) : null}
-      </header>
+      <ComprasalPipSection pip={comprasal.pip} />
 
       {comprasal.emptyMessage ? (
         <div
@@ -272,89 +478,73 @@ function ComprasalResultDetail({
 }
 
 export function HomeSearchResultDetail({
-  executionId,
   detail,
 }: {
-  executionId: string;
   detail: HomeSearchResultDetailView;
 }) {
   return (
     <section
-      className="mx-auto flex w-full max-w-5xl flex-1 flex-col"
+      className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col"
       aria-labelledby="home-search-result-detail-title"
     >
-      <Link
-        href={homeSearchHref(executionId)}
-        className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-accent"
+      <div
+        data-testid="home-search-result-detail-header"
+        className="shrink-0 border-b border-surface-border bg-surface-base pb-5"
       >
-        <ArrowLeft className="size-4" aria-hidden />
-        Volver a resultados
-      </Link>
-
-      {detail.comprasal ? (
-        <ComprasalResultDetail detail={detail} />
-      ) : (
-        <dl className="space-y-6">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Título
-            </dt>
-            <dd
+        {detail.comprasal ? (
+          <ComprasalResultHeader detail={detail} />
+        ) : (
+          <header>
+            <h1
               id="home-search-result-detail-title"
-              className="mt-1 font-heading text-lg font-semibold text-text-primary md:text-xl"
+              className="font-heading text-2xl font-bold leading-tight tracking-tight text-text-primary md:text-[1.75rem]"
             >
               {detail.title}
-            </dd>
-          </div>
+            </h1>
+            <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+              <DetailField label="Fecha límite" value={detail.deadlineLabel} />
+              <DetailField label="Monto" value={detail.amountLabel} />
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+                  Sitio web
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-text-primary">
+                  {detail.websiteUrl ? (
+                    <ExternalLink
+                      href={detail.websiteUrl}
+                      className="break-all text-accent hover:underline"
+                    >
+                      {detail.websiteLabel}
+                    </ExternalLink>
+                  ) : (
+                    <span className="text-text-secondary">
+                      {detail.websiteLabel}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </header>
+        )}
+      </div>
 
+      <div
+        data-testid="home-search-result-detail-scroll"
+        className="min-h-0 flex-1 overflow-y-auto pt-6 pb-8"
+      >
+        {detail.comprasal ? (
+          <ComprasalResultBody detail={detail} />
+        ) : (
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-text-secondary">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
               Descripción
-            </dt>
-            <dd className="mt-1 text-sm leading-6 text-text-primary whitespace-pre-wrap">
+            </p>
+            <p className="mt-1 text-sm leading-6 text-text-primary whitespace-pre-wrap">
               {detail.description}
-            </dd>
+            </p>
           </div>
-
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Sitio web
-            </dt>
-            <dd className="mt-1 text-sm">
-              {detail.websiteUrl ? (
-                <ExternalLink
-                  href={detail.websiteUrl}
-                  className="break-all text-accent hover:underline"
-                >
-                  {detail.websiteLabel}
-                </ExternalLink>
-              ) : (
-                <span className="text-text-secondary">
-                  {detail.websiteLabel}
-                </span>
-              )}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Fecha límite
-            </dt>
-            <dd className="mt-1 text-sm font-medium text-text-primary">
-              {detail.deadlineLabel}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Monto
-            </dt>
-            <dd className="mt-1 text-sm font-medium text-text-primary">
-              {detail.amountLabel}
-            </dd>
-          </div>
-        </dl>
-      )}
+        )}
+      </div>
     </section>
   );
 }
