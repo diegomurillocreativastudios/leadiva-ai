@@ -20,6 +20,18 @@ export const HOME_SEARCH_SOURCES = [
   label: string;
 }>;
 
+/** Sources shown in the home search picker. Others stay defined for a later release. */
+const SELECTABLE_HOME_SEARCH_SOURCE_IDS = [
+  "COMPRASAL",
+] as const satisfies ReadonlyArray<HomeSearchSourceId>;
+
+export const SELECTABLE_HOME_SEARCH_SOURCES = HOME_SEARCH_SOURCES.filter(
+  (source) =>
+    (SELECTABLE_HOME_SEARCH_SOURCE_IDS as readonly HomeSearchSourceId[]).includes(
+      source.id,
+    ),
+);
+
 type GroundedSearchBody = {
   sourceType: "PRIVATE_WEB" | "LINKEDIN";
   query: string;

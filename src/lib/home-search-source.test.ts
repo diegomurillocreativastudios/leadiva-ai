@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   GROUNDED_HOME_QUERY_MAX_LENGTH,
   HOME_SEARCH_SOURCES,
+  SELECTABLE_HOME_SEARCH_SOURCES,
   defaultHomeSearchSource,
   homeSearchSourceLabel,
   resolveHomeSearchRequest,
@@ -14,7 +15,7 @@ describe("home-search-source", () => {
     expect(GROUNDED_HOME_QUERY_MAX_LENGTH).toBe(100);
   });
 
-  it("exposes the three selectable sources in order", () => {
+  it("keeps all source definitions for later, but only exposes Comprasal in the picker", () => {
     expect(HOME_SEARCH_SOURCES.map((source) => source.id)).toEqual([
       "COMPRASAL",
       "PRIVATE_WEB",
@@ -24,6 +25,12 @@ describe("home-search-source", () => {
       "Comprasal",
       "Sector privado",
       "LinkedIn",
+    ]);
+    expect(SELECTABLE_HOME_SEARCH_SOURCES.map((source) => source.id)).toEqual([
+      "COMPRASAL",
+    ]);
+    expect(SELECTABLE_HOME_SEARCH_SOURCES.map((source) => source.label)).toEqual([
+      "Comprasal",
     ]);
   });
 

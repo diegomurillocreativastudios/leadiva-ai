@@ -10,14 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  HOME_SEARCH_SOURCES,
-  homeSearchSourceIds,
+  SELECTABLE_HOME_SEARCH_SOURCES,
   type HomeSearchSourceId,
 } from "@/lib/home-search-source";
 import { cn } from "@/lib/utils";
 
-function isHomeSearchSourceId(value: string): value is HomeSearchSourceId {
-  return (homeSearchSourceIds as readonly string[]).includes(value);
+function isSelectableHomeSearchSourceId(
+  value: string,
+): value is HomeSearchSourceId {
+  return SELECTABLE_HOME_SEARCH_SOURCES.some((source) => source.id === value);
 }
 
 export function HomeSearchSourceSelect({
@@ -44,7 +45,7 @@ export function HomeSearchSourceSelect({
         value={value}
         disabled={disabled}
         onValueChange={(next) => {
-          if (isHomeSearchSourceId(next)) {
+          if (isSelectableHomeSearchSourceId(next)) {
             onValueChange(next);
           }
         }}
@@ -70,7 +71,7 @@ export function HomeSearchSourceSelect({
           position="popper"
           className="min-w-44 rounded-xl border-surface-border bg-surface-raised p-1.5 text-text-primary shadow-md"
         >
-          {HOME_SEARCH_SOURCES.map((option) => (
+          {SELECTABLE_HOME_SEARCH_SOURCES.map((option) => (
             <SelectItem
               key={option.id}
               value={option.id}
