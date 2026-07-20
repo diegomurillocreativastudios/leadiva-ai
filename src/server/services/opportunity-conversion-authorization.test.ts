@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ select: vi.fn() }));
 
 vi.mock("@/server/db", () => ({ db: { select: mocks.select } }));
+vi.mock("@/server/db/transaction", () => ({ transactionDb: {} }));
 
 import { convertSearchResultToLead } from "./opportunity.service";
 

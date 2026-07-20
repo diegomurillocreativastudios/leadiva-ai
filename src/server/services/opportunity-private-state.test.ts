@@ -13,8 +13,10 @@ vi.mock("@/server/db", () => ({
     insert: mocks.insert,
     update: mocks.update,
     select: mocks.select,
-    transaction: mocks.transaction,
   },
+}));
+vi.mock("@/server/db/transaction", () => ({
+  transactionDb: { transaction: mocks.transaction },
 }));
 
 import { discardSearchResult } from "./opportunity.service";

@@ -79,15 +79,17 @@ export function AskLeadivaPrompt({
   const [greeting, setGreeting] = useState<HomeGreetingParts | null>(null);
   const docked = variant === "docked";
   const isComprasal = source === "COMPRASAL";
+  // COMPRASAL category picker is only for the home hero (`/`), never docked `/b/[id]`.
+  const showComprasalCategories = isComprasal && !docked;
   const groundedQuery = query.trim().slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH);
   const canSubmit =
     !pending &&
-    (isComprasal
+    (showComprasalCategories
       ? selectedCategories.length > 0
       : groundedQuery.length >= 3);
 
   const focusSearchIfEmpty = useCallback(() => {
-    if (isComprasal) {
+    if (showComprasalCategories) {
       return;
     }
     const input = inputRef.current;
@@ -95,7 +97,7 @@ export function AskLeadivaPrompt({
       return;
     }
     input.focus();
-  }, [isComprasal]);
+  }, [showComprasalCategories]);
 
   useEffect(() => {
     if (docked) {
@@ -138,17 +140,17 @@ export function AskLeadivaPrompt({
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const requestQuery = isComprasal
+    const requestQuery = showComprasalCategories
       ? buildComprasalCategoryQuery(selectedCategories)
       : query.trim().slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH);
     const request = resolveHomeSearchRequest(source, requestQuery);
 
-    if (isComprasal && selectedCategories.length === 0) {
+    if (showComprasalCategories && selectedCategories.length === 0) {
       toast.error("Selecciona al menos una categoría para buscar.");
       return;
     }
 
-    if (!isComprasal && requestQuery.length < 3) {
+    if (!showComprasalCategories && requestQuery.length < 3) {
       toast.error("Escribe al menos 3 caracteres para buscar.");
       return;
     }
@@ -252,7 +254,7 @@ export function AskLeadivaPrompt({
         </h1>
       ) : null}
 
-      {isComprasal ? (
+      {showComprasalCategories ? (
         <div className="space-y-4">
           <fieldset disabled={pending} className="min-w-0">
             <legend id={categoriesLegendId} className="sr-only">
@@ -281,7 +283,6 @@ export function AskLeadivaPrompt({
                       "hover:bg-accent-mint/40",
                       "has-focus-visible:ring-2 has-focus-visible:ring-accent/40",
                       checked && "border-accent bg-accent-mint/70",
-                      docked && "px-3 py-3",
                     )}
                   >
                     <input
@@ -293,18 +294,10 @@ export function AskLeadivaPrompt({
                       className="size-4 shrink-0 accent-accent-coral"
                     />
                     <Icon
-                      className={cn(
-                        "shrink-0 text-accent",
-                        docked ? "size-4" : "size-5",
-                      )}
+                      className="size-5 shrink-0 text-accent"
                       aria-hidden
                     />
-                    <span
-                      className={cn(
-                        "font-medium text-text-primary select-none",
-                        docked ? "text-sm" : "text-sm md:text-base",
-                      )}
-                    >
+                    <span className="text-sm font-medium text-text-primary select-none md:text-base">
                       {category.label}
                     </span>
                   </label>
@@ -316,7 +309,7 @@ export function AskLeadivaPrompt({
             <SkeuButton
               type="submit"
               variant="primary"
-              size={docked ? "sm" : "lg"}
+              size="lg"
               disabled={!canSubmit}
               aria-label={pending ? "Buscando" : "Buscar oportunidades"}
               className="gap-2"

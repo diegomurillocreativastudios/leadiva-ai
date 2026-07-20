@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/server/db", () => ({ db: {} }));
+vi.mock("@/server/db/transaction", () => ({ transactionDb: {} }));
 
 import {
   WebSearchProviderError,

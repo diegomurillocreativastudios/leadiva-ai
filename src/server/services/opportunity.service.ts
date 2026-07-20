@@ -48,6 +48,7 @@ import {
   opportunityNotDeleted,
   searchResultNotDeleted,
 } from "@/server/db/soft-delete";
+import { transactionDb } from "@/server/db/transaction";
 import { validateSourceUrl } from "@/server/services/source-url-validation";
 import { evaluatePrivateWebUrl } from "@/server/integrations/private-web/domain-policy";
 import {
@@ -544,7 +545,7 @@ export async function discardSearchResult(
 ) {
   const accessible = await userAccessibleSearchResultIds([id], userId);
   if (!accessible.has(id)) throw new Error("RESULT_NOT_FOUND");
-  const state = await db.transaction(async (tx) => {
+  const state = await transactionDb.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${id}`}::text, 0))`,
     );
@@ -639,7 +640,7 @@ export async function discardSearchResults(
   const allowedIds = uniqueIds.filter((id) => accessible.has(id)).sort();
   if (allowedIds.length === 0) return { discarded: 0 };
   const now = new Date();
-  const updated = await db.transaction(async (tx) => {
+  const updated = await transactionDb.transaction(async (tx) => {
     for (const id of allowedIds) {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${id}`}::text, 0))`,

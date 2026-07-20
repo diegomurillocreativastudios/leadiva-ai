@@ -38,9 +38,8 @@ export function AskLeadivaHome({
   const isHomeView = !selectedExecutionId;
   const showingLead = Boolean(selectedExecutionId && selectedLead);
   const showingResults = Boolean(selectedExecutionId && detail && !selectedLead);
-  const hideComprasalSearchControls =
-    source === "COMPRASAL" &&
-    Boolean(detail && detail.candidates.length > 1);
+  // Category picker is home-only (`/`). Never show it on `/b/[id]` views.
+  const hideComprasalSearchControls = source === "COMPRASAL";
 
   function renderDockedPrompt() {
     if (hideComprasalSearchControls) {

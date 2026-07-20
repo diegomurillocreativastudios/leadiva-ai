@@ -115,4 +115,18 @@ describe("PRIVATE_WEB Brave configuration", () => {
     serverModule = await import("./server");
     expect(serverModule.getServerEnv().BRAVE_API_KEY).toBe("legacy-key");
   });
+
+  it("does not treat PROVIDER_SEARCH as a replacement for the feature flag", async () => {
+    baseEnv();
+    vi.stubEnv("PRIVATE_WEB_DISCOVERY_MODE", "PROVIDER_SEARCH");
+    vi.stubEnv("PRIVATE_WEB_BRAVE_ENABLED", undefined);
+    vi.stubEnv("BRAVE_API_KEY", "canonical-key");
+    const { getServerEnv } = await import("./server");
+
+    expect(getServerEnv()).toMatchObject({
+      PRIVATE_WEB_DISCOVERY_MODE: "PROVIDER_SEARCH",
+      PRIVATE_WEB_BRAVE_ENABLED: false,
+      BRAVE_API_KEY: "canonical-key",
+    });
+  });
 });

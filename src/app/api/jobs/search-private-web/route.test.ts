@@ -18,7 +18,7 @@ vi.mock("@/server/integrations/private-web/service", () => ({
   PrivateWebSearchAdmissionError: mocks.AdmissionError,
 }));
 
-import { POST } from "./route";
+import { POST, runtime } from "./route";
 
 function request(body: unknown) {
   return new Request("http://localhost/api/jobs/search-private-web", {
@@ -41,6 +41,10 @@ describe("POST /api/jobs/search-private-web", () => {
       candidatesPartiallyVerified: 0,
       candidatesPersisted: 2,
     });
+  });
+
+  it("uses the Node.js runtime required by the transactional Neon Pool", () => {
+    expect(runtime).toBe("nodejs");
   });
 
   it("requires a session and a strict PRIVATE_WEB body", async () => {

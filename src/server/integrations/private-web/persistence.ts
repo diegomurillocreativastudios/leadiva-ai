@@ -12,6 +12,7 @@ import {
   searchResults,
   userSearchResultStates,
 } from "@/server/db/schema";
+import { transactionDb } from "@/server/db/transaction";
 
 import type { VerifiedPrivateWebCandidate } from "./contracts";
 
@@ -151,7 +152,7 @@ function canonicalValues(candidate: VerifiedPrivateWebCandidate) {
 
 export const databasePrivateWebRepository: PrivateWebRepository = {
   async startExecution(input) {
-    return db.transaction(async (tx) => {
+    return transactionDb.transaction(async (tx) => {
       // Serializes admission for this user across all application processes.
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${input.userId}::text, 0))`,
@@ -272,7 +273,7 @@ export const databasePrivateWebRepository: PrivateWebRepository = {
   },
 
   async persistCandidate(input) {
-    return db.transaction(async (tx) => {
+    return transactionDb.transaction(async (tx) => {
       const values = canonicalValues(input.candidate);
       const externalId = privateWebExternalId(input.candidate);
       const [existing] = await tx
