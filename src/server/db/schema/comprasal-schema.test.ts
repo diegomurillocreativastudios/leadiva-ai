@@ -61,4 +61,31 @@ describe("COMPRASAL execution isolation schema", () => {
     expect(migration).not.toMatch(/DELETE\s+FROM\s+"search_results"/i);
     expect(migration).not.toMatch(/INSERT\s+INTO\s+"user_search_result_states"/i);
   });
+
+  it("keeps equal PRIVATE_WEB and LINKEDIN URLs as separate source identities", () => {
+    const results = getTableConfig(searchResults);
+    const identity = results.indexes.find(
+      (index) => index.config.name === "search_results_normalized_url_uidx",
+    );
+    expect(
+      identity?.config.columns.map((column) =>
+        "name" in column ? column.name : null,
+      ),
+    ).toEqual(["source_type", "normalized_url"]);
+
+    const migration = readFileSync(
+      join(process.cwd(), "drizzle/0009_separate_web_source_identity.sql"),
+      "utf8",
+    );
+    expect(migration).toContain('("source_type","normalized_url")');
+    expect(migration).not.toMatch(/UPDATE\s+"search_results"|DELETE\s+FROM/i);
+
+    const linkedinPersistence = readFileSync(
+      join(process.cwd(), "src/server/integrations/vertex-ai/service.ts"),
+      "utf8",
+    );
+    expect(linkedinPersistence).toMatch(
+      /eq\(searchResults\.sourceType, mapped\.sourceType\)[\s\S]{0,160}eq\(searchResults\.normalizedUrl, mapped\.normalizedUrl\)/,
+    );
+  });
 });

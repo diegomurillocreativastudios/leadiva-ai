@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -78,17 +79,14 @@ export function AskLeadivaPrompt({
   const [greeting, setGreeting] = useState<HomeGreetingParts | null>(null);
   const docked = variant === "docked";
   const isComprasal = source === "COMPRASAL";
-  const comprasalQuery = buildComprasalCategoryQuery(selectedCategories);
   const groundedQuery = query.trim().slice(0, GROUNDED_HOME_QUERY_MAX_LENGTH);
-  const effectiveQuery = isComprasal ? comprasalQuery : groundedQuery;
-  const searchRequest = resolveHomeSearchRequest(source, effectiveQuery);
   const canSubmit =
     !pending &&
     (isComprasal
       ? selectedCategories.length > 0
       : groundedQuery.length >= 3);
 
-  function focusSearchIfEmpty() {
+  const focusSearchIfEmpty = useCallback(() => {
     if (isComprasal) {
       return;
     }
@@ -97,7 +95,7 @@ export function AskLeadivaPrompt({
       return;
     }
     input.focus();
-  }
+  }, [isComprasal]);
 
   useEffect(() => {
     if (docked) {
@@ -128,7 +126,7 @@ export function AskLeadivaPrompt({
       cancelAnimationFrame(greetingFrame);
       window.removeEventListener(NEW_HOME_SEARCH_EVENT, onNewSearch);
     };
-  }, [docked, isComprasal, userName]);
+  }, [docked, focusSearchIfEmpty, userName]);
 
   function toggleCategory(categoryId: HomeComprasalCategoryId) {
     setSelectedCategories((current) =>
@@ -173,6 +171,10 @@ export function AskLeadivaPrompt({
           toast.error(json.error ?? json.message ?? "Error en la búsqueda", {
             id: toastId,
           });
+          if (json.executionId) {
+            router.push(homeSearchHref(json.executionId));
+            router.refresh();
+          }
           return;
         }
 
@@ -288,7 +290,7 @@ export function AskLeadivaPrompt({
                       checked={checked}
                       disabled={pending}
                       onChange={() => toggleCategory(category.id)}
-                      className="size-4 shrink-0 accent-accent"
+                      className="size-4 shrink-0 accent-accent-coral"
                     />
                     <Icon
                       className={cn(

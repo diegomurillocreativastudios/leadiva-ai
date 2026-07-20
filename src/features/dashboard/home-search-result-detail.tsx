@@ -495,6 +495,18 @@ export function HomeSearchResultDetail({
           <ComprasalResultHeader detail={detail} />
         ) : (
           <header>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {detail.verificationStatus === "VERIFIED" ? (
+                <span className="rounded-md border border-accent/25 bg-accent-mint px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-dark">
+                  Verificada
+                </span>
+              ) : null}
+              {detail.verificationStatus === "PARTIALLY_VERIFIED" ? (
+                <span className="rounded-md border border-warning/30 bg-warning/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-warning">
+                  Verificación parcial
+                </span>
+              ) : null}
+            </div>
             <h1
               id="home-search-result-detail-title"
               className="font-heading text-2xl font-bold leading-tight tracking-tight text-text-primary md:text-[1.75rem]"
@@ -502,8 +514,31 @@ export function HomeSearchResultDetail({
               {detail.title}
             </h1>
             <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-              <DetailField label="Fecha límite" value={detail.deadlineLabel} />
-              <DetailField label="Monto" value={detail.amountLabel} />
+              <DetailField
+                label="Organización"
+                value={detail.organizationName ?? null}
+              />
+              <DetailField
+                label="Fecha de publicación"
+                value={detail.publishedAtLabel ?? null}
+              />
+              <DetailField
+                label="Fecha límite"
+                value={
+                  detail.verificationStatus === "PARTIALLY_VERIFIED"
+                    ? "No confirmada · revisión manual"
+                    : detail.deadlineLabel
+                }
+              />
+              <DetailField
+                label="Monto"
+                value={
+                  detail.verificationStatus &&
+                  detail.amountLabel === "Monto no disponible"
+                    ? null
+                    : detail.amountLabel
+                }
+              />
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
                   Sitio web
@@ -535,13 +570,47 @@ export function HomeSearchResultDetail({
         {detail.comprasal ? (
           <ComprasalResultBody detail={detail} />
         ) : (
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
-              Descripción
-            </p>
-            <p className="mt-1 text-sm leading-6 text-text-primary whitespace-pre-wrap">
-              {detail.description}
-            </p>
+          <div className="space-y-6">
+            {detail.verificationStatus === "PARTIALLY_VERIFIED" ? (
+              <div className="rounded-md border border-warning/25 bg-warning/5 px-4 py-3 text-sm text-text-primary">
+                <p className="font-semibold">Fecha límite no confirmada.</p>
+                <p className="mt-1 text-text-secondary">
+                  {detail.verificationReason ??
+                    "Esta oportunidad requiere revisión manual y no puede convertirse automáticamente en lead."}
+                </p>
+              </div>
+            ) : null}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+                Descripción
+              </p>
+              <p className="mt-1 text-sm leading-6 text-text-primary whitespace-pre-wrap">
+                {detail.description}
+              </p>
+            </div>
+            {(detail.evidence?.length ?? 0) > 0 ? (
+              <section aria-labelledby="private-web-evidence-title">
+                <h2
+                  id="private-web-evidence-title"
+                  className="font-heading text-sm font-semibold text-text-primary"
+                >
+                  Evidencia de la fuente
+                </h2>
+                <ul className="mt-3 space-y-2">
+                  {(detail.evidence ?? []).slice(0, 6).map((item, index) => (
+                    <li
+                      key={`${item.field}-${index}`}
+                      className="rounded-md border border-surface-border bg-surface-raised px-3 py-2 text-sm leading-5 text-text-secondary"
+                    >
+                      <span className="font-semibold text-text-primary">
+                        {item.field.replaceAll("_", " ")}:
+                      </span>{" "}
+                      {item.text}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </div>
         )}
       </div>

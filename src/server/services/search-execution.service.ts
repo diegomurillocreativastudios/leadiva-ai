@@ -44,6 +44,14 @@ function metricString(metrics: Metrics, key: string): string | null {
     : null;
 }
 
+export function isModernPrivateWebExecution(metrics: Metrics): boolean {
+  return (
+    metricString(metrics, "searchMode") === "PRIVATE_WEB_BRAVE" ||
+    metricString(metrics, "searchProvider") === "BRAVE" ||
+    metricString(metrics, "discoveryMode") === "BRAVE_ONLY"
+  );
+}
+
 function toIso(value: Date | null): string | null {
   return value ? value.toISOString() : null;
 }
@@ -267,12 +275,16 @@ export async function getUserSearchExecutionDetail(params: {
       summary: searchResults.snippet,
       officialSourceUrl: searchResults.sourceUrl,
       sourceDomain: searchResults.sourceDomain,
+      publishedAt: searchResults.publishedAt,
       deadlineAt: searchResults.deadlineAt,
+      estimatedAmount: searchResults.estimatedAmount,
+      currency: searchResults.currency,
       category: searchResults.category,
       preliminaryScore: searchExecutionResults.preliminaryScore,
       rank: searchExecutionResults.rank,
       verificationStatus: searchResults.verificationStatus,
       verificationReason: searchResults.verificationReason,
+      fieldEvidence: searchResults.fieldEvidence,
       deletedAt: searchResults.deletedAt,
       userState: userSearchResultStates.state,
     })
@@ -295,8 +307,10 @@ export async function getUserSearchExecutionDetail(params: {
     .limit(MAX_EXECUTION_RESULTS);
 
   const hasAssociations = associated.length > 0;
+  const modernPrivateWeb =
+    row.sourceType === "PRIVATE_WEB" && isModernPrivateWebExecution(metrics);
   const executionCandidateIds = readExecutionCandidateResultIds(metrics);
-  const legacyPersisted = hasAssociations
+  const legacyPersisted = hasAssociations || modernPrivateWeb
     ? []
     : await db
         .select({
@@ -306,12 +320,16 @@ export async function getUserSearchExecutionDetail(params: {
           summary: searchResults.snippet,
           officialSourceUrl: searchResults.sourceUrl,
           sourceDomain: searchResults.sourceDomain,
+          publishedAt: searchResults.publishedAt,
           deadlineAt: searchResults.deadlineAt,
+          estimatedAmount: searchResults.estimatedAmount,
+          currency: searchResults.currency,
           category: searchResults.category,
           preliminaryScore: searchResults.preliminaryScore,
           rank: sql<number | null>`null`,
           verificationStatus: searchResults.verificationStatus,
           verificationReason: searchResults.verificationReason,
+          fieldEvidence: searchResults.fieldEvidence,
           deletedAt: searchResults.deletedAt,
           userState: userSearchResultStates.state,
         })
@@ -357,10 +375,21 @@ export async function getUserSearchExecutionDetail(params: {
           summary: candidate.summary,
           officialSourceUrl: candidate.officialSourceUrl,
           sourceDomain: candidate.sourceDomain,
+          publishedAt: candidate.publishedAt?.toISOString(),
           deadlineAt: candidate.deadlineAt?.toISOString(),
+          estimatedAmount: candidate.estimatedAmount,
+          currency: candidate.currency,
+          evidence: candidate.fieldEvidence,
           category: candidate.category,
           stage: "PERSISTENCE",
-          outcome: "VERIFIED",
+          outcome:
+            candidate.verificationStatus === "PARTIALLY_VERIFIED"
+              ? "UNVERIFIED"
+              : "VERIFIED",
+          reasonCode:
+            candidate.verificationStatus === "PARTIALLY_VERIFIED"
+              ? "PARTIALLY_VERIFIED"
+              : null,
           preliminaryScore: candidate.preliminaryScore,
           verificationStatus: candidate.verificationStatus,
           reason: candidate.verificationReason,
@@ -373,7 +402,7 @@ export async function getUserSearchExecutionDetail(params: {
       Boolean(candidate),
     );
 
-  const merged = hasAssociations
+  const merged = hasAssociations || modernPrivateWeb
     ? persistedCandidates
     : mergeCandidateViews([
         ...persistedCandidates,
@@ -383,7 +412,7 @@ export async function getUserSearchExecutionDetail(params: {
             !hiddenLegacyResultIds.has(candidate.searchResultId),
         ),
       ]);
-  const attached = hasAssociations
+  const attached = hasAssociations || modernPrivateWeb
     ? merged
     : await attachSearchResultIdsToCandidates({
         candidates: merged,
@@ -568,10 +597,20 @@ export type UserSearchExecutionResultDetail = {
   title: string;
   snippet: string | null;
   sourceUrl: string;
+  organizationName: string | null;
+  publishedAt: Date | null;
   deadlineAt: Date | null;
   estimatedAmount: string | null;
   currency: string | null;
   amountStatus: string;
+  verificationStatus: string;
+  verificationReason: string | null;
+  fieldEvidence: Array<{
+    field: string;
+    text: string;
+    url: string;
+    confirmed: boolean;
+  }> | null;
 };
 
 export type UserAssociatedSearchResultDetail = {
@@ -685,6 +724,9 @@ export async function getUserSearchExecutionResultDetail(params: {
   if (!execution || isSearchExecutionHiddenFromHistory(execution.metrics)) {
     return null;
   }
+  const modernPrivateWeb =
+    execution.sourceType === "PRIVATE_WEB" &&
+    isModernPrivateWebExecution(execution.metrics as Metrics);
 
   const [anyAssociation, association] = await Promise.all([
     db
@@ -730,6 +772,9 @@ export async function getUserSearchExecutionResultDetail(params: {
   if (anyAssociation && !association) {
     return null;
   }
+  if (!anyAssociation && modernPrivateWeb) {
+    return null;
+  }
 
   const executionCandidateIds = readExecutionCandidateResultIds(
     execution.metrics as Metrics,
@@ -749,10 +794,15 @@ export async function getUserSearchExecutionResultDetail(params: {
       title: searchResults.title,
       snippet: searchResults.snippet,
       sourceUrl: searchResults.sourceUrl,
+      organizationName: searchResults.organizationName,
+      publishedAt: searchResults.publishedAt,
       deadlineAt: searchResults.deadlineAt,
       estimatedAmount: searchResults.estimatedAmount,
       currency: searchResults.currency,
       amountStatus: searchResults.amountStatus,
+      verificationStatus: searchResults.verificationStatus,
+      verificationReason: searchResults.verificationReason,
+      fieldEvidence: searchResults.fieldEvidence,
       userState: userSearchResultStates.state,
     })
     .from(searchResults)
@@ -787,9 +837,14 @@ export async function getUserSearchExecutionResultDetail(params: {
     title: result.title,
     snippet: result.snippet,
     sourceUrl: result.sourceUrl,
+    organizationName: result.organizationName,
+    publishedAt: result.publishedAt,
     deadlineAt: result.deadlineAt,
     estimatedAmount: result.estimatedAmount,
     currency: result.currency,
     amountStatus: result.amountStatus,
+    verificationStatus: result.verificationStatus,
+    verificationReason: result.verificationReason,
+    fieldEvidence: result.fieldEvidence,
   };
 }

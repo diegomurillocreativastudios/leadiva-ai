@@ -77,3 +77,42 @@ describe("COMPRASAL available configuration", () => {
     });
   });
 });
+
+describe("PRIVATE_WEB Brave configuration", () => {
+  function baseEnv() {
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost/leadiva_test");
+    vi.stubEnv("AUTH_SECRET", "01234567890123456789012345678901");
+  }
+
+  it("is disabled by default and exposes the approved hard-limit defaults", async () => {
+    baseEnv();
+    vi.stubEnv("PRIVATE_WEB_BRAVE_ENABLED", undefined);
+    vi.stubEnv("BRAVE_API_KEY", undefined);
+    vi.stubEnv("BRAVE_SEARCH_API_KEY", undefined);
+    const { getServerEnv } = await import("./server");
+    expect(getServerEnv()).toMatchObject({
+      PRIVATE_WEB_BRAVE_ENABLED: false,
+      PRIVATE_WEB_MAX_BRAVE_REQUESTS: 8,
+      PRIVARESULTS: 160,
+      PRIVATE_WEB_MAX_UNIQUE_URLS: 60,
+      PRIVATE_WEB_MAX_DOCUMENT_FETCHES: 10,
+      PRIVATE_WEB_MAX_GEMINI_EXTRACTIONS: 6,
+      PRIVATE_WEB_MAX_RESULTS: 50,
+      PRIVATE_WEB_MAX_PER_DOMAIN: 3,
+      PRIVATE_WEB_TOTAL_TIMEOUT_MS: 180000,
+    });
+  });
+
+  it("prefers BRAVE_API_KEY and falls back to the legacy alias", async () => {
+    baseEnv();
+    vi.stubEnv("BRAVE_API_KEY", "canonical-key");
+    vi.stubEnv("BRAVE_SEARCH_API_KEY", "legacy-key");
+    let serverModule = await import("./server");
+    expect(serverModule.getServerEnv().BRAVE_API_KEY).toBe("canonical-key");
+
+    vi.resetModules();
+    vi.stubEnv("BRAVE_API_KEY", undefined);
+    serverModule = await import("./server");
+    expect(serverModule.getServerEnv().BRAVE_API_KEY).toBe("legacy-key");
+  });
+});

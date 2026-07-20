@@ -8,7 +8,7 @@ import {
 
 const request = {
   query: "website redesign RFP",
-  language: "en" as const,
+  language: "es" as const,
   page: 1,
   resultsPerPage: 10,
   timeoutMs: 1_000,
@@ -36,14 +36,19 @@ describe("BraveSearchProvider", () => {
   it("maps a valid web response and preserves query provenance", async () => {
     const fetchImpl = vi.fn(async () =>
       Response.json({
-        query: { more_results_available: true },
+        query: {
+          more_results_available: true,
+          altered: "website software RFP",
+        },
         web: {
           results: [
             {
               title: "<strong>Website</strong> RFP",
               url: "https://buyer.example/rfp",
               description: "Submit &amp; proposal",
+              age: "hace 2 días",
               page_age: "2026-07-10",
+              extra_snippets: ["Alcance adicional", "Fecha límite publicada"],
             },
           ],
         },
@@ -61,8 +66,27 @@ describe("BraveSearchProvider", () => {
       queryFamily: "explicit_procurement",
       rank: 1,
       provider: "BRAVE",
+      age: "hace 2 días",
+      extraSnippets: ["Alcance adicional", "Fecha límite publicada"],
     });
     expect(result.requestCount).toBe(1);
+    expect(result.moreResultsAvailable).toBe(true);
+    expect(result.exhausted).toBe(false);
+    expect(result.queryAltered).toBe("website software RFP");
+
+    const [requestUrl, init] = vi.mocked(fetchImpl).mock.calls[0] ?? [];
+    const url = new URL(String(requestUrl));
+    expect(url.searchParams.get("count")).toBe("10");
+    expect(url.searchParams.has("offset")).toBe(false);
+    expect(url.searchParams.get("result_filter")).toBe("web");
+    expect(url.searchParams.get("search_lang")).toBe("es");
+    expect(url.searchParams.get("safesearch")).toBe("strict");
+    expect(url.searchParams.get("spellcheck")).toBe("true");
+    expect(url.searchParams.get("extra_snippets")).toBe("true");
+    expect(url.searchParams.has("country")).toBe(false);
+    const headers = new Headers(init?.headers);
+    expect(headers.get("x-loc-country")).toBe("SV");
+    expect(headers.get("x-loc-timezone")).toBe("America/El_Salvador");
   });
 
   it("supports empty responses and missing snippets", async () => {
@@ -134,6 +158,23 @@ describe("BraveSearchProvider", () => {
     expect(sleepImpl).toHaveBeenCalledWith(250);
   });
 
+  it("stops a Retry-After wait when the Brave budget is cancelled", async () => {
+    const controller = new AbortController();
+    const sleepImpl = vi.fn(async () => {
+      controller.abort();
+    });
+    const fetchImpl = vi.fn(async () =>
+      new Response(null, { status: 429, headers: { "Retry-After": "30" } }),
+    ) as typeof fetch;
+    await expectCode(
+      provider(fetchImpl, { sleepImpl }).search(request, {
+        signal: controller.signal,
+      }),
+      "PROVIDER_REQUEST_FAILED",
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it("retries 5xx and fails after the configured attempts", async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 500 })) as typeof fetch;
     await expectCode(
@@ -141,6 +182,35 @@ describe("BraveSearchProvider", () => {
       "PROVIDER_REQUEST_FAILED",
     );
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a mocked 422 and never adds country=SV", async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 422 })) as typeof fetch;
+    await expectCode(provider(fetchImpl).search(request), "PROVIDER_BAD_RESPONSE");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(
+      new URL(String(vi.mocked(fetchImpl).mock.calls[0]?.[0])).searchParams.has(
+        "country",
+      ),
+    ).toBe(false);
+  });
+
+  it("caps retries with the remaining execution request budget", async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 500 })) as typeof fetch;
+    await expectCode(
+      provider(fetchImpl).search(request, { maxAttempts: 1 }),
+      "PROVIDER_REQUEST_FAILED",
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses offset=1 only for the requested second page", async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({ web: { results: [] } }),
+    ) as typeof fetch;
+    await provider(fetchImpl).search({ ...request, page: 2 });
+    const url = new URL(String(vi.mocked(fetchImpl).mock.calls[0]?.[0]));
+    expect(url.searchParams.get("offset")).toBe("1");
   });
 
   it("distinguishes timeout from caller cancellation", async () => {

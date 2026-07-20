@@ -15,7 +15,10 @@ const BRAVE_WEB_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
 const braveResponseSchema = z
   .object({
     query: z
-      .object({ more_results_available: z.boolean().optional() })
+      .object({
+        more_results_available: z.boolean().optional(),
+        altered: z.string().optional(),
+      })
       .passthrough()
       .optional(),
     web: z
@@ -27,7 +30,9 @@ const braveResponseSchema = z
                 title: z.string().optional(),
                 url: z.string().optional(),
                 description: z.string().optional(),
+                age: z.string().optional(),
                 page_age: z.string().optional(),
+                extra_snippets: z.array(z.string()).optional(),
               })
               .passthrough(),
           )
@@ -122,6 +127,24 @@ function providerHttpError(status: number, attempts: number): WebSearchProviderE
   );
 }
 
+function waitForRetry(
+  sleep: (ms: number) => Promise<void>,
+  delayMs: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  if (!signal) return sleep(delayMs);
+  if (signal.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+
+  return new Promise<void>((resolve, reject) => {
+    const abort = () => reject(new DOMException("Aborted", "AbortError"));
+    signal.addEventListener("abort", abort, { once: true });
+    sleep(delayMs).then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", abort);
+    });
+    if (signal.aborted) abort();
+  });
+}
+
 export class BraveSearchProvider implements WebSearchProvider {
   readonly name = "BRAVE";
   private readonly apiKey: string;
@@ -148,12 +171,13 @@ export class BraveSearchProvider implements WebSearchProvider {
       signal?: AbortSignal;
       executionId?: string;
       queryFamily?: string;
+      maxAttempts?: number;
     } = {},
   ): Promise<WebSearchResponse> {
     if (!this.apiKey) {
       throw new WebSearchProviderError(
         "PROVIDER_NOT_CONFIGURED",
-        "BRAVE_SEARCH_API_KEY no está configurada",
+        "Brave Search no está configurado",
         { retryable: false, attempts: 0 },
       );
     }
@@ -162,24 +186,41 @@ export class BraveSearchProvider implements WebSearchProvider {
     const url = new URL(BRAVE_WEB_SEARCH_URL);
     url.searchParams.set("q", request.query);
     url.searchParams.set("count", String(Math.min(20, request.resultsPerPage)));
-    url.searchParams.set("offset", String(Math.max(0, (request.page ?? 1) - 1)));
-    url.searchParams.set("safesearch", "moderate");
-    url.searchParams.set("spellcheck", "false");
+    if ((request.page ?? 1) > 1) {
+      url.searchParams.set("offset", String((request.page ?? 1) - 1));
+    }
+    url.searchParams.set("result_filter", "web");
+    url.searchParams.set("safesearch", "strict");
+    url.searchParams.set("spellcheck", "true");
+    url.searchParams.set("extra_snippets", "true");
     if (request.language) {
       url.searchParams.set("search_lang", request.language);
     }
     if (request.country?.trim()) {
       url.searchParams.set("country", request.country.trim().toUpperCase());
     }
-    if (request.publishedAfter && request.publishedBefore) {
+    if (request.freshness) {
+      url.searchParams.set("freshness", request.freshness);
+    } else if (request.publishedAfter && request.publishedBefore) {
       url.searchParams.set(
         "freshness",
         `${request.publishedAfter.slice(0, 10)}to${request.publishedBefore.slice(0, 10)}`,
       );
     }
 
+    const maxAttempts = Math.max(
+      1,
+      Math.min(this.options.maxRetries + 1, context.maxAttempts ?? Infinity),
+    );
     let attempts = 0;
-    for (let attempt = 0; attempt <= this.options.maxRetries; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      if (context.signal?.aborted) {
+        throw new WebSearchProviderError(
+          "PROVIDER_REQUEST_FAILED",
+          "La búsqueda fue cancelada",
+          { retryable: false, attempts },
+        );
+      }
       attempts += 1;
       const controller = new AbortController();
       let timedOut = false;
@@ -189,6 +230,7 @@ export class BraveSearchProvider implements WebSearchProvider {
       }, request.timeoutMs || this.options.timeoutMs);
       const onAbort = () => controller.abort();
       context.signal?.addEventListener("abort", onAbort, { once: true });
+      if (context.signal?.aborted) controller.abort();
 
       try {
         const response = await this.fetchImpl(url, {
@@ -197,6 +239,8 @@ export class BraveSearchProvider implements WebSearchProvider {
             Accept: "application/json",
             "Accept-Encoding": "gzip",
             "X-Subscription-Token": this.apiKey,
+            "X-Loc-Country": "SV",
+            "X-Loc-Timezone": "America/El_Salvador",
           },
           signal: controller.signal,
           cache: "no-store",
@@ -206,7 +250,7 @@ export class BraveSearchProvider implements WebSearchProvider {
           const error = providerHttpError(response.status, attempts);
           const shouldRetry =
             error.options.retryable === true &&
-            attempt < this.options.maxRetries;
+            attempt + 1 < maxAttempts;
           if (!shouldRetry) {
             throw error;
           }
@@ -223,7 +267,7 @@ export class BraveSearchProvider implements WebSearchProvider {
             attempt: attempt + 1,
             delayMs,
           });
-          await this.sleepImpl(delayMs);
+          await waitForRetry(this.sleepImpl, delayMs, context.signal);
           continue;
         }
 
@@ -268,6 +312,11 @@ export class BraveSearchProvider implements WebSearchProvider {
             snippet: cleanText(item.description)?.slice(0, 2_000) ?? null,
             domain: parsedUrl.hostname.toLowerCase(),
             publishedAt: normalizePublishedAt(item.page_age),
+            age: cleanText(item.age),
+            extraSnippets: (item.extra_snippets ?? [])
+              .map((snippet) => cleanText(snippet))
+              .filter((snippet): snippet is string => Boolean(snippet))
+              .slice(0, 5),
             query: request.query,
             queryFamily,
             rank:
@@ -279,15 +328,18 @@ export class BraveSearchProvider implements WebSearchProvider {
           });
         }
 
+        const moreResultsAvailable =
+          parsed.data.query?.more_results_available === true;
+
         return {
           results,
           provider: this.name,
           requestCount: attempts,
           retryCount: attempts - 1,
           durationMs: Date.now() - startedAt,
-          exhausted:
-            parsed.data.query?.more_results_available !== true ||
-            results.length < Math.min(20, request.resultsPerPage),
+          exhausted: !moreResultsAvailable,
+          moreResultsAvailable,
+          queryAltered: cleanText(parsed.data.query?.altered),
         };
       } catch (error) {
         if (error instanceof WebSearchProviderError) {

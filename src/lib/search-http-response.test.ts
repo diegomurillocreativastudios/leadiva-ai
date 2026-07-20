@@ -27,4 +27,15 @@ describe("search HTTP responses", () => {
     });
     await expect(readSearchHttpPayload(response)).resolves.toEqual({});
   });
+
+  it("preserves a valid executionId on a controlled failure for navigation", async () => {
+    const executionId = "00000000-0000-4000-8000-000000000201";
+    const payload = await readSearchHttpPayload(
+      Response.json(
+        { executionId, status: "FAILED", message: "Búsqueda no disponible" },
+        { status: 502 },
+      ),
+    );
+    expect(payload.executionId).toBe(executionId);
+  });
 });

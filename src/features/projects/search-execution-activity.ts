@@ -38,7 +38,16 @@ export type SearchExecutionCandidateView = {
   officialSourceUrl: string | null;
   applicationUrl: string | null;
   sourceDomain: string | null;
+  publishedAt?: string | null;
   deadlineAt: string | null;
+  estimatedAmount?: string | null;
+  currency?: string | null;
+  evidence?: Array<{
+    field: string;
+    text: string;
+    url: string | null;
+    confirmed: boolean;
+  }>;
   category: string | null;
   stage: SearchExecutionCandidateStage;
   outcome: SearchExecutionCandidateOutcome;
@@ -378,6 +387,26 @@ function validDeadline(value: unknown): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+function safeEvidence(value: unknown): SearchExecutionCandidateView["evidence"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .flatMap((item) => {
+      if (!isRecord(item)) return [];
+      const field = optionalString(item.field, 80);
+      const text = optionalString(item.text, 500);
+      if (!field || !text) return [];
+      return [
+        {
+          field,
+          text,
+          url: safeExternalUrl(item.url),
+          confirmed: item.confirmed === true,
+        },
+      ];
+    })
+    .slice(0, 12);
+}
+
 /** Converts persisted JSONB traces, including historical trace shapes, to a safe API view. */
 export function normalizeCandidateTrace(
   value: unknown,
@@ -413,7 +442,11 @@ export function normalizeCandidateTrace(
     officialSourceUrl,
     applicationUrl: safeExternalUrl(value.applicationUrl),
     sourceDomain,
+    publishedAt: validDeadline(value.publishedAt),
     deadlineAt: validDeadline(value.deadlineAt),
+    estimatedAmount: optionalString(value.estimatedAmount, 80),
+    currency: optionalString(value.currency, 3),
+    evidence: safeEvidence(value.evidence),
     category: optionalString(value.category, 80),
     stage: normalizeStage(value.stage),
     outcome: normalizeOutcome(value.outcome, reasonCode),

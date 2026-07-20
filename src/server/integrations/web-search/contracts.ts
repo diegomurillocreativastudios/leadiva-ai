@@ -6,6 +6,7 @@ export type WebSearchRequest = {
   resultsPerPage: number;
   publishedAfter?: string | null;
   publishedBefore?: string | null;
+  freshness?: "pm" | "py" | null;
   timeoutMs: number;
 };
 
@@ -15,6 +16,8 @@ export type WebSearchResult = {
   snippet: string | null;
   domain: string;
   publishedAt: string | null;
+  age?: string | null;
+  extraSnippets?: string[];
   query: string;
   queryFamily: string;
   rank: number;
@@ -28,6 +31,8 @@ export type WebSearchResponse = {
   retryCount: number;
   durationMs: number;
   exhausted: boolean;
+  moreResultsAvailable?: boolean;
+  queryAltered?: string | null;
 };
 
 export interface WebSearchProvider {
@@ -39,6 +44,7 @@ export interface WebSearchProvider {
       signal?: AbortSignal;
       executionId?: string;
       queryFamily?: string;
+      maxAttempts?: number;
     },
   ): Promise<WebSearchResponse>;
 }

@@ -21,7 +21,7 @@ const EXECUTION_ID = "00000000-0000-4000-8000-000000000201";
 const RESULT_ID = "00000000-0000-4000-8000-000000000101";
 const OTHER_RESULT_ID = "00000000-0000-4000-8000-000000000102";
 
-function ownedExecutionRow() {
+function ownedExecutionRow(overrides: Record<string, unknown> = {}) {
   return {
     id: EXECUTION_ID,
     status: "COMPLETED",
@@ -50,6 +50,7 @@ function ownedExecutionRow() {
     createdAt: new Date("2026-07-18T12:00:00.000Z"),
     sourceType: "COMPRASAL",
     profileName: "COMPRASAL — búsqueda de oportunidades",
+    ...overrides,
   };
 }
 
@@ -210,6 +211,35 @@ describe("search execution result isolation", () => {
     expect(detail?.candidates).toMatchObject([
       { searchResultId: RESULT_ID, preliminaryScore: 72 },
     ]);
+  });
+
+  it("never turns PRIVATE_WEB_BRAVE metrics traces into visible results", async () => {
+    mocks.select
+      .mockImplementationOnce(() =>
+        ownedExecutionSelect(
+          ownedExecutionRow({
+            sourceType: "PRIVATE_WEB",
+            metrics: {
+              searchMode: "PRIVATE_WEB_BRAVE",
+              searchProvider: "BRAVE",
+              executionCandidates: [
+                {
+                  searchResultId: OTHER_RESULT_ID,
+                  title: "Trace rechazado",
+                  outcome: "REJECTED",
+                },
+              ],
+            },
+          }),
+        ),
+      )
+      .mockImplementationOnce(() => associatedCandidatesSelect([]));
+    const detail = await getUserSearchExecutionDetail({
+      executionId: EXECUTION_ID,
+      userId: "00000000-0000-4000-8000-000000000401",
+    });
+    expect(detail?.candidates).toEqual([]);
+    expect(mocks.select).toHaveBeenCalledTimes(2);
   });
 
   it("hides an associated result dismissed only by the current user", async () => {

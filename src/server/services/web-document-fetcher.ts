@@ -5,8 +5,8 @@ import {
   type SafeUrlFailure,
 } from "@/server/security/safe-url";
 import {
-  defaultPublicHostLookup,
-  resolveAndAssertPublicHost,
+  requestPinnedPublicUrl,
+  type HostRequestGate,
   type SourceUrlValidationDeps,
 } from "./source-url-validation";
 import { checkRobotsAllowed, type RobotsPolicyDeps } from "./robots-policy";
@@ -62,7 +62,7 @@ type PdfDocumentLike = {
 
 export type WebDocumentFetcherDeps = Pick<
   SourceUrlValidationDeps,
-  "fetchImpl" | "lookupImpl" | "now"
+  "fetchImpl" | "requestImpl" | "lookupImpl" | "now"
 > & {
   timeoutMs: number;
   maxRedirects: number;
@@ -71,6 +71,9 @@ export type WebDocumentFetcherDeps = Pick<
   userAgent: string;
   robotsCacheTtlMs: number;
   robotsCache?: RobotsPolicyDeps["cache"];
+  maxRobotsBytes?: number;
+  requestGate?: HostRequestGate;
+  urlPolicy?: (url: string) => boolean;
   signal?: AbortSignal;
   loadPdfDocument?: (bytes: Uint8Array) => Promise<PdfDocumentLike>;
 };
@@ -148,7 +151,13 @@ export function extractHtmlDocument(html: string, finalUrl: string): {
   links: string[];
   canonicalUrl: string | null;
 } {
-  const title = stripMarkup(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").slice(0, 500) || null;
+  const heading = stripMarkup(
+    html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "",
+  ).slice(0, 500);
+  const htmlTitle = stripMarkup(
+    html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "",
+  ).slice(0, 500);
+  const title = heading || htmlTitle || null;
   const canonicalHref = html.match(
     /<link\b(?=[^>]*\brel=["'][^"']*canonical[^"']*["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>/i,
   )?.[1];
@@ -157,7 +166,10 @@ export function extractHtmlDocument(html: string, finalUrl: string): {
     try {
       const candidate = new URL(canonicalHref, finalUrl);
       const safe = assertSafePublicHttpUrl(candidate.toString());
-      canonicalUrl = safe.ok ? safe.url.toString() : null;
+      canonicalUrl =
+        safe.ok && safe.url.origin === new URL(finalUrl).origin
+          ? safe.url.toString()
+          : null;
     } catch {
       canonicalUrl = null;
     }
@@ -220,6 +232,7 @@ export async function extractPdfText(
   maxPages: number,
   loadPdfDocument: (bytes: Uint8Array) => Promise<PdfDocumentLike> =
     defaultLoadPdfDocument,
+  signal?: AbortSignal,
 ): Promise<{ text: string; pagesProcessed: number }> {
   const signature = new TextDecoder("ascii").decode(bytes.slice(0, 5));
   if (signature !== "%PDF-") {
@@ -230,6 +243,9 @@ export async function extractPdfText(
   const pages: string[] = [];
   try {
     for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+      if (signal?.aborted) {
+        throw new DOMException("The operation was aborted", "AbortError");
+      }
       const page = await document.getPage(pageNumber);
       const content = await page.getTextContent();
       pages.push(
@@ -246,6 +262,11 @@ export async function extractPdfText(
     text: relevantHtmlText(pages.join("\n").replace(/\s+/g, " ").trim()),
     pagesProcessed: pageCount,
   };
+}
+
+function hasCompatibleHtmlStructure(bytes: Uint8Array): boolean {
+  const prefix = new TextDecoder().decode(bytes.slice(0, Math.min(bytes.length, 16_384)));
+  return /<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<article\b|<title\b/i.test(prefix);
 }
 
 async function readBytes(
@@ -312,45 +333,69 @@ export async function fetchWebDocument(
   rawUrl: string,
   deps: WebDocumentFetcherDeps,
 ): Promise<DocumentFetchResult> {
+  if (deps.signal?.aborted) {
+    return { ok: false, code: "TIMEOUT", detail: "Tiempo de espera agotado" };
+  }
   const initial = assertSafePublicHttpUrl(rawUrl);
   if (!initial.ok) {
     return mappedStructuralFailure(initial);
   }
 
-  const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
-  const fetchImpl = deps.fetchImpl ?? fetch;
   let currentUrl = initial.url.toString();
   let robotsFromCache = false;
 
   for (let hop = 0; hop <= deps.maxRedirects; hop += 1) {
+    if (deps.signal?.aborted) {
+      return {
+        ok: false,
+        code: "TIMEOUT",
+        detail: "Tiempo de espera agotado",
+        finalUrl: currentUrl,
+      };
+    }
     const structural = assertSafePublicHttpUrl(currentUrl);
     if (!structural.ok) {
       return { ...mappedStructuralFailure(structural), finalUrl: currentUrl };
     }
-    const dnsFailure = await resolveAndAssertPublicHost(
-      structural.url.hostname,
-      lookupImpl,
-    );
-    if (dnsFailure) {
+    if (deps.urlPolicy && !deps.urlPolicy(currentUrl)) {
       return {
         ok: false,
-        code: mapValidationFailureCode(dnsFailure.code),
-        detail: dnsFailure.detail,
+        code: "BLOCKED_HOST",
+        detail: "El destino no cumple la política de fuentes permitidas",
         finalUrl: currentUrl,
       };
     }
-
     const robots = await checkRobotsAllowed(currentUrl, {
       fetchImpl: deps.fetchImpl,
+      requestImpl: deps.requestImpl,
       lookupImpl: deps.lookupImpl,
       timeoutMs: deps.timeoutMs,
       now: deps.now,
       userAgent: deps.userAgent,
       cacheTtlMs: deps.robotsCacheTtlMs,
       cache: deps.robotsCache,
+      signal: deps.signal,
+      maxBytes: deps.maxRobotsBytes,
+      requestGate: deps.requestGate,
     });
+    if (deps.signal?.aborted) {
+      return {
+        ok: false,
+        code: "TIMEOUT",
+        detail: "Tiempo de espera agotado",
+        finalUrl: currentUrl,
+      };
+    }
     robotsFromCache = robots.fromCache;
     if (!robots.allowed) {
+      if (robots.failureCode) {
+        return {
+          ok: false,
+          code: mapValidationFailureCode(robots.failureCode),
+          detail: "No fue posible validar de forma segura el host de robots.txt",
+          finalUrl: currentUrl,
+        };
+      }
       return {
         ok: false,
         code:
@@ -364,21 +409,6 @@ export async function fetchWebDocument(
         finalUrl: currentUrl,
       };
     }
-    // Resolve again immediately before the document request. This narrows the
-    // DNS-rebinding window introduced by the separate robots.txt request.
-    const preFetchDnsFailure = await resolveAndAssertPublicHost(
-      structural.url.hostname,
-      lookupImpl,
-    );
-    if (preFetchDnsFailure) {
-      return {
-        ok: false,
-        code: mapValidationFailureCode(preFetchDnsFailure.code),
-        detail: preFetchDnsFailure.detail,
-        finalUrl: currentUrl,
-      };
-    }
-
     const controller = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -387,17 +417,28 @@ export async function fetchWebDocument(
     }, deps.timeoutMs);
     const onAbort = () => controller.abort();
     deps.signal?.addEventListener("abort", onAbort, { once: true });
+    if (deps.signal?.aborted) controller.abort();
     try {
-      const response = await fetchImpl(currentUrl, {
+      const request = () => requestPinnedPublicUrl(structural.url, {
         method: "GET",
-        redirect: "manual",
-        credentials: "omit",
         signal: controller.signal,
         headers: {
           Accept: "text/html,application/xhtml+xml,application/pdf",
           "User-Agent": deps.userAgent,
         },
-      });
+      }, deps);
+      const requested = deps.requestGate
+        ? await deps.requestGate(currentUrl, request)
+        : await request();
+      if (!requested.ok) {
+        return {
+          ok: false,
+          code: mapValidationFailureCode(requested.failure.code),
+          detail: requested.failure.detail,
+          finalUrl: currentUrl,
+        };
+      }
+      const response = requested.response;
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location");
         if (!location) {
@@ -423,8 +464,8 @@ export async function fetchWebDocument(
       }
       const contentType = (response.headers.get("content-type") ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
       const signature = new TextDecoder("ascii").decode(bytes.slice(0, 5));
-      const isPdf = contentType === "application/pdf" || (contentType === "application/octet-stream" && signature === "%PDF-");
-      const isHtml = contentType === "text/html" || contentType === "application/xhtml+xml" || (!contentType && signature !== "%PDF-");
+      const isPdf = contentType === "application/pdf";
+      const isHtml = contentType === "text/html" || contentType === "application/xhtml+xml";
       const fetchedAt = (deps.now?.() ?? new Date()).toISOString();
 
       if (isPdf) {
@@ -436,6 +477,7 @@ export async function fetchWebDocument(
             bytes,
             deps.maxPdfPages,
             deps.loadPdfDocument,
+            deps.signal,
           );
           if (!parsed.text) {
             return { ok: false, code: "PDF_NO_EXTRACTABLE_TEXT", detail: "El PDF no contiene texto extraíble", finalUrl: currentUrl };
@@ -449,7 +491,7 @@ export async function fetchWebDocument(
               canonicalUrl: null,
               contentType: "application/pdf",
               statusCode: response.status,
-              title: decodeURIComponent(new URL(currentUrl).pathname.split("/").at(-1) ?? "") || null,
+              title: null,
               text: parsed.text,
               links: [],
               byteLength: bytes.byteLength,
@@ -469,6 +511,9 @@ export async function fetchWebDocument(
       if (!isHtml) {
         return { ok: false, code: "UNSUPPORTED_CONTENT_TYPE", detail: `Tipo de contenido no permitido: ${contentType || "desconocido"}`, finalUrl: currentUrl };
       }
+      if (!hasCompatibleHtmlStructure(bytes)) {
+        return { ok: false, code: "UNSUPPORTED_CONTENT_TYPE", detail: "El contenido no presenta una estructura HTML válida", finalUrl: currentUrl };
+      }
       const extracted = extractHtmlDocument(new TextDecoder().decode(bytes), currentUrl);
       return {
         ok: true,
@@ -477,7 +522,7 @@ export async function fetchWebDocument(
           requestedUrl: rawUrl,
           finalUrl: currentUrl,
           canonicalUrl: extracted.canonicalUrl,
-          contentType: contentType || "text/html",
+          contentType,
           statusCode: response.status,
           title: extracted.title,
           text: extracted.text,
@@ -490,8 +535,11 @@ export async function fetchWebDocument(
     } catch {
       return {
         ok: false,
-        code: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
-        detail: timedOut ? "Tiempo de espera agotado" : "No se pudo recuperar el documento",
+        code: timedOut || deps.signal?.aborted ? "TIMEOUT" : "NETWORK_ERROR",
+        detail:
+          timedOut || deps.signal?.aborted
+            ? "Tiempo de espera agotado"
+            : "No se pudo recuperar el documento",
         finalUrl: currentUrl,
       };
     } finally {

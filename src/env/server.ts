@@ -126,13 +126,55 @@ const serverEnvSchema = z.object({
   PRIVATE_WEB_DISCOVERY_MODE: z
     .enum(["GROUNDING_ONLY", "PROVIDER_SEARCH"])
     .default("GROUNDING_ONLY"),
+  PRIVATE_WEB_BRAVE_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  BRAVE_API_KEY: z.string().trim().min(1).optional(),
   BRAVE_SEARCH_API_KEY: z.string().trim().min(1).optional(),
   BRAVE_SEARCH_COST_PER_REQUEST: z.coerce.number().min(0).max(1).default(0.005),
+  PRIVATE_WEB_MAX_BRAVE_REQUESTS: z.coerce.number().int().min(1).max(8).default(8),
+  PRIVATE_WEB_BRAVE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(5_000)
+    .max(35_000)
+    .default(35_000),
+  PRIVARESULTS: z.coerce.number().int().min(1).max(160).default(160),
   PRIVATE_WEB_MAX_PROVIDER_QUERIES: z.coerce.number().int().min(1).max(50).default(8),
   PRIVATE_WEB_RESULTS_PER_QUERY: z.coerce.number().int().min(1).max(20).default(10),
   PRIVATE_WEB_MAX_PAGES_PER_QUERY: z.coerce.number().int().min(1).max(10).default(1),
   PRIVATE_WEB_MAX_PROVIDER_RESULTS: z.coerce.number().int().min(1).max(500).default(80),
-  PRIVATE_WEB_MAX_UNIQUE_URLS: z.coerce.number().int().min(1).max(250).default(40),
+  PRIVATE_WEB_MAX_UNIQUE_URLS: z.coerce.number().int().min(1).max(60).default(60),
+  PRIVATE_WEB_MAX_DOCUMENT_FETCHES: z.coerce.number().int().min(1).max(10).default(10),
+  PRIVATE_WEB_MAX_GEMINI_EXTRACTIONS: z.coerce.number().int().min(0).max(6).default(6),
+  PRIVATE_WEB_MAX_RESULTS: z.coerce.number().int().min(1).max(50).default(50),
+  PRIVATE_WEB_MAX_PER_DOMAIN: z.coerce.number().int().min(1).max(3).default(3),
+  PRIVATE_WEB_MAX_CONCURRENT_SEARCHES_PER_USER: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1)
+    .default(1),
+  PRIVATE_WEB_MAX_SEARCHES_PER_HOUR: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(5)
+    .default(5),
+  PRIVATE_WEB_STALE_EXECUTION_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(5)
+    .max(120)
+    .default(10),
+  PRIVATE_WEB_QUERY_MIN_COVERAGE: z.coerce.number().min(0.5).max(1).default(0.6),
+  PRIVATE_WEB_TOTAL_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(10_000)
+    .max(180_000)
+    .default(180_000),
   PRIVATE_WEB_MAX_URLS_PER_DOMAIN: z.coerce.number().int().min(1).max(20).default(3),
   PRIVATE_WEB_SEARCH_CONCURRENCY: z.coerce.number().int().min(1).max(10).default(2),
   PRIVATE_WEB_SEARCH_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(10_000),
@@ -146,6 +188,12 @@ const serverEnvSchema = z.object({
   PRIVATE_WEB_MAX_REQUESTS_PER_HOST: z.coerce.number().int().min(1).max(10).default(2),
   PRIVATE_WEB_FETCH_USER_AGENT: z.string().trim().min(3).max(250).default("CreativaLeadsBot/1.0"),
   PRIVATE_WEB_ROBOTS_CACHE_TTL_MS: z.coerce.number().int().min(60_000).max(86_400_000).default(3_600_000),
+  PRIVATE_WEB_MAX_ROBOTS_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1_024)
+    .max(1_000_000)
+    .default(500_000),
   PRIVATE_WEB_MAX_PDF_PAGES: z.coerce.number().int().min(1).max(100).default(30),
   PRIVATE_WEB_MAX_EXTRACTION_DOCUMENTS: z.coerce.number().int().min(1).max(100).default(12),
   PRIVATE_WEB_EXTRACTION_CONCURRENCY: z.coerce.number().int().min(1).max(10).default(2),
@@ -216,13 +264,35 @@ export function getServerEnv(): ServerEnv {
     SEARCH_REGIONAL_SHARE: process.env.SEARCH_REGIONAL_SHARE,
     SEARCH_MAX_CANDIDATES: process.env.SEARCH_MAX_CANDIDATES,
     PRIVATE_WEB_DISCOVERY_MODE: process.env.PRIVATE_WEB_DISCOVERY_MODE,
+    PRIVATE_WEB_BRAVE_ENABLED: process.env.PRIVATE_WEB_BRAVE_ENABLED,
+    BRAVE_API_KEY:
+      process.env.BRAVE_API_KEY?.trim() ||
+      process.env.BRAVE_SEARCH_API_KEY?.trim() ||
+      undefined,
     BRAVE_SEARCH_API_KEY: process.env.BRAVE_SEARCH_API_KEY?.trim() || undefined,
     BRAVE_SEARCH_COST_PER_REQUEST: process.env.BRAVE_SEARCH_COST_PER_REQUEST,
+    PRIVATE_WEB_MAX_BRAVE_REQUESTS: process.env.PRIVATE_WEB_MAX_BRAVE_REQUESTS,
+    PRIVATE_WEB_BRAVE_TIMEOUT_MS: process.env.PRIVATE_WEB_BRAVE_TIMEOUT_MS,
+    PRIVARESULTS: process.env.PRIVARESULTS,
     PRIVATE_WEB_MAX_PROVIDER_QUERIES: process.env.PRIVATE_WEB_MAX_PROVIDER_QUERIES,
     PRIVATE_WEB_RESULTS_PER_QUERY: process.env.PRIVATE_WEB_RESULTS_PER_QUERY,
     PRIVATE_WEB_MAX_PAGES_PER_QUERY: process.env.PRIVATE_WEB_MAX_PAGES_PER_QUERY,
     PRIVATE_WEB_MAX_PROVIDER_RESULTS: process.env.PRIVATE_WEB_MAX_PROVIDER_RESULTS,
     PRIVATE_WEB_MAX_UNIQUE_URLS: process.env.PRIVATE_WEB_MAX_UNIQUE_URLS,
+    PRIVATE_WEB_MAX_DOCUMENT_FETCHES:
+      process.env.PRIVATE_WEB_MAX_DOCUMENT_FETCHES,
+    PRIVATE_WEB_MAX_GEMINI_EXTRACTIONS:
+      process.env.PRIVATE_WEB_MAX_GEMINI_EXTRACTIONS,
+    PRIVATE_WEB_MAX_RESULTS: process.env.PRIVATE_WEB_MAX_RESULTS,
+    PRIVATE_WEB_MAX_PER_DOMAIN: process.env.PRIVATE_WEB_MAX_PER_DOMAIN,
+    PRIVATE_WEB_MAX_CONCURRENT_SEARCHES_PER_USER:
+      process.env.PRIVATE_WEB_MAX_CONCURRENT_SEARCHES_PER_USER,
+    PRIVATE_WEB_MAX_SEARCHES_PER_HOUR:
+      process.env.PRIVATE_WEB_MAX_SEARCHES_PER_HOUR,
+    PRIVATE_WEB_STALE_EXECUTION_MINUTES:
+      process.env.PRIVATE_WEB_STALE_EXECUTION_MINUTES,
+    PRIVATE_WEB_QUERY_MIN_COVERAGE: process.env.PRIVATE_WEB_QUERY_MIN_COVERAGE,
+    PRIVATE_WEB_TOTAL_TIMEOUT_MS: process.env.PRIVATE_WEB_TOTAL_TIMEOUT_MS,
     PRIVATE_WEB_MAX_URLS_PER_DOMAIN: process.env.PRIVATE_WEB_MAX_URLS_PER_DOMAIN,
     PRIVATE_WEB_SEARCH_CONCURRENCY: process.env.PRIVATE_WEB_SEARCH_CONCURRENCY,
     PRIVATE_WEB_SEARCH_TIMEOUT_MS: process.env.PRIVATE_WEB_SEARCH_TIMEOUT_MS,
@@ -237,6 +307,7 @@ export function getServerEnv(): ServerEnv {
     PRIVATE_WEB_MAX_REQUESTS_PER_HOST: process.env.PRIVATE_WEB_MAX_REQUESTS_PER_HOST,
     PRIVATE_WEB_FETCH_USER_AGENT: process.env.PRIVATE_WEB_FETCH_USER_AGENT,
     PRIVATE_WEB_ROBOTS_CACHE_TTL_MS: process.env.PRIVATE_WEB_ROBOTS_CACHE_TTL_MS,
+    PRIVATE_WEB_MAX_ROBOTS_BYTES: process.env.PRIVATE_WEB_MAX_ROBOTS_BYTES,
     PRIVATE_WEB_MAX_PDF_PAGES: process.env.PRIVATE_WEB_MAX_PDF_PAGES,
     PRIVATE_WEB_MAX_EXTRACTION_DOCUMENTS: process.env.PRIVATE_WEB_MAX_EXTRACTION_DOCUMENTS,
     PRIVATE_WEB_EXTRACTION_CONCURRENCY: process.env.PRIVATE_WEB_EXTRACTION_CONCURRENCY,

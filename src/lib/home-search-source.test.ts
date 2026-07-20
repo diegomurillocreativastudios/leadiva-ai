@@ -15,7 +15,7 @@ describe("home-search-source", () => {
     expect(GROUNDED_HOME_QUERY_MAX_LENGTH).toBe(100);
   });
 
-  it("keeps all source definitions for later, but only exposes Comprasal in the picker", () => {
+  it("exposes Comprasal and Sector privado while keeping LinkedIn legacy hidden", () => {
     expect(HOME_SEARCH_SOURCES.map((source) => source.id)).toEqual([
       "COMPRASAL",
       "PRIVATE_WEB",
@@ -28,9 +28,11 @@ describe("home-search-source", () => {
     ]);
     expect(SELECTABLE_HOME_SEARCH_SOURCES.map((source) => source.id)).toEqual([
       "COMPRASAL",
+      "PRIVATE_WEB",
     ]);
     expect(SELECTABLE_HOME_SEARCH_SOURCES.map((source) => source.label)).toEqual([
       "Comprasal",
+      "Sector privado",
     ]);
   });
 
@@ -51,13 +53,13 @@ describe("home-search-source", () => {
     });
   });
 
-  it("resolves grounded sources with query and sourceType", () => {
+  it("resolves PRIVATE_WEB to its dedicated route and leaves LINKEDIN legacy unchanged", () => {
     expect(
       resolveHomeSearchRequest("PRIVATE_WEB", "RFP consultoría"),
     ).toEqual({
-      endpoint: "/api/jobs/search-grounding",
+      endpoint: "/api/jobs/search-private-web",
       body: { sourceType: "PRIVATE_WEB", query: "RFP consultoría" },
-      loadingMessage: "Buscando oportunidades…",
+      loadingMessage: "Buscando oportunidades privadas…",
       requiresQuery: true,
     });
 

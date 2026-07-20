@@ -119,12 +119,14 @@ export function ProjectDetailActions({
   alreadyLead,
   officialUrlOk,
   searchResultId,
+  executionId,
   convertAction,
 }: {
   canConvert: boolean;
   alreadyLead: boolean;
   officialUrlOk: boolean;
   searchResultId: string;
+  executionId: string;
   convertAction: (formData: FormData) => void | Promise<void>;
 }) {
   return (
@@ -132,6 +134,7 @@ export function ProjectDetailActions({
       {canConvert ? (
         <form action={convertAction}>
           <input type="hidden" name="searchResultId" value={searchResultId} />
+          <input type="hidden" name="executionId" value={executionId} />
           <SkeuButton
             type="submit"
             variant="primary"

@@ -50,6 +50,13 @@ export function HomeSearchResults({
         </p>
       </header>
 
+      {detail.execution.status === "PARTIALLY_COMPLETED" ? (
+        <div className="mb-4 rounded-md border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning" role="status">
+          La búsqueda terminó parcialmente. Algunos sitios o resultados no
+          pudieron procesarse.
+        </div>
+      ) : null}
+
       {candidates.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center rounded-md border border-dashed border-surface-border px-4 py-16 text-center">
           <FileSearch
@@ -57,10 +64,18 @@ export function HomeSearchResults({
             aria-hidden
           />
           <p className="mt-3 text-sm font-medium text-text-primary">
-            No hay resultados para esta búsqueda
+            {detail.execution.status === "FAILED"
+              ? "No fue posible completar la búsqueda."
+              : detail.execution.status === "PARTIALLY_COMPLETED"
+                ? "No se conservaron oportunidades verificadas."
+                : "No encontramos oportunidades verificadas para esta búsqueda."}
           </p>
           <p className="mt-1 max-w-sm text-xs text-text-secondary">
-            Las ejecuciones históricas pueden no tener candidatos guardados.
+            {detail.execution.status === "FAILED"
+              ? "Puedes intentarlo nuevamente más tarde."
+              : detail.execution.status === "PARTIALLY_COMPLETED"
+                ? "La búsqueda se detuvo antes de completar todo el trabajo planeado."
+                : "Prueba con otros términos o revisa otra búsqueda del historial."}
           </p>
         </div>
       ) : (
@@ -87,29 +102,66 @@ export function HomeSearchResults({
                     <h3 className="min-w-0 font-heading text-sm font-semibold text-text-primary">
                       {candidate.title ?? "Oportunidad sin título"}
                     </h3>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium",
-                        sector === "Público"
-                          ? "border-accent/25 bg-accent-mint text-accent-dark"
-                          : "border-surface-border bg-surface-base text-text-secondary",
-                      )}
-                    >
-                      {sector}
-                    </span>
+                    <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                      {candidate.verificationStatus === "PARTIALLY_VERIFIED" ? (
+                        <span className="rounded-md border border-warning/30 bg-warning/5 px-2 py-0.5 text-[11px] font-medium text-warning">
+                          Verificación parcial
+                        </span>
+                      ) : candidate.verificationStatus === "VERIFIED" ? (
+                        <span className="rounded-md border border-accent/25 bg-accent-mint px-2 py-0.5 text-[11px] font-medium text-accent-dark">
+                          Verificada
+                        </span>
+                      ) : null}
+                      <span
+                        className={cn(
+                          "rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                          sector === "Público"
+                            ? "border-accent/25 bg-accent-mint text-accent-dark"
+                            : "border-surface-border bg-surface-base text-text-secondary",
+                        )}
+                      >
+                        {sector}
+                      </span>
+                    </div>
                   </div>
+                  {candidate.organizationName ? (
+                    <p className="mt-1 text-xs font-medium text-text-primary">
+                      {candidate.organizationName}
+                    </p>
+                  ) : null}
                   <p className="mt-2 line-clamp-2 text-sm leading-5 text-text-secondary">
                     {description}
                   </p>
+                  {candidate.sourceDomain ? (
+                    <p className="mt-2 text-xs text-text-secondary">
+                      Fuente: {candidate.sourceDomain}
+                    </p>
+                  ) : null}
                   <p className="mt-3 text-xs text-text-secondary">
                     {detail.execution.sourceType === "COMPRASAL"
                       ? "Cierre"
                       : "Fecha límite"}
                     :{" "}
                     <span className="font-medium text-text-primary">
-                      {formatDeadline(candidate.deadlineAt)}
+                      {candidate.verificationStatus === "PARTIALLY_VERIFIED" &&
+                      !candidate.deadlineAt
+                        ? "No confirmada · revisión manual"
+                        : formatDeadline(candidate.deadlineAt)}
                     </span>
                   </p>
+                  {candidate.publishedAt || candidate.estimatedAmount ? (
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {candidate.publishedAt
+                        ? `Publicada ${new Date(candidate.publishedAt).toLocaleDateString("es-SV")}`
+                        : ""}
+                      {candidate.publishedAt && candidate.estimatedAmount
+                        ? " · "
+                        : ""}
+                      {candidate.estimatedAmount
+                        ? `${candidate.currency ?? "USD"} ${candidate.estimatedAmount}`
+                        : ""}
+                    </p>
+                  ) : null}
                 </Link>
               </li>
             );

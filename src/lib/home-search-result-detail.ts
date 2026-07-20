@@ -11,10 +11,20 @@ export type HomeSearchResultDetailInput = {
   title: string;
   snippet: string | null;
   sourceUrl: string | null;
+  organizationName?: string | null;
+  publishedAt?: Date | string | null;
   deadlineAt: Date | string | null;
   estimatedAmount: string | number | null;
   currency: string | null;
   amountStatus: string | null;
+  verificationStatus?: string | null;
+  verificationReason?: string | null;
+  fieldEvidence?: Array<{
+    field: string;
+    text: string;
+    url: string;
+    confirmed: boolean;
+  }> | null;
 };
 
 export type HomeSearchResultDetailView = {
@@ -22,8 +32,13 @@ export type HomeSearchResultDetailView = {
   description: string;
   websiteUrl: string | null;
   websiteLabel: string;
+  organizationName?: string | null;
+  publishedAtLabel?: string | null;
   deadlineLabel: string;
   amountLabel: string;
+  verificationStatus?: string | null;
+  verificationReason?: string | null;
+  evidence?: Array<{ field: string; text: string }>;
   comprasal?: ComprasalAwardReportView;
 };
 
@@ -404,12 +419,35 @@ export function buildHomeSearchResultDetail(
     websiteLabel: websiteUrl
       ? websiteLabelFromUrl(websiteUrl)
       : "Sin sitio web",
+    ...(input.organizationName?.trim()
+      ? { organizationName: input.organizationName.trim() }
+      : {}),
+    ...(input.publishedAt
+      ? { publishedAtLabel: formatDeadlineLabel(input.publishedAt) }
+      : {}),
     deadlineLabel: formatDeadlineLabel(input.deadlineAt),
     amountLabel: formatProjectBudgetLabel(
       input.estimatedAmount,
       input.currency,
       input.amountStatus,
     ),
+    ...(input.verificationStatus?.trim()
+      ? { verificationStatus: input.verificationStatus.trim() }
+      : {}),
+    ...(input.verificationReason?.trim()
+      ? { verificationReason: input.verificationReason.trim() }
+      : {}),
+    ...(input.fieldEvidence?.length
+      ? {
+          evidence: input.fieldEvidence
+            .filter((item) => item.confirmed && item.text.trim())
+            .map((item) => ({
+              field: item.field,
+              text: item.text.trim().slice(0, 500),
+            }))
+            .slice(0, 8),
+        }
+      : {}),
   };
 }
 
@@ -420,7 +458,18 @@ export function buildHomeSearchResultDetailFromCandidate(candidate: {
   organizationName: string | null;
   officialSourceUrl: string | null;
   applicationUrl: string | null;
+  publishedAt?: string | null;
   deadlineAt: string | null;
+  estimatedAmount?: string | null;
+  currency?: string | null;
+  verificationStatus?: string | null;
+  reason?: string | null;
+  evidence?: Array<{
+    field: string;
+    text: string;
+    url: string | null;
+    confirmed: boolean;
+  }>;
 }): HomeSearchResultDetailView {
   return buildHomeSearchResultDetail({
     title: candidate.title ?? "Oportunidad sin título",
@@ -428,9 +477,17 @@ export function buildHomeSearchResultDetailFromCandidate(candidate: {
       candidate.summary ?? candidate.organizationName ?? null,
     sourceUrl:
       candidate.officialSourceUrl ?? candidate.applicationUrl ?? null,
+    organizationName: candidate.organizationName,
+    publishedAt: candidate.publishedAt,
     deadlineAt: candidate.deadlineAt,
-    estimatedAmount: null,
-    currency: null,
-    amountStatus: "UNKNOWN",
+    estimatedAmount: candidate.estimatedAmount ?? null,
+    currency: candidate.currency ?? null,
+    amountStatus: candidate.estimatedAmount ? "PUBLISHED" : "UNKNOWN",
+    verificationStatus: candidate.verificationStatus,
+    verificationReason: candidate.reason,
+    fieldEvidence: (candidate.evidence ?? []).map((item) => ({
+      ...item,
+      url: item.url ?? candidate.officialSourceUrl ?? "",
+    })),
   });
 }

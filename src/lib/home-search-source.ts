@@ -20,9 +20,10 @@ export const HOME_SEARCH_SOURCES = [
   label: string;
 }>;
 
-/** Sources shown in the home search picker. Others stay defined for a later release. */
+/** Sources shown in the home search picker. LinkedIn remains a separate legacy engine. */
 const SELECTABLE_HOME_SEARCH_SOURCE_IDS = [
   "COMPRASAL",
+  "PRIVATE_WEB",
 ] as const satisfies ReadonlyArray<HomeSearchSourceId>;
 
 export const SELECTABLE_HOME_SEARCH_SOURCES = HOME_SEARCH_SOURCES.filter(
@@ -43,7 +44,10 @@ type ComprasalSearchBody = {
 };
 
 export type HomeSearchRequest = {
-  endpoint: "/api/jobs/search-comprasal" | "/api/jobs/search-grounding";
+  endpoint:
+    | "/api/jobs/search-comprasal"
+    | "/api/jobs/search-private-web"
+    | "/api/jobs/search-grounding";
   body: GroundedSearchBody | ComprasalSearchBody;
   loadingMessage: string;
   requiresQuery: boolean;
@@ -63,6 +67,15 @@ export function resolveHomeSearchRequest(
       endpoint: "/api/jobs/search-comprasal",
       body: { sourceType: "COMPRASAL", query },
       loadingMessage: "Buscando en COMPRASAL…",
+      requiresQuery: true,
+    };
+  }
+
+  if (source === "PRIVATE_WEB") {
+    return {
+      endpoint: "/api/jobs/search-private-web",
+      body: { sourceType: "PRIVATE_WEB", query },
+      loadingMessage: "Buscando oportunidades privadas…",
       requiresQuery: true,
     };
   }

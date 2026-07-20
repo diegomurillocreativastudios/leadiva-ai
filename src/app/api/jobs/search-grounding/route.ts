@@ -4,6 +4,10 @@ import { z } from "zod";
 import { getServerEnv } from "@/env/server";
 import { GROUNDED_HOME_QUERY_MAX_LENGTH } from "@/lib/home-search-source";
 import { auth } from "@/server/auth";
+import {
+  PrivateWebSearchAdmissionError,
+  searchPrivateWeb,
+} from "@/server/integrations/private-web/service";
 import { mapPrivateSearchError } from "@/server/integrations/vertex-ai/response";
 import { runGroundedSearch } from "@/server/integrations/vertex-ai/service";
 
@@ -44,6 +48,27 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (parsed.data.sourceType === "PRIVATE_WEB") {
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (!parsed.data.query) {
+        return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+      }
+      const result = await searchPrivateWeb({
+        userId: session.user.id,
+        query: parsed.data.query,
+      });
+      return NextResponse.json(result, {
+        status:
+          result.status === "FAILED"
+            ? 502
+            : result.status === "PARTIALLY_COMPLETED"
+              ? 207
+              : 200,
+      });
+    }
+
     const result = await runGroundedSearch({
       sourceType: parsed.data.sourceType,
       query: parsed.data.query,
@@ -55,6 +80,26 @@ export async function POST(request: Request) {
       status: result.status === "FAILED" ? 502 : 200,
     });
   } catch (error) {
+    if (parsed.data.sourceType === "PRIVATE_WEB") {
+      if (error instanceof PrivateWebSearchAdmissionError) {
+        return NextResponse.json(
+          {
+            error:
+              error.code === "ACTIVE_SEARCH"
+                ? "Ya existe una búsqueda privada en curso."
+                : "Se alcanzó el límite de búsquedas privadas.",
+          },
+          {
+            status: error.code === "ACTIVE_SEARCH" ? 409 : 429,
+            headers: { "Retry-After": String(error.retryAfterSeconds) },
+          },
+        );
+      }
+      return NextResponse.json(
+        { error: "No se pudo completar la búsqueda privada" },
+        { status: 502 },
+      );
+    }
     const message = error instanceof Error ? error.message : "Search failed";
     const friendly = mapPrivateSearchError(message);
 

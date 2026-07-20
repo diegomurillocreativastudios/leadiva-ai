@@ -278,40 +278,16 @@ describe("provider mode service integration", () => {
     });
 
     const { runGroundedSearch } = await import("./service");
-    const result = await runGroundedSearch({
-      sourceType: "PRIVATE_WEB",
-      interestCategories: ["SOFTWARE"],
-    });
+    await expect(
+      runGroundedSearch({
+        sourceType: "PRIVATE_WEB",
+        interestCategories: ["SOFTWARE"],
+      } as never),
+    ).rejects.toThrow("PRIVATE_WEB_REQUIRES_BRAVE");
 
     expect(mocks.searchWithGrounding).not.toHaveBeenCalled();
-    expect(result).toMatchObject({
-      status: "COMPLETED",
-      discoveryMode: "PROVIDER_SEARCH",
-      searchProvider: "BRAVE",
-      providerResults: 6,
-      uniqueUrls: 5,
-      uniqueDomains: 4,
-      documentsFetched: 2,
-      documentsExtracted: 2,
-      candidatesFound: 2,
-      candidatesFiltered: 1,
-      candidatesVerified: 1,
-      candidatesCreated: 1,
-      candidatesDiscarded: 1,
-    });
-    expect(result.discardCounts.EXPIRED).toBe(1);
-    expect(mocks.verifyProviderCandidate).toHaveBeenCalledOnce();
-    expect(mocks.verifyProviderCandidate).toHaveBeenCalledWith(
-      expect.objectContaining({ allowGrounding: true }),
-    );
-    expect(mocks.insertedValues).toHaveLength(2);
-    expect(mocks.insertedValues[1]).toMatchObject({
-      rawData: {
-        discoveryMetadata: {
-          discoveredByQueries: ["RFP software", "platform vendor"],
-          sourceRelationship: "DIRECT_OFFICIAL",
-        },
-      },
-    });
+    expect(mocks.discoverPrivateWeb).not.toHaveBeenCalled();
+    expect(mocks.verifyProviderCandidate).not.toHaveBeenCalled();
+    expect(mocks.insertedValues).toHaveLength(0);
   });
 });

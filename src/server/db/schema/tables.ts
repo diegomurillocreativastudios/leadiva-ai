@@ -185,7 +185,7 @@ export const searchResults = pgTable(
   },
   (table) => [
     uniqueIndex("search_results_normalized_url_uidx")
-      .on(table.normalizedUrl)
+      .on(table.sourceType, table.normalizedUrl)
       .where(
         sql`${table.deletedAt} is null and ${table.sourceType} <> 'COMPRASAL'`,
       ),

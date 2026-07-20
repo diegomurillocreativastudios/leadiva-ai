@@ -12,6 +12,7 @@ import {
   isNull,
   lt,
   lte,
+  ne,
   notInArray,
   or,
   sql,
@@ -34,7 +35,10 @@ import {
   type ProjectSortOption,
 } from "@/lib/project-catalog";
 import { extractDomain, normalizeUrl, slugify } from "@/lib/normalization";
-import { getSearchResultConversionError } from "@/lib/search-result-conversion";
+import {
+  canReturnExistingLeadToUser,
+  getSearchResultConversionError,
+} from "@/lib/search-result-conversion";
 import { isGenericOrListingSourceUrl } from "@/lib/source-url-specificity";
 import type { LeadFiltersInput } from "@/schemas/leads";
 import type { ProjectFiltersResolved } from "@/schemas/projects";
@@ -45,6 +49,7 @@ import {
   searchResultNotDeleted,
 } from "@/server/db/soft-delete";
 import { validateSourceUrl } from "@/server/services/source-url-validation";
+import { evaluatePrivateWebUrl } from "@/server/integrations/private-web/domain-policy";
 import {
   opportunities,
   opportunityNotes,
@@ -52,6 +57,7 @@ import {
   opportunityStatusHistory,
   organizations,
   searchExecutions,
+  searchExecutionResults,
   searchProfiles,
   searchResults,
   userSearchResultStates,
@@ -536,31 +542,87 @@ export async function discardSearchResult(
   userId: string,
   reason: string,
 ) {
-  const [state] = await db
-    .insert(userSearchResultStates)
-    .values({
-      userId,
-      searchResultId: id,
-      state: "DISMISSED",
-      dismissedAt: new Date(),
-      dismissReason: reason,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        userSearchResultStates.userId,
-        userSearchResultStates.searchResultId,
-      ],
-      set: {
+  const accessible = await userAccessibleSearchResultIds([id], userId);
+  if (!accessible.has(id)) throw new Error("RESULT_NOT_FOUND");
+  const state = await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${id}`}::text, 0))`,
+    );
+    const [inserted] = await tx
+      .insert(userSearchResultStates)
+      .values({
+        userId,
+        searchResultId: id,
         state: "DISMISSED",
         dismissedAt: new Date(),
         dismissReason: reason,
         updatedAt: new Date(),
-      },
-    })
-    .returning({ id: userSearchResultStates.searchResultId });
+      })
+      .onConflictDoUpdate({
+        target: [
+          userSearchResultStates.userId,
+          userSearchResultStates.searchResultId,
+        ],
+        set: {
+          state: "DISMISSED",
+          dismissedAt: new Date(),
+          dismissReason: reason,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ id: userSearchResultStates.searchResultId });
+    return inserted;
+  });
 
   return { discarded: state ? 1 : 0 };
+}
+
+async function userAccessibleSearchResultIds(
+  ids: string[],
+  userId: string,
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const [associated, legacy, publicRows] = await Promise.all([
+    db
+      .select({ id: searchResults.id })
+      .from(searchExecutionResults)
+      .innerJoin(searchResults, eq(searchExecutionResults.searchResultId, searchResults.id))
+      .innerJoin(searchExecutions, eq(searchExecutionResults.searchExecutionId, searchExecutions.id))
+      .innerJoin(searchProfiles, eq(searchExecutions.searchProfileId, searchProfiles.id))
+      .where(
+        and(
+          inArray(searchResults.id, ids),
+          eq(searchProfiles.createdByUserId, userId),
+          searchResultNotDeleted(),
+        ),
+      ),
+    db
+      .select({ id: searchResults.id })
+      .from(searchResults)
+      .innerJoin(searchExecutions, eq(searchResults.searchExecutionId, searchExecutions.id))
+      .innerJoin(searchProfiles, eq(searchExecutions.searchProfileId, searchProfiles.id))
+      .where(
+        and(
+          inArray(searchResults.id, ids),
+          eq(searchProfiles.createdByUserId, userId),
+          ne(searchResults.sourceType, "PRIVATE_WEB"),
+          searchResultNotDeleted(),
+        ),
+      ),
+    db
+      .select({ id: searchResults.id })
+      .from(searchResults)
+      .where(
+        and(
+          inArray(searchResults.id, ids),
+          eq(searchResults.sourceType, "COMPRASAL"),
+          searchResultNotDeleted(),
+        ),
+      ),
+  ]);
+  return new Set(
+    [...associated, ...legacy, ...publicRows].map((row) => row.id),
+  );
 }
 
 export async function discardSearchResults(
@@ -573,11 +635,20 @@ export async function discardSearchResults(
     return { discarded: 0 };
   }
 
+  const accessible = await userAccessibleSearchResultIds(uniqueIds, userId);
+  const allowedIds = uniqueIds.filter((id) => accessible.has(id)).sort();
+  if (allowedIds.length === 0) return { discarded: 0 };
   const now = new Date();
-  const updated = await db
-    .insert(userSearchResultStates)
-    .values(
-      uniqueIds.map((searchResultId) => ({
+  const updated = await db.transaction(async (tx) => {
+    for (const id of allowedIds) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${id}`}::text, 0))`,
+      );
+    }
+    return tx
+      .insert(userSearchResultStates)
+      .values(
+        allowedIds.map((searchResultId) => ({
         userId,
         searchResultId,
         state: "DISMISSED" as const,
@@ -585,8 +656,8 @@ export async function discardSearchResults(
         dismissReason: reason,
         updatedAt: now,
       })),
-    )
-    .onConflictDoUpdate({
+      )
+      .onConflictDoUpdate({
       target: [
         userSearchResultStates.userId,
         userSearchResultStates.searchResultId,
@@ -597,8 +668,9 @@ export async function discardSearchResults(
         dismissReason: reason,
         updatedAt: now,
       },
-    })
-    .returning({ id: userSearchResultStates.searchResultId });
+      })
+      .returning({ id: userSearchResultStates.searchResultId });
+  });
 
   return { discarded: updated.length };
 }
@@ -651,8 +723,29 @@ export async function convertSearchResultsToLeads(params: {
 
   for (const searchResultId of params.searchResultIds) {
     try {
+      const [ownedAssociation] = await db
+        .select({ executionId: searchExecutions.id })
+        .from(searchExecutionResults)
+        .innerJoin(
+          searchExecutions,
+          eq(searchExecutionResults.searchExecutionId, searchExecutions.id),
+        )
+        .innerJoin(
+          searchProfiles,
+          eq(searchExecutions.searchProfileId, searchProfiles.id),
+        )
+        .where(
+          and(
+            eq(searchExecutionResults.searchResultId, searchResultId),
+            eq(searchProfiles.createdByUserId, params.userId),
+          ),
+        )
+        .orderBy(desc(searchExecutions.createdAt))
+        .limit(1);
+      if (!ownedAssociation) throw new Error("RESULT_NOT_FOUND");
       const lead = await convertSearchResultToLead({
         searchResultId,
+        executionId: ownedAssociation.executionId,
         userId: params.userId,
       });
       leads.push(lead);
@@ -669,39 +762,72 @@ export async function convertSearchResultsToLeads(params: {
 
 export async function convertSearchResultToLead(params: {
   searchResultId: string;
+  executionId: string;
   userId: string;
 }) {
+  const [access] = await db
+    .select({
+      resultId: searchResults.id,
+      userState: userSearchResultStates.state,
+    })
+    .from(searchExecutionResults)
+    .innerJoin(
+      searchExecutions,
+      eq(searchExecutionResults.searchExecutionId, searchExecutions.id),
+    )
+    .innerJoin(
+      searchProfiles,
+      eq(searchExecutions.searchProfileId, searchProfiles.id),
+    )
+    .innerJoin(
+      searchResults,
+      eq(searchExecutionResults.searchResultId, searchResults.id),
+    )
+    .leftJoin(
+      userSearchResultStates,
+      and(
+        eq(userSearchResultStates.searchResultId, searchResults.id),
+        eq(userSearchResultStates.userId, params.userId),
+      ),
+    )
+    .where(
+      and(
+        eq(searchExecutions.id, params.executionId),
+        eq(searchExecutionResults.searchResultId, params.searchResultId),
+        eq(searchProfiles.createdByUserId, params.userId),
+        searchResultNotDeleted(),
+      ),
+    )
+    .limit(1);
+  if (!access) {
+    throw new Error("RESULT_NOT_FOUND");
+  }
+
   const result = await getSearchResultById(params.searchResultId);
   if (!result) {
     throw new Error("RESULT_NOT_FOUND");
   }
 
-  const [privateState] = await db
-    .select({ state: userSearchResultStates.state })
-    .from(userSearchResultStates)
-    .where(
-      and(
-        eq(userSearchResultStates.userId, params.userId),
-        eq(userSearchResultStates.searchResultId, result.id),
-      ),
-    )
-    .limit(1);
   const conversionError = getSearchResultConversionError({
     sourceType: result.sourceType,
     verificationStatus: result.verificationStatus,
-    userState: privateState?.state ?? null,
+    userState: access.userState ?? null,
+    deadlineAt: result.deadlineAt,
   });
   if (conversionError) {
     throw new Error(conversionError);
   }
 
   const [existingLead] = await db
-    .select({ id: opportunities.id })
+    .select({ id: opportunities.id, createdByUserId: opportunities.createdByUserId })
     .from(opportunities)
     .where(eq(opportunities.originSearchResultId, result.id))
     .limit(1);
 
   if (existingLead) {
+    if (!canReturnExistingLeadToUser(existingLead.createdByUserId, params.userId)) {
+      throw new Error("RESULT_NOT_FOUND");
+    }
     return existingLead;
   }
 
@@ -721,6 +847,12 @@ export async function convertSearchResultToLead(params: {
 
   const validatedSourceUrl = urlValidation.finalUrl;
   if (isGenericOrListingSourceUrl(validatedSourceUrl)) {
+    throw new Error("SOURCE_URL_NOT_SPECIFIC");
+  }
+  if (
+    result.sourceType === "PRIVATE_WEB" &&
+    !evaluatePrivateWebUrl(validatedSourceUrl).allowed
+  ) {
     throw new Error("SOURCE_URL_NOT_SPECIFIC");
   }
 

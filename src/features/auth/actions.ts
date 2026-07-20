@@ -200,6 +200,7 @@ export async function convertToLeadAction(formData: FormData) {
   const session = await requireSession();
   const parsed = convertToLeadSchema.safeParse({
     searchResultId: formData.get("searchResultId"),
+    executionId: formData.get("executionId"),
   });
   if (!parsed.success) {
     throw new Error("Invalid id");
@@ -208,6 +209,7 @@ export async function convertToLeadAction(formData: FormData) {
   try {
     await convertSearchResultToLead({
       searchResultId: parsed.data.searchResultId,
+      executionId: parsed.data.executionId,
       userId: session.user.id,
     });
     redirect("/");
@@ -223,6 +225,9 @@ export async function convertToLeadAction(formData: FormData) {
       throw new Error(
         "La fuente aún no cumple los mínimos de verificación para crear un Lead.",
       );
+    }
+    if (error instanceof Error && error.message === "RESULT_EXPIRED") {
+      throw new Error("La oportunidad ya venció y no puede convertirse en Lead.");
     }
     if (error instanceof Error && error.message === "SOURCE_URL_UNREACHABLE") {
       throw new Error(

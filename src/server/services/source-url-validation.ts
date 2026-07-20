@@ -1,8 +1,15 @@
 import { lookup as dnsLookup } from "node:dns/promises";
 
 import {
+  nodePinnedHttpRequest,
+  type PinnedHttpRequest,
+  type PinnedRequestInit,
+  type PublicAddress,
+} from "@/server/security/pinned-http-client";
+import {
   assertSafePublicHttpUrl,
   isPrivateOrReservedIp,
+  parseIpAddress,
 } from "@/server/security/safe-url";
 
 export type SourceUrlValidationCode =
@@ -41,7 +48,9 @@ export type SourceUrlValidationResult =
   | SourceUrlValidationFailure;
 
 export type SourceUrlValidationDeps = {
+  /** Test-only compatibility adapter. Production uses requestImpl/default pinning. */
   fetchImpl?: typeof fetch;
+  requestImpl?: PinnedHttpRequest;
   lookupImpl?: (
     hostname: string,
   ) => Promise<Array<{ address: string; family: number }>>;
@@ -51,59 +60,90 @@ export type SourceUrlValidationDeps = {
   now?: () => Date;
 };
 
+export type HostRequestGate = <T>(
+  rawUrl: string,
+  task: () => Promise<T>,
+) => Promise<T>;
+
 const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_MAX_REDIRECTS = 3;
 const DEFAULT_MAX_RESPONSE_BYTES = 1_500_000;
 
-function allowedContentType(contentType: string | null): boolean {
+export function allowedSourceContentType(contentType: string | null): boolean {
   if (!contentType) {
-    return true;
+    return false;
   }
-  const normalized = contentType.toLowerCase();
+  const normalized = contentType.split(";", 1)[0]?.trim().toLowerCase();
   return (
-    normalized.includes("text/html") ||
-    normalized.includes("application/xhtml+xml") ||
-    normalized.includes("application/pdf")
+    normalized === "text/html" ||
+    normalized === "application/xhtml+xml" ||
+    normalized === "application/pdf"
   );
 }
 
-export async function resolveAndAssertPublicHost(
+export type PublicHostResolution =
+  | { ok: true; addresses: PublicAddress[] }
+  | { ok: false; failure: SourceUrlValidationFailure };
+
+export async function resolvePublicHost(
   hostname: string,
   lookupImpl: NonNullable<SourceUrlValidationDeps["lookupImpl"]>,
-): Promise<SourceUrlValidationFailure | null> {
+): Promise<PublicHostResolution> {
   let addresses: Array<{ address: string; family: number }>;
   try {
     addresses = await lookupImpl(hostname);
   } catch {
     return {
       ok: false,
-      checkedAt: new Date().toISOString(),
-      code: "DNS_FAILED",
-      detail: "No se pudo resolver el dominio de la convocatoria",
+      failure: {
+        ok: false,
+        checkedAt: new Date().toISOString(),
+        code: "DNS_FAILED",
+        detail: "No se pudo resolver el dominio de la convocatoria",
+      },
     };
   }
-
   if (!addresses.length) {
     return {
       ok: false,
-      checkedAt: new Date().toISOString(),
-      code: "DNS_FAILED",
-      detail: "El dominio de la convocatoria no tiene registros DNS",
+      failure: {
+        ok: false,
+        checkedAt: new Date().toISOString(),
+        code: "DNS_FAILED",
+        detail: "El dominio de la convocatoria no tiene registros DNS",
+      },
     };
   }
 
+  const validated: PublicAddress[] = [];
   for (const entry of addresses) {
-    if (isPrivateOrReservedIp(entry.address)) {
+    const parsed = parseIpAddress(entry.address);
+    if (
+      !parsed ||
+      parsed.family !== entry.family ||
+      isPrivateOrReservedIp(entry.address)
+    ) {
       return {
         ok: false,
-        checkedAt: new Date().toISOString(),
-        code: "BLOCKED_IP",
-        detail: "El dominio resuelve a una IP no pública",
+        failure: {
+          ok: false,
+          checkedAt: new Date().toISOString(),
+          code: "BLOCKED_IP",
+          detail: "El dominio resuelve a una IP no pública",
+        },
       };
     }
+    validated.push({ address: entry.address, family: parsed.family });
   }
+  return { ok: true, addresses: validated };
+}
 
-  return null;
+export async function resolveAndAssertPublicHost(
+  hostname: string,
+  lookupImpl: NonNullable<SourceUrlValidationDeps["lookupImpl"]>,
+): Promise<SourceUrlValidationFailure | null> {
+  const result = await resolvePublicHost(hostname, lookupImpl);
+  return result.ok ? null : result.failure;
 }
 
 export async function defaultPublicHostLookup(
@@ -114,6 +154,60 @@ export async function defaultPublicHostLookup(
     address: entry.address,
     family: entry.family,
   }));
+}
+
+function testFetchRequest(fetchImpl: typeof fetch): PinnedHttpRequest {
+  return async (url, init) =>
+    fetchImpl(url, {
+      method: init.method,
+      redirect: "manual",
+      credentials: "omit",
+      signal: init.signal,
+      headers: init.headers,
+    });
+}
+
+export type PublicPinnedRequestDeps = Pick<
+  SourceUrlValidationDeps,
+  "lookupImpl" | "requestImpl" | "fetchImpl"
+>;
+
+export async function requestPinnedPublicUrl(
+  url: URL,
+  init: PinnedRequestInit,
+  deps: PublicPinnedRequestDeps,
+): Promise<
+  | { ok: true; response: Response; address: PublicAddress }
+  | { ok: false; failure: SourceUrlValidationFailure }
+> {
+  const resolution = await resolvePublicHost(
+    url.hostname,
+    deps.lookupImpl ?? defaultPublicHostLookup,
+  );
+  if (!resolution.ok) {
+    return resolution;
+  }
+  const address = resolution.addresses[0];
+  if (!address) {
+    return {
+      ok: false,
+      failure: failure("DNS_FAILED", "El dominio no tiene una IP pública"),
+    };
+  }
+  const requestImpl =
+    deps.requestImpl ??
+    (deps.fetchImpl ? testFetchRequest(deps.fetchImpl) : nodePinnedHttpRequest);
+  try {
+    return { ok: true, response: await requestImpl(url, init, address), address };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return { ok: false, failure: failure("TIMEOUT", "Tiempo de espera agotado") };
+    }
+    return {
+      ok: false,
+      failure: failure("NETWORK_ERROR", "No se pudo contactar la fuente"),
+    };
+  }
 }
 
 function failure(
@@ -139,7 +233,6 @@ export async function validateSourceUrl(
   rawUrl: string,
   deps: SourceUrlValidationDeps = {},
 ): Promise<SourceUrlValidationResult> {
-  const fetchImpl = deps.fetchImpl ?? fetch;
   const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxRedirects = deps.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
@@ -160,39 +253,37 @@ export async function validateSourceUrl(
       return failure(parsed.code, parsed.detail, { finalUrl: currentUrl }, now);
     }
 
-    const dnsFailure = await resolveAndAssertPublicHost(
-      parsed.url.hostname,
-      lookupImpl,
-    );
-    if (dnsFailure) {
-      return { ...dnsFailure, checkedAt: now().toISOString(), finalUrl: currentUrl };
-    }
-
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      let response = await fetchImpl(currentUrl, {
+      let requested = await requestPinnedPublicUrl(parsed.url, {
         method: "HEAD",
-        redirect: "manual",
         signal: controller.signal,
         headers: {
           Accept: "text/html,application/pdf,application/xhtml+xml,*/*",
           "User-Agent": "LeadivaSourceValidator/1.0",
         },
-      });
+      }, { ...deps, lookupImpl });
+      if (!requested.ok) {
+        return { ...requested.failure, checkedAt: now().toISOString(), finalUrl: currentUrl };
+      }
+      let response = requested.response;
 
       if (response.status === 405 || response.status === 501) {
-        response = await fetchImpl(currentUrl, {
+        requested = await requestPinnedPublicUrl(parsed.url, {
           method: "GET",
-          redirect: "manual",
           signal: controller.signal,
           headers: {
             Accept: "text/html,application/pdf,application/xhtml+xml,*/*",
             "User-Agent": "LeadivaSourceValidator/1.0",
             Range: "bytes=0-0",
           },
-        });
+        }, { ...deps, lookupImpl });
+        if (!requested.ok) {
+          return { ...requested.failure, checkedAt: now().toISOString(), finalUrl: currentUrl };
+        }
+        response = requested.response;
       }
 
       if (response.status >= 300 && response.status < 400) {
@@ -228,7 +319,7 @@ export async function validateSourceUrl(
       }
 
       const contentType = response.headers.get("content-type");
-      if (!allowedContentType(contentType)) {
+      if (!allowedSourceContentType(contentType)) {
         return failure(
           "UNSUPPORTED_CONTENT_TYPE",
           "La URL no contiene HTML ni PDF verificable",
@@ -347,7 +438,6 @@ export async function retrieveSourceContent(
     return validation;
   }
 
-  const fetchImpl = deps.fetchImpl ?? fetch;
   const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxResponseBytes = deps.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
@@ -357,23 +447,21 @@ export async function retrieveSourceContent(
     return failure(parsed.code, parsed.detail, { finalUrl: validation.finalUrl }, now);
   }
 
-  const dnsFailure = await resolveAndAssertPublicHost(parsed.url.hostname, lookupImpl);
-  if (dnsFailure) {
-    return { ...dnsFailure, checkedAt: now().toISOString(), finalUrl: validation.finalUrl };
-  }
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetchImpl(validation.finalUrl, {
+    const requested = await requestPinnedPublicUrl(parsed.url, {
       method: "GET",
-      redirect: "manual",
       signal: controller.signal,
       headers: {
         Accept: "text/html,application/pdf,application/xhtml+xml",
         "User-Agent": "LeadivaSourceVerifier/1.0",
       },
-    });
+    }, { ...deps, lookupImpl });
+    if (!requested.ok) {
+      return { ...requested.failure, checkedAt: now().toISOString(), finalUrl: validation.finalUrl };
+    }
+    const response = requested.response;
 
     if (response.status >= 300 && response.status < 400) {
       return failure(
@@ -393,7 +481,7 @@ export async function retrieveSourceContent(
     }
 
     const contentType = response.headers.get("content-type") ?? validation.contentType;
-    if (!allowedContentType(contentType)) {
+    if (!allowedSourceContentType(contentType)) {
       return failure(
         "UNSUPPORTED_CONTENT_TYPE",
         "La URL no contiene HTML ni PDF verificable",

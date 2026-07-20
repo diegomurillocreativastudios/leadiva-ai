@@ -565,6 +565,7 @@ export async function discoverPrivateWeb(params: {
     robotsCacheTtlMs: params.budget.robotsCacheTtlMs,
     signal: params.signal,
     now: params.deps?.now,
+    requestGate: (url, task) => hostLimiter.run(url, task),
   };
   const fetched: PrivateWebDiscoveryResult["documents"] = [];
   const diagnosticTraces: NonNullable<
@@ -595,9 +596,7 @@ export async function discoverPrivateWeb(params: {
         metrics.robotsChecks += 1;
         let result: DocumentFetchResult;
         try {
-          result = await hostLimiter.run(selection.url, () =>
-            fetchDocument(selection.url, fetchDeps),
-          );
+          result = await fetchDocument(selection.url, fetchDeps);
         } catch {
           unexpectedFetchErrors += 1;
           result = {

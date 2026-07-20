@@ -2,8 +2,8 @@ import "server-only";
 
 import { assertSafePublicHttpUrl } from "@/server/security/safe-url";
 import {
-  defaultPublicHostLookup,
-  resolveAndAssertPublicHost,
+  requestPinnedPublicUrl,
+  type HostRequestGate,
   type SourceUrlValidationDeps,
 } from "./source-url-validation";
 
@@ -12,6 +12,7 @@ export type RobotsDecision = {
   reason: "ALLOWED" | "ROBOTS_DISALLOWED" | "ROBOTS_UNAVAILABLE";
   robotsUrl: string;
   fromCache: boolean;
+  failureCode?: "BLOCKED_IP" | "DNS_FAILED" | "TIMEOUT" | "NETWORK_ERROR";
 };
 
 type RobotsCacheEntry = {
@@ -22,14 +23,49 @@ type RobotsCacheEntry = {
 
 export type RobotsPolicyDeps = Pick<
   SourceUrlValidationDeps,
-  "fetchImpl" | "lookupImpl" | "timeoutMs" | "now"
+  "fetchImpl" | "requestImpl" | "lookupImpl" | "timeoutMs" | "now"
 > & {
   userAgent: string;
   cacheTtlMs: number;
   cache?: Map<string, RobotsCacheEntry>;
+  signal?: AbortSignal;
+  maxBytes?: number;
+  requestGate?: HostRequestGate;
 };
 
 const sharedRobotsCache = new Map<string, RobotsCacheEntry>();
+const DEFAULT_MAX_ROBOTS_BYTES = 500_000;
+
+async function readRobotsBody(
+  body: ReadableStream<Uint8Array> | null,
+  maxBytes: number,
+): Promise<string | null> {
+  if (!body) return "";
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -109,6 +145,14 @@ export async function checkRobotsAllowed(
   rawUrl: string,
   deps: RobotsPolicyDeps,
 ): Promise<RobotsDecision> {
+  if (deps.signal?.aborted) {
+    return {
+      allowed: false,
+      reason: "ROBOTS_UNAVAILABLE",
+      robotsUrl: rawUrl,
+      fromCache: false,
+    };
+  }
   const structural = assertSafePublicHttpUrl(rawUrl);
   const fallbackRobotsUrl = (() => {
     try {
@@ -133,49 +177,70 @@ export async function checkRobotsAllowed(
   let fromCache = Boolean(cached && cached.expiresAt > nowMs);
 
   if (!cached || cached.expiresAt <= nowMs) {
-    const lookupImpl = deps.lookupImpl ?? defaultPublicHostLookup;
-    const dnsFailure = await resolveAndAssertPublicHost(
-      structural.url.hostname,
-      lookupImpl,
-    );
-    if (dnsFailure) {
-      return {
-        allowed: false,
-        reason: "ROBOTS_UNAVAILABLE",
-        robotsUrl,
-        fromCache: false,
-      };
-    }
-
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? 8_000);
+    const onAbort = () => controller.abort();
+    deps.signal?.addEventListener("abort", onAbort, { once: true });
+    if (deps.signal?.aborted) controller.abort();
     try {
-      const response = await (deps.fetchImpl ?? fetch)(robotsUrl, {
+      const request = () => requestPinnedPublicUrl(new URL(robotsUrl), {
         method: "GET",
-        redirect: "manual",
-        credentials: "omit",
         signal: controller.signal,
         headers: {
           Accept: "text/plain,*/*;q=0.1",
           "User-Agent": deps.userAgent,
         },
-      });
+      }, deps);
+      const requested = deps.requestGate
+        ? await deps.requestGate(robotsUrl, request)
+        : await request();
+      if (!requested.ok) {
+        return {
+          allowed: false,
+          reason: "ROBOTS_UNAVAILABLE",
+          robotsUrl,
+          fromCache: false,
+          failureCode:
+            requested.failure.code === "BLOCKED_IP" ||
+            requested.failure.code === "DNS_FAILED" ||
+            requested.failure.code === "TIMEOUT" ||
+            requested.failure.code === "NETWORK_ERROR"
+              ? requested.failure.code
+              : "NETWORK_ERROR",
+        };
+      }
+      const response = requested.response;
       if (response.status === 404 || response.status === 410) {
         cached = { expiresAt: nowMs + deps.cacheTtlMs, text: null, unavailable: false };
       } else if (!response.ok || (response.status >= 300 && response.status < 400)) {
         cached = { expiresAt: nowMs + Math.min(deps.cacheTtlMs, 300_000), text: null, unavailable: true };
       } else {
-        const text = (await response.text()).slice(0, 500_000);
-        cached = { expiresAt: nowMs + deps.cacheTtlMs, text, unavailable: false };
+        const text = await readRobotsBody(
+          response.body,
+          deps.maxBytes ?? DEFAULT_MAX_ROBOTS_BYTES,
+        );
+        cached = text === null
+          ? { expiresAt: nowMs + Math.min(deps.cacheTtlMs, 300_000), text: null, unavailable: true }
+          : { expiresAt: nowMs + deps.cacheTtlMs, text, unavailable: false };
       }
       cache.set(structural.url.origin, cached);
       fromCache = false;
     } catch {
+      if (deps.signal?.aborted) {
+        return {
+          allowed: false,
+          reason: "ROBOTS_UNAVAILABLE",
+          robotsUrl,
+          fromCache: false,
+          failureCode: "TIMEOUT",
+        };
+      }
       cached = { expiresAt: nowMs + Math.min(deps.cacheTtlMs, 300_000), text: null, unavailable: true };
       cache.set(structural.url.origin, cached);
       fromCache = false;
     } finally {
       clearTimeout(timer);
+      deps.signal?.removeEventListener("abort", onAbort);
     }
   }
 
@@ -194,4 +259,3 @@ export async function checkRobotsAllowed(
     fromCache,
   };
 }
-

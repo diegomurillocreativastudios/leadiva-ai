@@ -957,12 +957,15 @@ async function generateGroundedOnce(params: {
  * Without GCP_PROJECT_ID returns an empty configured=false batch (no invented leads).
  */
 export async function searchWithGrounding(params: {
-  sourceType: "PRIVATE_WEB" | "LINKEDIN";
+  sourceType: "LINKEDIN";
   query: string;
   interestCategories?: string[];
   maxCandidates?: number;
   searchPlan?: DiscoverySearchPlan;
 }): Promise<GroundingBatch> {
+  if ((params as { sourceType?: string }).sourceType !== "LINKEDIN") {
+    throw new Error("PRIVATE_WEB_REQUIRES_BRAVE");
+  }
   const env = getServerEnv();
   const maxCandidates = Math.min(
     params.maxCandidates ?? env.SEARCH_MAX_CANDIDATES,

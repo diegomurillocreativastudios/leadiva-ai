@@ -39,7 +39,7 @@ describe("HTML extraction", () => {
        <script>alert(1)</script><a href="/files/terms.pdf">Terms PDF</a></main></body></html>`,
       "https://buyer.example/notices/42",
     );
-    expect(result.title).toBe("RFP & Platform");
+    expect(result.title).toBe("Request for proposal");
     expect(result.canonicalUrl).toBe("https://buyer.example/rfp/42");
     expect(result.text).toContain("Deadline July 30");
     expect(result.text).not.toContain("alert");
@@ -107,7 +107,7 @@ describe("safe document fetching", () => {
     let lookups = 0;
     const lookupImpl = vi.fn(async () => {
       lookups += 1;
-      return [{ address: lookups < 3 ? "8.8.8.8" : "10.0.0.5", family: 4 }];
+      return [{ address: lookups < 2 ? "8.8.8.8" : "10.0.0.5", family: 4 }];
     });
     const fetchImpl = robotsThen(new Response("<html>RFP</html>", { headers: { "content-type": "text/html" } }));
     expect(
@@ -116,6 +116,47 @@ describe("safe document fetching", () => {
         deps(fetchImpl, { lookupImpl }),
       ),
     ).toMatchObject({ ok: false, code: "BLOCKED_IP" });
+  });
+
+  it("drops a canonical URL that resolves to a private address", async () => {
+    const result = await fetchWebDocument(
+      "https://buyer.example/notices/rfp",
+      deps(
+        robotsThen(
+          new Response(
+            '<html><head><link rel="canonical" href="https://internal.example/rfp"></head><main>Solicitud de propuestas</main></html>',
+            { headers: { "content-type": "text/html" } },
+          ),
+        ),
+        {
+          lookupImpl: async (host: string) => [
+            {
+              address: host === "internal.example" ? "10.0.0.5" : "8.8.8.8",
+              family: 4,
+            },
+          ],
+        },
+      ),
+    );
+    expect(result).toMatchObject({ ok: true, document: { canonicalUrl: null } });
+  });
+
+  it("ignores a cross-origin canonical without resolving or following it", async () => {
+    const lookupImpl = vi.fn(async () => [{ address: "8.8.8.8", family: 4 }]);
+    const result = await fetchWebDocument(
+      "https://buyer.example/notices/rfp",
+      deps(
+        robotsThen(
+          new Response(
+            '<html><head><link rel="canonical" href="https://other.example/rfp"></head><main><h1>RFP software</h1></main></html>',
+            { headers: { "content-type": "text/html" } },
+          ),
+        ),
+        { lookupImpl },
+      ),
+    );
+    expect(result).toMatchObject({ ok: true, document: { canonicalUrl: null } });
+    expect(lookupImpl).toHaveBeenCalledTimes(2);
   });
 
   it("respects robots disallow", async () => {
@@ -154,6 +195,69 @@ describe("safe document fetching", () => {
       deps(robotsThen(new Response("png", { headers: { "content-type": "image/png" } }))),
     );
     expect(image).toMatchObject({ ok: false, code: "UNSUPPORTED_CONTENT_TYPE" });
+
+    const missingMime = await fetchWebDocument(
+      "https://buyer.example/no-mime",
+      deps(
+        robotsThen(
+          new Response(new TextEncoder().encode("<html><body>RFP</body></html>")),
+        ),
+      ),
+    );
+    expect(missingMime).toMatchObject({ ok: false, code: "UNSUPPORTED_CONTENT_TYPE" });
+
+    const fakeHtml = await fetchWebDocument(
+      "https://buyer.example/fake-html",
+      deps(
+        robotsThen(
+          new Response("plain text only", { headers: { "content-type": "text/html" } }),
+        ),
+      ),
+    );
+    expect(fakeHtml).toMatchObject({ ok: false, code: "UNSUPPORTED_CONTENT_TYPE" });
+  });
+
+  it("fails closed when robots.txt exceeds its streaming limit", async () => {
+    const fetchImpl = vi.fn(async () =>
+      new Response("User-agent: *\n".repeat(20), { status: 200 }),
+    ) as typeof fetch;
+    expect(
+      await fetchWebDocument(
+        "https://buyer.example/rfp",
+        deps(fetchImpl, { maxRobotsBytes: 16 }),
+      ),
+    ).toMatchObject({ ok: false, code: "ROBOTS_UNAVAILABLE" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes only the validated DNS address to each socket request", async () => {
+    const lookupImpl = vi
+      .fn()
+      .mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }])
+      .mockResolvedValueOnce([{ address: "1.1.1.1", family: 4 }]);
+    const requestImpl = vi.fn(async (
+      ...args: [URL, unknown, { address: string; family: 4 | 6 }]
+    ) =>
+      {
+        const url = args[0];
+        return (
+      url.pathname === "/robots.txt"
+        ? new Response("User-agent: *\nDisallow:")
+        : new Response("<html><body><h1>RFP</h1></body></html>", {
+            headers: { "content-type": "text/html" },
+          })
+        );
+      },
+    );
+    const result = await fetchWebDocument(
+      "https://buyer.example/rfp",
+      deps(vi.fn() as unknown as typeof fetch, { requestImpl, lookupImpl }),
+    );
+    expect(result.ok).toBe(true);
+    expect(requestImpl.mock.calls.map((call) => call[2])).toEqual([
+      { address: "8.8.8.8", family: 4 },
+      { address: "1.1.1.1", family: 4 },
+    ]);
   });
 
   it("reports timeout", async () => {
@@ -173,6 +277,19 @@ describe("safe document fetching", () => {
         deps(fetchImpl, { timeoutMs: 5 }),
       ),
     ).toMatchObject({ ok: false, code: "TIMEOUT" });
+  });
+
+  it("does not start robots or document requests after global cancellation", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    expect(
+      await fetchWebDocument(
+        "https://buyer.example/rfp",
+        deps(fetchImpl, { signal: controller.signal }),
+      ),
+    ).toMatchObject({ ok: false, code: "TIMEOUT" });
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("parses a bounded PDF and reports PDFs without text", async () => {

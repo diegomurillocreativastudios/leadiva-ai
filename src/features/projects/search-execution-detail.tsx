@@ -51,6 +51,7 @@ function CandidateBadge({
 }) {
   const destructive =
     candidate.outcome === "ERROR" || candidate.outcome === "REJECTED";
+  const partial = candidate.verificationStatus === "PARTIALLY_VERIFIED";
   const verified = ["VERIFIED", "CREATED", "UPDATED", "UNCHANGED"].includes(
     candidate.outcome,
   );
@@ -59,18 +60,21 @@ function CandidateBadge({
       variant={destructive ? "destructive" : verified ? "secondary" : "outline"}
       className={cn(
         verified && "bg-accent-mint text-accent-dark",
-        candidate.outcome === "UNVERIFIED" && "border-warning/30 text-warning",
+        (candidate.outcome === "UNVERIFIED" || partial) &&
+          "border-warning/30 bg-warning/5 text-warning",
       )}
     >
-      {formatCandidateOutcome(candidate)}
+      {partial ? "Verificación parcial" : formatCandidateOutcome(candidate)}
     </Badge>
   );
 }
 
 function CandidateCard({
   candidate,
+  privateEngine,
 }: {
   candidate: SearchExecutionCandidateView;
+  privateEngine: boolean;
 }) {
   const visibleReason =
     candidate.reason ?? formatCandidateReason(candidate.reasonCode);
@@ -96,6 +100,13 @@ function CandidateCard({
         </p>
       ) : null}
 
+      {candidate.verificationStatus === "PARTIALLY_VERIFIED" ? (
+        <div className="mt-3 rounded-md border border-warning/25 bg-warning/5 px-3 py-2 text-sm text-text-primary">
+          <span className="font-semibold">Fecha límite no confirmada.</span>{" "}
+          Requiere revisión manual y no puede convertirse automáticamente en lead.
+        </div>
+      ) : null}
+
       <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
         <div className="inline-flex gap-1">
           <dt>Etapa:</dt>
@@ -116,6 +127,27 @@ function CandidateCard({
             <dt>Fecha límite:</dt>
             <dd className="font-medium text-text-primary">
               {new Date(candidate.deadlineAt).toLocaleDateString("es-SV")}
+            </dd>
+          </div>
+        ) : candidate.verificationStatus === "PARTIALLY_VERIFIED" ? (
+          <div className="inline-flex gap-1 text-warning">
+            <dt>Fecha límite:</dt>
+            <dd className="font-medium">No confirmada</dd>
+          </div>
+        ) : null}
+        {candidate.publishedAt ? (
+          <div className="inline-flex gap-1">
+            <dt>Publicación:</dt>
+            <dd className="font-medium text-text-primary">
+              {new Date(candidate.publishedAt).toLocaleDateString("es-SV")}
+            </dd>
+          </div>
+        ) : null}
+        {candidate.estimatedAmount ? (
+          <div className="inline-flex gap-1">
+            <dt>Monto:</dt>
+            <dd className="font-medium text-text-primary">
+              {candidate.currency ?? "USD"} {candidate.estimatedAmount}
             </dd>
           </div>
         ) : null}
@@ -165,7 +197,25 @@ function CandidateCard({
             </ExternalLink>
           </SkeuButton>
         ) : null}
-        <details className="group text-xs text-text-secondary">
+        {privateEngine && (candidate.evidence?.length ?? 0) > 0 ? (
+          <details className="group text-xs text-text-secondary">
+            <summary className="cursor-pointer list-none rounded-md px-2 py-1.5 font-medium hover:bg-surface-pressed hover:text-text-primary">
+              Ver evidencia
+            </summary>
+            <ul className="mt-2 max-w-xl space-y-2 rounded-md border border-surface-border bg-surface-base p-3">
+              {(candidate.evidence ?? []).slice(0, 5).map((item, index) => (
+                <li key={`${item.field}-${index}`}>
+                  <span className="font-medium text-text-primary">
+                    {item.field.replaceAll("_", " ")}:
+                  </span>{" "}
+                  <span>{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+        {!privateEngine ? (
+          <details className="group text-xs text-text-secondary">
           <summary className="cursor-pointer list-none rounded-md px-2 py-1.5 font-medium hover:bg-surface-pressed hover:text-text-primary">
             Ver diagnóstico
           </summary>
@@ -182,7 +232,8 @@ function CandidateCard({
               <p>Consultas: {candidate.discoveredByQueries.join(" · ")}</p>
             ) : null}
           </div>
-        </details>
+          </details>
+        ) : null}
       </div>
     </article>
   );
@@ -332,7 +383,11 @@ export function ExecutionDetailView({
         {filteredCandidates.length > 0 ? (
           <div className="grid gap-3 xl:grid-cols-2">
             {filteredCandidates.map((candidate) => (
-              <CandidateCard key={candidate.temporaryId} candidate={candidate} />
+              <CandidateCard
+                key={candidate.temporaryId}
+                candidate={candidate}
+                privateEngine={detail.execution.sourceType === "PRIVATE_WEB"}
+              />
             ))}
           </div>
         ) : (

@@ -49,6 +49,7 @@ export const onboardingSchema = z
 export const convertToLeadSchema = z
   .object({
     searchResultId: z.string().uuid(),
+    executionId: z.string().uuid(),
   })
   .strict();
 

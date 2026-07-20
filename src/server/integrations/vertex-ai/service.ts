@@ -266,6 +266,7 @@ async function findExistingPrivateCandidate(mapped: PersistedGroundedSearchResul
     .from(searchResults)
     .where(
       and(
+        eq(searchResults.sourceType, mapped.sourceType),
         eq(searchResults.normalizedUrl, mapped.normalizedUrl),
         searchResultNotDeleted(),
       ),
@@ -320,7 +321,12 @@ async function upsertPrivateCandidate(params: {
       await db
         .update(searchResults)
         .set({ searchExecutionId: executionId })
-        .where(eq(searchResults.id, existing.id));
+        .where(
+          and(
+            eq(searchResults.id, existing.id),
+            eq(searchResults.sourceType, mapped.sourceType),
+          ),
+        );
       return "unchanged";
     }
 
@@ -361,7 +367,12 @@ async function upsertPrivateCandidate(params: {
         fieldEvidence: mapped.fieldEvidence ?? null,
         verificationStatus: mapped.verificationStatus,
       })
-      .where(eq(searchResults.id, existing.id));
+      .where(
+        and(
+          eq(searchResults.id, existing.id),
+          eq(searchResults.sourceType, mapped.sourceType),
+        ),
+      );
 
     return "updated";
   }
@@ -453,11 +464,14 @@ function providerOutcome(params: {
 }
 
 export async function runGroundedSearch(params: {
-  sourceType: "PRIVATE_WEB" | "LINKEDIN";
+  sourceType: "LINKEDIN";
   query?: string;
   userId?: string;
   interestCategories?: string[];
 }): Promise<PrivateSearchResult> {
+  if ((params as { sourceType?: string }).sourceType !== "LINKEDIN") {
+    throw new Error("PRIVATE_WEB_REQUIRES_BRAVE");
+  }
   const env = getServerEnv();
   const discoveryMode = resolvePrivateDiscoveryMode(
     params.sourceType,

@@ -169,3 +169,37 @@ describe("COMPRASAL home result detail UI", () => {
     );
   });
 });
+
+describe("PRIVATE_WEB home result detail UI", () => {
+  it("shows partial status, evidence and no invented amount", () => {
+    const detail: HomeSearchResultDetailView = {
+      title: "RFP para desarrollo de software",
+      description: "Implementación de una plataforma de beneficiarios.",
+      websiteUrl: "https://fundacion.org.sv/convocatorias/rfp-software",
+      websiteLabel: "fundacion.org.sv/convocatorias/rfp-software",
+      organizationName: "Fundación Ejemplo",
+      publishedAtLabel: "20/07/2026",
+      deadlineLabel: "Sin fecha límite",
+      amountLabel: "Monto no disponible",
+      verificationStatus: "PARTIALLY_VERIFIED",
+      verificationReason: "Fecha límite no confirmada. Requiere revisión manual.",
+      evidence: [
+        {
+          field: "EXTERNAL_INTENT",
+          text: "invita a presentar propuestas de proveedores externos",
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      createElement(HomeSearchResultDetail, { detail }),
+    );
+    expect(html).toContain("Verificación parcial");
+    expect(html).toContain("Fecha límite no confirmada");
+    expect(html).toContain("Requiere revisión manual");
+    expect(html).toContain("Fundación Ejemplo");
+    expect(html).toContain("Evidencia de la fuente");
+    expect(html).toContain("invita a presentar propuestas");
+    expect(html).not.toContain("Monto no disponible");
+    expect(html).not.toContain("rawData");
+  });
+});
