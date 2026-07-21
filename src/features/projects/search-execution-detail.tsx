@@ -255,6 +255,7 @@ export function ExecutionDetailView({
   const summary = detail.summary;
   const topDiscards = topDiscardReasons(detail.discardCounts, 3);
   const filteredWithoutVerification =
+    detail.execution.resultDisposition === "ALL_FILTERED" ||
     detail.execution.outcome === "COMPLETED_ALL_FILTERED" ||
     (summary.candidatesFiltered > 0 &&
       summary.candidatesVerified === 0 &&
@@ -291,9 +292,11 @@ export function ExecutionDetailView({
               : ""}
           </p>
         </div>
-        {detail.execution.outcome ? (
+        {detail.execution.resultDisposition || detail.execution.outcome ? (
           <Badge variant="outline">
-            {formatPrivateSearchOutcome(detail.execution.outcome)}
+            {formatPrivateSearchOutcome(
+              detail.execution.resultDisposition ?? detail.execution.outcome,
+            )}
           </Badge>
         ) : null}
       </div>

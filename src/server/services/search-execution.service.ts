@@ -79,6 +79,7 @@ function executionView(row: {
     id: row.id,
     status: row.status,
     outcome: metricString(row.metrics, "outcome"),
+    resultDisposition: metricString(row.metrics, "resultDisposition"),
     query: queryLabel,
     createdAt: row.createdAt.toISOString(),
     startedAt: toIso(row.startedAt),

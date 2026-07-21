@@ -83,7 +83,10 @@ describe("PRIVATE_WEB home results UI", () => {
 
   it.each([
     ["FAILED", "No fue posible completar la búsqueda."],
-    ["PARTIALLY_COMPLETED", "La búsqueda terminó parcialmente."],
+    [
+      "PARTIALLY_COMPLETED",
+      "La búsqueda terminó parcialmente, pero no se verificaron oportunidades.",
+    ],
     ["COMPLETED", "No encontramos oportunidades verificadas para esta búsqueda."],
   ] as const)("renders the %s empty state", (status, message) => {
     const detail = {

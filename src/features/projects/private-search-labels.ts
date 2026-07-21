@@ -1,4 +1,11 @@
 const PRIVATE_SEARCH_OUTCOME_LABELS: Record<string, string> = {
+  COMPLETED: "Completado",
+  PARTIALLY_COMPLETED: "Completado parcialmente",
+  FAILED: "Fallido",
+  RESULTS_FOUND: "Resultados encontrados",
+  ALL_FILTERED: "Todos los candidatos filtrados",
+  NO_DISCOVERY_RESULTS: "Sin resultados de descubrimiento",
+  NO_VERIFIED_RESULTS: "Sin resultados verificados",
   COMPLETED_WITH_RESULTS: "Completado con resultados",
   COMPLETED_NO_GROUNDING_SOURCES: "Sin fuentes de Grounding",
   COMPLETED_EMPTY_DISCOVERY_RESPONSE: "Respuesta de descubrimiento vacía",
@@ -29,6 +36,8 @@ const DISCARD_REASON_LABELS: Record<string, string> = {
   INVALID: "Inválido",
   NOISE: "Ruido / empleo / curso",
   PUBLIC_SECTOR: "Sector público",
+  INTERGOVERNMENTAL: "Organismo intergubernamental",
+  FOREIGN_PUBLIC_SECTOR: "Sector público extranjero",
   IRRELEVANT: "Irrelevante",
   EXPIRED: "Vencido",
   DUPLICATE_IN_BATCH: "Duplicado en lote",
@@ -95,7 +104,11 @@ export function describePrivateSearchCatalogEmpty(params: {
     ? ` Motivo principal: ${params.topDiscardLabel}.`
     : "";
 
-  if (outcome === "COMPLETED_ALL_FILTERED" || params.candidatesFiltered > 0) {
+  if (
+    outcome === "COMPLETED_ALL_FILTERED" ||
+    outcome === "ALL_FILTERED" ||
+    params.candidatesFiltered > 0
+  ) {
     return {
       title: "Todavía no hay oportunidades verificadas",
       description: `${params.funnelLine}.${discardHint} Revisa la actividad de la búsqueda o inicia otra.`,

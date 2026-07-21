@@ -1,6 +1,35 @@
-export const PRIVATE_WEB_PLANNER_VERSION = "private-web-brave-v1";
+export const PRIVATE_WEB_PLANNER_VERSION = "private-web-brave-v2";
+export const PRIVATE_WEB_MAX_QUERY_FAMILIES = 6;
 export const BRAVE_QUERY_MAX_CHARS = 400;
 export const BRAVE_QUERY_MAX_WORDS = 50;
+
+export const PRIVATE_WEB_TECH_OBJECT_FACETS = [
+  "software",
+  "sistema informático",
+  "sistema web",
+  "plataforma",
+  "aplicación",
+  "API",
+  "solución tecnológica",
+] as const;
+
+export const PRIVATE_WEB_ACTION_FACETS = [
+  "desarrollar",
+  "implementar",
+  "adquirir",
+  "mantener",
+  "integrar",
+  "licenciar",
+] as const;
+
+export const PRIVATE_WEB_BUYER_INTENT_FACETS = [
+  "condor",
+  "solicitud de propuestas",
+  "solicitud de cotización",
+  "invita a presentar ofertas",
+  "términos de referencia para contratar",
+  "recepción de propuestas",
+] as const;
 
 export type PrivateWebQueryFamily = {
   id: string;
@@ -28,7 +57,11 @@ const STOP_WORDS = new Set([
 ]);
 
 function normalizeWhitespace(value: string): string {
-  return value.normalize("NFKC").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function comparable(value: string): string {
@@ -45,60 +78,78 @@ function significantTerms(query: string): string[] {
     .slice(0, 12);
 }
 
-function subjectExpansion(query: string): {
-  primary: string;
-  proposal: string;
-  systems: string;
-  technology: string;
-  university: boolean;
+function technologyExpansion(query: string): {
+  proposalObject: string;
+  serviceAction: string;
+  quotationObject: string;
+  termsAction: string;
+  offerObject: string;
 } {
-  const terms = significantTerms(query);
-  const blob = terms.join(" ");
-  if (/inteligencia artificial|\bia\b|machine learning|datos/.test(blob)) {
+  const blob = significantTerms(query).join(" ");
+  if (/\bapi\b|integracion/.test(blob)) {
     return {
-      primary: "inteligencia artificial",
-      proposal: "inteligencia artificial",
-      systems: "sistemas",
-      technology: "tecnología",
-      university: /universidad|educacion|academ/.test(blob),
+      proposalObject: "API",
+      serviceAction: "integración de API",
+      quotationObject: "solución tecnológica",
+      termsAction: "implementación de API",
+      offerObject: "API",
     };
   }
-  if (/infraestructura|redes|servidor|nube|cloud|ciberseguridad/.test(blob)) {
+  if (/licencia|licenciamiento/.test(blob)) {
     return {
-      primary: "infraestructura TI",
-      proposal: "infraestructura TI",
-      systems: "sistemas",
-      technology: "tecnología",
-      university: /universidad|educacion|academ/.test(blob),
+      proposalObject: "software",
+      serviceAction: "licenciamiento de software",
+      quotationObject: "licencias de software",
+      termsAction: "adquisición de software",
+      offerObject: "software",
     };
   }
-  if (/consultor|consultoria|asesoria/.test(blob)) {
+  if (/aplicacion|app movil/.test(blob)) {
     return {
-      primary: "consultoría",
-      proposal: terms.includes("software") ? "software" : "consultoría",
-      systems: terms.includes("software") ? "software" : "sistemas",
-      technology: "servicios profesionales",
-      university: /universidad|educacion|academ/.test(blob),
+      proposalObject: "aplicación",
+      serviceAction: "desarrollo de aplicación",
+      quotationObject: "aplicación",
+      termsAction: "implementación de aplicación",
+      offerObject: "aplicación",
     };
   }
-  const primary = terms.slice(0, 6).join(" ") || "servicios digitales";
+  if (/plataforma/.test(blob)) {
+    return {
+      proposalObject: "plataforma",
+      serviceAction: "desarrollo de plataforma",
+      quotationObject: "plataforma web",
+      termsAction: "implementación de plataforma",
+      offerObject: "plataforma",
+    };
+  }
+  if (/web/.test(blob)) {
+    return {
+      proposalObject: "sistema web",
+      serviceAction: "desarrollo de software",
+      quotationObject: "sistema web",
+      termsAction: "implementación de sistema",
+      offerObject: "software",
+    };
+  }
   return {
-    primary,
-    proposal: /software|desarrollo|aplicacion|web|plataforma/.test(blob)
-      ? "software"
-      : "sistemas",
-    systems: "sistemas",
-    technology: /licencia/.test(blob) ? "licencias tecnología" : "tecnología",
-    university: /universidad|educacion|academ/.test(blob),
+    proposalObject: "sistema informático",
+    serviceAction: "desarrollo de software",
+    quotationObject: "sistema web",
+    termsAction: "implementación de sistema",
+    offerObject: "software",
   };
 }
 
 function withinBraveLimits(query: string): string {
-  const words = normalizeWhitespace(query).split(" ").slice(0, BRAVE_QUERY_MAX_WORDS);
+  const words = normalizeWhitespace(query)
+    .split(" ")
+    .slice(0, BRAVE_QUERY_MAX_WORDS);
   return words.join(" ").slice(0, BRAVE_QUERY_MAX_CHARS).trim();
 }
 
-function dedupeFamilies(families: PrivateWebQueryFamily[]): PrivateWebQueryFamily[] {
+function dedupeFamilies(
+  families: PrivateWebQueryFamily[],
+): PrivateWebQueryFamily[] {
   const seen = new Set<string>();
   return families.filter((family) => {
     const key = comparable(family.query);
@@ -115,78 +166,61 @@ export function planPrivateWebQueries(userQuery: string): {
   adaptive: PrivateWebQueryFamily[];
 } {
   const normalizedUserQuery = normalizeWhitespace(userQuery).slice(0, 180);
-  const subject = subjectExpansion(normalizedUserQuery);
-  const initialCandidates: PrivateWebQueryFamily[] = [
+  const technology = technologyExpansion(normalizedUserQuery);
+  const candidates: PrivateWebQueryFamily[] = [
     {
       id: "base_provider_sv",
       stage: 1,
-      query: `${normalizedUserQuery} proveedor El Salvador`,
+      query: `${normalizedUserQuery} contratar proveedor El Salvador`,
       freshness: null,
     },
     {
-      id: "proposal_sv",
+      id: "proposal_system_sv",
       stage: 1,
-      query: `"solicitud de propuestas" ${subject.proposal} El Salvador`,
+      query: `"solicitud de propuestas" ${technology.proposalObject} software El Salvador`,
       freshness: "py",
     },
     {
-      id: "terms_sv",
+      id: "services_development_sv",
       stage: 1,
-      query: `"términos de referencia" ${subject.systems} El Salvador`,
-      freshness: null,
+      query: `"contratación de servicios" ${technology.serviceAction} El Salvador`,
+      freshness: "py",
     },
     {
-      id: "quotation_sv",
+      id: "quotation_web_sv",
       stage: 1,
-      query: `"solicitud de cotización" ${subject.technology} El Salvador`,
+      query: `"solicitud de cotización" ${technology.quotationObject} software El Salvador`,
       freshness: "pm",
     },
-  ];
-  const initial = dedupeFamilies(
-    initialCandidates.map((family) => ({
-      ...family,
-      query: withinBraveLimits(family.query),
-    })),
-  );
-
-  const adaptiveCandidates: PrivateWebQueryFamily[] = [
     {
-      id: "org_sv_convocation",
+      id: "terms_implementation_sv",
       stage: 2,
-      query: `site:org.sv ${subject.proposal} convocatoria`,
+      query: `"términos de referencia" ${technology.termsAction} software El Salvador`,
       freshness: null,
     },
-    subject.university
-      ? {
-          id: "edu_sv_private",
-          stage: 2,
-          query: `site:edu.sv ${subject.primary} convocatoria proveedor`,
-          freshness: null,
-        }
-      : {
-          id: "com_sv_provider",
-          stage: 2,
-          query: `site:com.sv ${subject.technology} proveedor`,
-          freshness: "pm",
-        },
+    {
+      id: "offers_software_sv",
+      stage: 2,
+      query: `"invita a presentar ofertas" ${technology.offerObject} El Salvador`,
+      freshness: "py",
+    },
   ];
+  const families = dedupeFamilies(
+    candidates
+      .slice(0, PRIVATE_WEB_MAX_QUERY_FAMILIES)
+      .map((family) => ({ ...family, query: withinBraveLimits(family.query) })),
+  );
 
   return {
     plannerVersion: PRIVATE_WEB_PLANNER_VERSION,
     normalizedUserQuery,
-    initial,
-    adaptive: dedupeFamilies(
-      adaptiveCandidates.map((family) => ({
-        ...family,
-        query: withinBraveLimits(family.query),
-      })),
-    ),
+    initial: families.filter((family) => family.stage === 1),
+    adaptive: families.filter((family) => family.stage === 2),
   };
 }
 
 export function shouldRunAdaptivePrivateWebStage(input: {
-  eligibleUniqueUrls: number;
-  providerResults: number;
+  qualifiedYield: number;
 }): boolean {
-  return input.eligibleUniqueUrls < 8 || input.providerResults < 12;
+  return input.qualifiedYield < 6;
 }

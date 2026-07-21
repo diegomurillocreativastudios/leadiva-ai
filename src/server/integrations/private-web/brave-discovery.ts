@@ -4,9 +4,11 @@ import {
   type WebSearchProvider,
   type WebSearchResult,
 } from "@/server/integrations/web-search/contracts";
-import { classifySearchResult } from "@/server/integrations/web-search/discovery-selection";
-
 import { evaluateBraveResult } from "./domain-policy";
+import {
+  evaluatePrivateWebPreliminaryResult,
+  type PrivateWebAgeBucket,
+} from "./preliminary-scoring";
 import {
   planPrivateWebQueries,
   shouldRunAdaptivePrivateWebStage,
@@ -16,6 +18,14 @@ import {
 export type DiscoveredPrivateWebResult = WebSearchResult & {
   normalizedUrl: string;
   retrievalScore: number;
+  qualified: boolean;
+  preliminaryPositiveSignals: string[];
+  preliminaryNegativeSignals: string[];
+  ageBucket: PrivateWebAgeBucket;
+  freshnessFactor: number;
+  inferredDate: string | null;
+  inferredDateSource: string | null;
+  deadlineExpiredVisible: boolean;
   discoveredByQueries: string[];
   discoveredByFamilies: string[];
 };
@@ -23,6 +33,7 @@ export type DiscoveredPrivateWebResult = WebSearchResult & {
 export type PrivateWebBraveDiscoveryMetrics = {
   plannerVersion: string;
   familiesPlanned: string[];
+  familyQueries: Record<string, string>;
   familiesExecuted: string[];
   baseRequests: number;
   paginationRequests: number;
@@ -30,6 +41,9 @@ export type PrivateWebBraveDiscoveryMetrics = {
   totalRequests: number;
   queryAltered: string[];
   yieldByFamily: Record<string, number>;
+  qualifiedYieldByFamily: Record<string, number>;
+  qualifiedYieldScoreByFamily: Record<string, number>;
+  qualifiedYield: number;
   providerResults: number;
   urlsBeforeDedupe: number;
   urlsAfterDedupe: number;
@@ -51,13 +65,19 @@ function increment(record: Record<string, number>, key: string, by = 1) {
   record[key] = (record[key] ?? 0) + by;
 }
 
-function combineResults(results: WebSearchResult[], maxUniqueUrls: number) {
+function combineResults(
+  results: WebSearchResult[],
+  maxUniqueUrls: number,
+  query: string,
+  now: Date,
+) {
   const byUrl = new Map<string, DiscoveredPrivateWebResult>();
   let duplicates = 0;
   for (const result of results) {
     const policy = evaluateBraveResult(result);
     if (!policy.allowed) continue;
     const normalizedUrl = normalizeUrl(result.url);
+    const preliminary = evaluatePrivateWebPreliminaryResult({ result, query, now });
     const existing = byUrl.get(normalizedUrl);
     if (existing) {
       duplicates += 1;
@@ -73,13 +93,32 @@ function combineResults(results: WebSearchResult[], maxUniqueUrls: number) {
           ...(result.extraSnippets ?? []),
         ]),
       ].slice(0, 5);
+      if (preliminary.score > existing.retrievalScore) {
+        existing.retrievalScore = preliminary.score;
+        existing.qualified = preliminary.qualified;
+        existing.preliminaryPositiveSignals = preliminary.positiveSignals;
+        existing.preliminaryNegativeSignals = preliminary.negativeSignals;
+        existing.ageBucket = preliminary.ageBucket;
+        existing.freshnessFactor = preliminary.freshnessFactor;
+        existing.inferredDate = preliminary.inferredDate;
+        existing.inferredDateSource = preliminary.inferredDateSource;
+        existing.deadlineExpiredVisible = preliminary.deadlineExpiredVisible;
+      }
       continue;
     }
     if (byUrl.size >= maxUniqueUrls) break;
     byUrl.set(normalizedUrl, {
       ...result,
       normalizedUrl,
-      retrievalScore: Math.max(0, classifySearchResult(result).score),
+      retrievalScore: preliminary.score,
+      qualified: preliminary.qualified,
+      preliminaryPositiveSignals: preliminary.positiveSignals,
+      preliminaryNegativeSignals: preliminary.negativeSignals,
+      ageBucket: preliminary.ageBucket,
+      freshnessFactor: preliminary.freshnessFactor,
+      inferredDate: preliminary.inferredDate,
+      inferredDateSource: preliminary.inferredDateSource,
+      deadlineExpiredVisible: preliminary.deadlineExpiredVisible,
       discoveredByQueries: [result.query],
       discoveredByFamilies: [result.queryFamily],
     });
@@ -96,15 +135,19 @@ export async function discoverPrivateWebWithBrave(input: {
   maxUniqueUrls: number;
   timeoutMs: number;
   requestTimeoutMs: number;
+  now?: Date;
 }): Promise<PrivateWebBraveDiscoveryResult> {
   const startedAt = Date.now();
   const controller = new AbortController();
   const totalTimer = setTimeout(() => controller.abort(), input.timeoutMs);
   const plan = planPrivateWebQueries(input.query);
+  const now = input.now ?? new Date();
   const rawResults: WebSearchResult[] = [];
   const executed: PrivateWebQueryFamily[] = [];
   const moreByFamily = new Map<string, boolean>();
   const yieldByFamily: Record<string, number> = {};
+  const qualifiedYieldByFamily: Record<string, number> = {};
+  const qualifiedYieldScoreByFamily: Record<string, number> = {};
   const rejectedByReason: Record<string, number> = {};
   const altered: string[] = [];
   const limitsReached: string[] = [];
@@ -149,6 +192,21 @@ export async function discoverPrivateWebWithBrave(input: {
         return policy.allowed;
       });
       increment(yieldByFamily, family.id, allowed.length);
+      const qualified = allowed
+        .map((result) =>
+          evaluatePrivateWebPreliminaryResult({
+            result,
+            query: input.query,
+            now,
+          }),
+        )
+        .filter((classification) => classification.qualified);
+      increment(qualifiedYieldByFamily, family.id, qualified.length);
+      increment(
+        qualifiedYieldScoreByFamily,
+        family.id,
+        qualified.reduce((sum, classification) => sum + classification.score, 0),
+      );
       rawResults.push(...response.results);
       if (rawResults.length >= input.maxProviderResults) {
         rawResults.length = input.maxProviderResults;
@@ -189,13 +247,17 @@ export async function discoverPrivateWebWithBrave(input: {
       await execute(family, 1);
     }
 
-    let combined = combineResults(rawResults, input.maxUniqueUrls);
+    let combined = combineResults(
+      rawResults,
+      input.maxUniqueUrls,
+      input.query,
+      now,
+    );
     if (
       !fatalError &&
       terminationCause !== "RAW_RESULT_LIMIT" &&
       shouldRunAdaptivePrivateWebStage({
-        eligibleUniqueUrls: combined.results.length,
-        providerResults: rawResults.length,
+        qualifiedYield: combined.results.filter((result) => result.qualified).length,
       })
     ) {
       for (const family of plan.adaptive) {
@@ -206,10 +268,17 @@ export async function discoverPrivateWebWithBrave(input: {
     }
 
     const bestFamilies = [...executed]
-      .filter((family) => moreByFamily.get(family.id) === true)
+      .filter(
+        (family) =>
+          moreByFamily.get(family.id) === true &&
+          (qualifiedYieldByFamily[family.id] ?? 0) > 0,
+      )
       .sort(
         (left, right) =>
-          (yieldByFamily[right.id] ?? 0) - (yieldByFamily[left.id] ?? 0),
+          (qualifiedYieldByFamily[right.id] ?? 0) -
+            (qualifiedYieldByFamily[left.id] ?? 0) ||
+          (qualifiedYieldScoreByFamily[right.id] ?? 0) -
+            (qualifiedYieldScoreByFamily[left.id] ?? 0),
       )
       .slice(0, 2);
     for (const family of bestFamilies) {
@@ -217,7 +286,12 @@ export async function discoverPrivateWebWithBrave(input: {
       await execute(family, 2);
     }
 
-    combined = combineResults(rawResults, input.maxUniqueUrls);
+    combined = combineResults(
+      rawResults,
+      input.maxUniqueUrls,
+      input.query,
+      now,
+    );
     if (successfulResponses === 0 && requestCount > 0) {
       fatalError = fatalError ?? "PROVIDER_REQUEST_FAILED";
       terminationCause = fatalError;
@@ -242,6 +316,12 @@ export async function discoverPrivateWebWithBrave(input: {
       metrics: {
         plannerVersion: plan.plannerVersion,
         familiesPlanned: [...plan.initial, ...plan.adaptive].map((family) => family.id),
+        familyQueries: Object.fromEntries(
+          [...plan.initial, ...plan.adaptive].map((family) => [
+            family.id,
+            family.query,
+          ]),
+        ),
         familiesExecuted: executed.map((family) => family.id),
         baseRequests,
         paginationRequests,
@@ -249,6 +329,9 @@ export async function discoverPrivateWebWithBrave(input: {
         totalRequests: requestCount,
         queryAltered: [...new Set(altered)],
         yieldByFamily,
+        qualifiedYieldByFamily,
+        qualifiedYieldScoreByFamily,
+        qualifiedYield: combined.results.filter((result) => result.qualified).length,
         providerResults: rawResults.length,
         urlsBeforeDedupe: rawResults.length,
         urlsAfterDedupe: combined.results.length,

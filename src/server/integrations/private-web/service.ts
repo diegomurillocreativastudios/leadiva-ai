@@ -25,7 +25,11 @@ import type {
 import { extractPrivateOpportunityDeterministically } from "./deterministic-extractor";
 import { evaluatePrivateWebSource, evaluatePrivateWebUrl } from "./domain-policy";
 import {
+  classifyGeminiFailure,
   extractPrivateOpportunitiesWithGemini,
+  type GeminiFailureCode,
+  type GeminiFailureMetric,
+  type GeminiInvalidCandidateIssue,
   type GeminiPrivateWebExtractionResult,
 } from "./gemini-extractor";
 import {
@@ -34,6 +38,8 @@ import {
   type PrivateWebRepository,
 } from "./persistence";
 import { verifyPrivateWebCandidate } from "./verification";
+import { inferPrivateWebDocumentType } from "./preliminary-scoring";
+import { PRIVATE_WEB_PLANNER_VERSION } from "./query-planner";
 
 export type PrivateWebServiceConfig = {
   enabled: boolean;
@@ -84,9 +90,26 @@ export type PrivateWebSearchResult = {
   candidatesVerified: number;
   candidatesPartiallyVerified: number;
   candidatesPersisted: number;
+  resultDisposition: ResultDisposition | null;
   errorCode?: "PRIVATE_WEB_DISABLED" | "BRAVE_NOT_CONFIGURED" | "BRAVE_FAILED" | "PIPELINE_FAILED";
   message?: string;
 };
+
+/**
+ * Business disposition, kept separate from the technical execution status.
+ *
+ * RESULTS_FOUND: at least one result was persisted.
+ * ALL_FILTERED: at least one candidate was extracted, but all were rejected.
+ * NO_DISCOVERY_RESULTS: Brave produced no eligible sources.
+ * NO_VERIFIED_RESULTS: documents were processed without producing a verifiable candidate.
+ */
+export type ResultDisposition =
+  | "RESULTS_FOUND"
+  | "ALL_FILTERED"
+  | "NO_DISCOVERY_RESULTS"
+  | "NO_VERIFIED_RESULTS";
+
+export type SelectionMode = "QUALIFIED" | "FALLBACK_LOW_CONFIDENCE";
 
 export class PrivateWebSearchAdmissionError extends Error {
   constructor(
@@ -118,6 +141,11 @@ type CandidateTrace = {
   temporaryId: string;
   searchResultId?: string;
   title: string | null;
+  titleSource?: string | null;
+  braveTitle?: string | null;
+  failureStage?: string;
+  failureName?: string;
+  failureCode?: string;
   organizationName: string | null;
   summary: string | null;
   officialSourceUrl: string | null;
@@ -131,12 +159,29 @@ type CandidateTrace = {
   stage: "FETCH" | "EXTRACTION" | "VERIFICATION" | "PERSISTENCE";
   outcome: "FILTERED" | "REJECTED" | "UNVERIFIED" | "CREATED" | "UPDATED" | "UNCHANGED" | "ERROR";
   reasonCode: string | null;
+  primaryRejectReason?: string | null;
+  secondaryRejectReasons?: string[];
   reason: string | null;
   retrievalScore?: number;
   preliminaryScore?: number;
   verificationStatus?: string;
   discoveredByQueries: string[];
   discoveredByFamilies: string[];
+};
+
+export type SelectedDocumentTrace = {
+  title: string | null;
+  domain: string;
+  family: string;
+  ranking: number;
+  ageBucket: string;
+  freshnessFactor: number;
+  documentType: "HTML" | "PDF" | "UNKNOWN";
+  fetchOutcome: string;
+  extractionOutcome: string;
+  candidateCount: number;
+  primaryRejectReason: string | null;
+  secondaryRejectReasons: string[];
 };
 
 function defaultConfig(): PrivateWebServiceConfig {
@@ -229,6 +274,14 @@ function increment(record: Record<string, number>, key: string, by = 1) {
   record[key] = (record[key] ?? 0) + by;
 }
 
+function boundedTraceText(
+  value: string | null | undefined,
+  maxLength: number,
+): string | null {
+  const normalized = value?.replace(/\s+/g, " ").trim() ?? "";
+  return normalized ? normalized.slice(0, maxLength) : null;
+}
+
 function traceForVerified(
   candidate: VerifiedPrivateWebCandidate,
   provenance: DiscoveredPrivateWebResult,
@@ -237,8 +290,10 @@ function traceForVerified(
   return {
     temporaryId,
     title: candidate.title,
+    titleSource: candidate.titleSource,
+    braveTitle: boundedTraceText(provenance.title, 500),
     organizationName: candidate.organizationName,
-    summary: candidate.description,
+    summary: boundedTraceText(candidate.description, 500),
     officialSourceUrl: candidate.sourceUrl,
     sourceDomain: candidate.sourceDomain,
     publishedAt: candidate.publishedAt,
@@ -256,6 +311,8 @@ function traceForVerified(
       candidate.verificationStatus === "PARTIALLY_VERIFIED"
         ? "PARTIALLY_VERIFIED"
         : null,
+    primaryRejectReason: null,
+    secondaryRejectReasons: [],
     reason: candidate.verificationReason,
     retrievalScore: provenance.retrievalScore,
     preliminaryScore: candidate.preliminaryScore,
@@ -276,16 +333,77 @@ function shouldTryGemini(rejection: PrivateWebCandidateRejection | null): boolea
   ].includes(rejection.reasonCode);
 }
 
-function pipelineOutcome(input: {
+export function determinePrivateWebResultDisposition(input: {
   status: PrivateWebSearchResult["status"];
+  discoveryResults: number;
+  documentsProcessed: number;
+  extractedCandidates: number;
   persisted: number;
-  rejected: number;
-}): string {
-  if (input.status === "FAILED") return "FAILED";
-  if (input.persisted === 0 && input.rejected > 0) return "COMPLETED_ALL_FILTERED";
-  return input.status === "PARTIALLY_COMPLETED"
+}): ResultDisposition | null {
+  if (input.status === "FAILED") return null;
+  if (input.persisted > 0) return "RESULTS_FOUND";
+  if (input.discoveryResults === 0) return "NO_DISCOVERY_RESULTS";
+  if (input.extractedCandidates > 0) return "ALL_FILTERED";
+  return "NO_VERIFIED_RESULTS";
+}
+
+function addDocumentRejectReasons(
+  trace: SelectedDocumentTrace,
+  primary: string,
+  secondary: readonly string[] = [],
+) {
+  if (!trace.primaryRejectReason) trace.primaryRejectReason = primary;
+  const additions = trace.primaryRejectReason === primary ? secondary : [primary, ...secondary];
+  trace.secondaryRejectReasons = [
+    ...new Set(
+      [...trace.secondaryRejectReasons, ...additions].filter(
+        (reason) => reason !== trace.primaryRejectReason,
+      ),
+    ),
+  ].slice(0, 12);
+}
+
+export function determinePrivateWebStatus(input: {
+  technicalFailureCount: number;
+  fetchAttempted: number;
+  fetchSucceeded: number;
+  extractionAttempted: number;
+  extractionSucceeded: number;
+  persistenceAttempted: number;
+  persistenceFailures: number;
+  persisted: number;
+  timedOut: boolean;
+}): PrivateWebSearchResult["status"] {
+  if (input.technicalFailureCount === 0) return "COMPLETED";
+  if (input.timedOut && input.extractionSucceeded === 0 && input.persisted === 0) {
+    return "FAILED";
+  }
+  if (
+    input.persistenceAttempted > 0 &&
+    input.persistenceFailures > 0 &&
+    input.persisted === 0
+  ) {
+    return "FAILED";
+  }
+  if (
+    input.extractionAttempted > 0 &&
+    input.extractionSucceeded === 0 &&
+    input.persisted === 0
+  ) {
+    return "FAILED";
+  }
+  if (
+    input.fetchAttempted > 0 &&
+    input.fetchSucceeded === 0 &&
+    input.persisted === 0
+  ) {
+    return "FAILED";
+  }
+  return input.fetchSucceeded > 0 ||
+    input.extractionSucceeded > 0 ||
+    input.persisted > 0
     ? "PARTIALLY_COMPLETED"
-    : "COMPLETED";
+    : "FAILED";
 }
 
 export async function runPrivateWebSearchWithDependencies(
@@ -324,6 +442,7 @@ export async function runPrivateWebSearchWithDependencies(
   }
   const execution = { id: admission.executionId };
   const traces: CandidateTrace[] = [];
+  const selectedDocumentTraces: SelectedDocumentTrace[] = [];
   const discardCounts: Record<string, number> = {};
   const limitsReached: string[] = [];
   let finished = false;
@@ -370,6 +489,7 @@ export async function runPrivateWebSearchWithDependencies(
     searchMode: "PRIVATE_WEB_BRAVE",
     discoveryMode: "BRAVE_ONLY",
     searchProvider: "BRAVE",
+    plannerVersion: PRIVATE_WEB_PLANNER_VERSION,
     plannedWork: {
       braveRequests: Math.min(config.maxBraveRequests, PRIVATE_WEB_HARD_LIMITS.braveRequests),
       documentFetches: Math.min(config.maxDocumentFetches, PRIVATE_WEB_HARD_LIMITS.documentFetches),
@@ -383,6 +503,7 @@ export async function runPrivateWebSearchWithDependencies(
     const metrics = {
       ...baseMetrics,
       outcome: "FAILED",
+      resultDisposition: null,
       terminationCause: "FEATURE_DISABLED",
       durationMs: Date.now() - pipelineStartedAt,
       executionCandidates: [],
@@ -400,6 +521,7 @@ export async function runPrivateWebSearchWithDependencies(
       candidatesVerified: 0,
       candidatesPartiallyVerified: 0,
       candidatesPersisted: 0,
+      resultDisposition: null,
       errorCode: "PRIVATE_WEB_DISABLED",
       message: "El motor de búsqueda privada no está habilitado.",
     };
@@ -409,6 +531,7 @@ export async function runPrivateWebSearchWithDependencies(
     const metrics = {
       ...baseMetrics,
       outcome: "FAILED",
+      resultDisposition: null,
       terminationCause: "BRAVE_NOT_CONFIGURED",
       durationMs: Date.now() - pipelineStartedAt,
       executionCandidates: [],
@@ -426,6 +549,7 @@ export async function runPrivateWebSearchWithDependencies(
       candidatesVerified: 0,
       candidatesPartiallyVerified: 0,
       candidatesPersisted: 0,
+      resultDisposition: null,
       errorCode: "BRAVE_NOT_CONFIGURED",
       message: "El buscador privado no está configurado.",
     };
@@ -450,6 +574,7 @@ export async function runPrivateWebSearchWithDependencies(
           Math.min(config.braveTimeoutMs, absoluteDeadlineMs - Date.now()),
         ),
         requestTimeoutMs: config.searchRequestTimeoutMs,
+        now: deps.now(),
       });
 
     if (discovery.fatalError && discovery.results.length === 0) {
@@ -457,6 +582,7 @@ export async function runPrivateWebSearchWithDependencies(
         ...baseMetrics,
         ...discovery.metrics,
         outcome: "FAILED",
+        resultDisposition: null,
         durationMs: Date.now() - pipelineStartedAt,
         executionCandidates: [],
       };
@@ -476,19 +602,47 @@ export async function runPrivateWebSearchWithDependencies(
         candidatesVerified: 0,
         candidatesPartiallyVerified: 0,
         candidatesPersisted: 0,
+        resultDisposition: null,
         errorCode: "BRAVE_FAILED",
         message: "No se pudo completar la búsqueda privada.",
       };
     }
 
+    const plannedDocuments = Math.min(
+      config.maxDocumentFetches,
+      PRIVATE_WEB_HARD_LIMITS.documentFetches,
+    );
     const selected = selectPrivateWebDocuments({
       results: discovery.results,
-      maxDocuments: Math.min(
-        config.maxDocumentFetches,
-        PRIVATE_WEB_HARD_LIMITS.documentFetches,
-      ),
+      maxDocuments: plannedDocuments,
       maxPerDomain: Math.min(config.maxPerDomain, PRIVATE_WEB_HARD_LIMITS.perDomain),
     });
+    const qualifiedDocuments = selected.filter((result) => result.qualified).length;
+    const fallbackDocuments = selected.length - qualifiedDocuments;
+    const selectionMode: SelectionMode | null =
+      selected.length === 0
+        ? null
+        : qualifiedDocuments > 0
+          ? "QUALIFIED"
+          : "FALLBACK_LOW_CONFIDENCE";
+    selectedDocumentTraces.push(
+      ...selected.map(
+        (result, index): SelectedDocumentTrace => ({
+          title: boundedTraceText(result.title, 180),
+          domain: result.domain.slice(0, 253),
+          family: (result.discoveredByFamilies[0] ?? result.queryFamily).slice(0, 80),
+          ranking: index + 1,
+          ageBucket: result.ageBucket,
+          freshnessFactor: result.freshnessFactor,
+          documentType: inferPrivateWebDocumentType(result),
+          fetchOutcome: "NOT_ATTEMPTED",
+          extractionOutcome: "NOT_ATTEMPTED",
+          candidateCount: 0,
+          primaryRejectReason: null,
+          secondaryRejectReasons: [],
+        }),
+      ),
+    );
     if (discovery.results.length > selected.length) {
       limitsReached.push("PRIVATE_WEB_MAX_DOCUMENT_FETCHES_OR_DOMAIN_LIMIT");
     }
@@ -497,15 +651,23 @@ export async function runPrivateWebSearchWithDependencies(
     let bytesFetched = 0;
     let htmlFetched = 0;
     let pdfFetched = 0;
+    let documentFetchAttempts = 0;
+    let successfulFetches = 0;
     let documentsFetchSucceeded = 0;
     const fetched = await mapWithConcurrency(
       selected,
       config.fetchConcurrency,
       async (provenance, index) => {
+        const documentTrace = selectedDocumentTraces[index];
         if (totalController.signal.aborted) {
           increment(discardCounts, "TOTAL_TIMEOUT");
+          if (documentTrace) {
+            documentTrace.fetchOutcome = "NOT_ATTEMPTED_TOTAL_TIMEOUT";
+            addDocumentRejectReasons(documentTrace, "TOTAL_TIMEOUT");
+          }
           return null;
         }
+        documentFetchAttempts += 1;
         const result = await deps.fetchDocument(provenance.url, {
             timeoutMs: Math.max(
               1,
@@ -520,15 +682,21 @@ export async function runPrivateWebSearchWithDependencies(
             signal: totalController.signal,
             now: deps.now,
             requestGate: (url, task) => hostLimiter.run(url, task),
-            urlPolicy: (url) => evaluatePrivateWebUrl(url).allowed,
+            urlPolicy: evaluatePrivateWebUrl,
           });
         if (!result.ok) {
           increment(discardCounts, result.code);
+          if (documentTrace) {
+            documentTrace.fetchOutcome = result.code;
+            addDocumentRejectReasons(documentTrace, result.code);
+          }
           traces.push({
             temporaryId: `fetch-${index + 1}`,
             title: provenance.title,
+            titleSource: "BRAVE_RESULT",
+            braveTitle: boundedTraceText(provenance.title, 500),
             organizationName: null,
-            summary: provenance.snippet,
+            summary: null,
             officialSourceUrl: provenance.url,
             sourceDomain: provenance.domain,
             deadlineAt: null,
@@ -536,12 +704,23 @@ export async function runPrivateWebSearchWithDependencies(
             stage: "FETCH",
             outcome: "ERROR",
             reasonCode: result.code,
+            primaryRejectReason: result.code,
+            secondaryRejectReasons: [],
             reason: result.detail,
+            failureStage: result.parserFailure?.stage,
+            failureName: result.parserFailure?.exceptionName,
+            failureCode: result.parserFailure?.exceptionCode,
             retrievalScore: provenance.retrievalScore,
             discoveredByQueries: provenance.discoveredByQueries,
             discoveredByFamilies: provenance.discoveredByFamilies,
           });
           return null;
+        }
+        successfulFetches += 1;
+        if (documentTrace) {
+          documentTrace.fetchOutcome = "FETCHED";
+          documentTrace.documentType =
+            result.document.contentType === "application/pdf" ? "PDF" : "HTML";
         }
         const finalPolicy = evaluatePrivateWebSource({
           url: result.document.finalUrl,
@@ -562,6 +741,10 @@ export async function runPrivateWebSearchWithDependencies(
               ? "NO_OPPORTUNITY_SIGNAL"
               : canonicalPolicy.reason;
           increment(discardCounts, reason);
+          if (documentTrace) {
+            documentTrace.extractionOutcome = "FILTERED_BEFORE_EXTRACTION";
+            addDocumentRejectReasons(documentTrace, reason);
+          }
           return null;
         }
         documentsFetchSucceeded += 1;
@@ -569,12 +752,18 @@ export async function runPrivateWebSearchWithDependencies(
         robotsCacheHits += result.robotsFromCache ? 1 : 0;
         if (result.document.contentType === "application/pdf") pdfFetched += 1;
         else htmlFetched += 1;
-        return { provenance, document: result.document };
+        return { provenance, document: result.document, selectedIndex: index };
       },
     );
 
     const fetchedDocuments = fetched.filter(
-      (item): item is { provenance: DiscoveredPrivateWebResult; document: FetchedDocument } =>
+      (
+        item,
+      ): item is {
+        provenance: DiscoveredPrivateWebResult;
+        document: FetchedDocument;
+        selectedIndex: number;
+      } =>
         Boolean(item),
     );
     const verified: Array<{
@@ -582,17 +771,28 @@ export async function runPrivateWebSearchWithDependencies(
       provenance: DiscoveredPrivateWebResult;
     }> = [];
     let geminiCalls = 0;
+    let geminiSuccesses = 0;
     let geminiInputTokens = 0;
     let geminiOutputTokens = 0;
     let geminiLimitSkipped = 0;
+    const geminiFailureCounts = new Map<GeminiFailureCode, number>();
+    const geminiInvalidCandidates: GeminiInvalidCandidateIssue[] = [];
     let deterministicCandidates = 0;
     let geminiCandidates = 0;
     let documentsExtracted = 0;
+    const candidateRejectReason: Record<string, number> = {};
+    const candidateSecondaryRejectReason: Record<string, number> = {};
     const countryDecisions: Array<{ decision: string; confidence: number }> = [];
 
     for (const [documentIndex, item] of fetchedDocuments.entries()) {
+      const documentTrace = selectedDocumentTraces[item.selectedIndex];
+      const documentRejectReasons: string[] = [];
       if (totalController.signal.aborted) {
         increment(discardCounts, "TOTAL_TIMEOUT");
+        if (documentTrace) {
+          documentTrace.extractionOutcome = "NOT_ATTEMPTED_TOTAL_TIMEOUT";
+          addDocumentRejectReasons(documentTrace, "TOTAL_TIMEOUT");
+        }
         break;
       }
       documentsExtracted += 1;
@@ -603,14 +803,24 @@ export async function runPrivateWebSearchWithDependencies(
       let deterministicRejection: PrivateWebCandidateRejection | null = null;
       if (deterministic) {
         deterministicCandidates += 1;
+        if (documentTrace) documentTrace.candidateCount += 1;
         const result = verifyPrivateWebCandidate({
           candidate: deterministic,
           document: item.document,
           query: input.query,
           now: deps.now(),
           minQueryCoverage: config.queryMinCoverage,
+          braveResult: {
+            title: item.provenance.title,
+            url: item.provenance.url,
+          },
         });
         if ("verificationStatus" in result) {
+          if (documentTrace) {
+            documentTrace.extractionOutcome = "VERIFIED";
+            documentTrace.primaryRejectReason = null;
+            documentTrace.secondaryRejectReasons = [];
+          }
           verified.push({ candidate: result, provenance: item.provenance });
           countryDecisions.push({
             decision: result.countryEvidence.decision,
@@ -619,6 +829,14 @@ export async function runPrivateWebSearchWithDependencies(
           continue;
         }
         deterministicRejection = result;
+        documentRejectReasons.push(
+          result.primaryRejectReason,
+          ...result.secondaryRejectReasons,
+        );
+        increment(candidateRejectReason, result.reasonCode);
+        for (const reason of result.secondaryRejectReasons) {
+          increment(candidateSecondaryRejectReason, reason);
+        }
         if (result.countryEvidence) {
           countryDecisions.push({
             decision: result.countryEvidence.decision,
@@ -638,12 +856,22 @@ export async function runPrivateWebSearchWithDependencies(
           geminiLimitSkipped += 1;
         }
         const reason = deterministicRejection?.reasonCode ?? "EXTRACTION_INCOMPLETE";
+        if (documentTrace) {
+          documentTrace.extractionOutcome = "NO_VERIFIED_CANDIDATE";
+          addDocumentRejectReasons(
+            documentTrace,
+            documentRejectReasons[0] ?? reason,
+            documentRejectReasons.slice(1),
+          );
+        }
         increment(discardCounts, reason);
         traces.push({
           temporaryId: `extract-${documentIndex + 1}`,
           title: deterministic?.title ?? item.document.title,
+          titleSource: deterministic?.titleSource ?? item.document.titleSource ?? null,
+          braveTitle: boundedTraceText(item.provenance.title, 500),
           organizationName: deterministic?.organizationName ?? null,
-          summary: deterministic?.description ?? null,
+          summary: boundedTraceText(deterministic?.description, 500),
           officialSourceUrl: item.document.canonicalUrl ?? item.document.finalUrl,
           sourceDomain: item.provenance.domain,
           deadlineAt: deterministic?.deadlineAt ?? null,
@@ -651,6 +879,10 @@ export async function runPrivateWebSearchWithDependencies(
           stage: "EXTRACTION",
           outcome: "REJECTED",
           reasonCode: reason,
+          primaryRejectReason:
+            deterministicRejection?.primaryRejectReason ?? reason,
+          secondaryRejectReasons:
+            deterministicRejection?.secondaryRejectReasons ?? [],
           reason:
             deterministicRejection?.reason ??
             "El extractor determinista no confirmó todos los campos y Gemini no estaba disponible.",
@@ -666,6 +898,10 @@ export async function runPrivateWebSearchWithDependencies(
       if (absoluteDeadlineMs - Date.now() < 2_000) {
         increment(discardCounts, "TOTAL_TIMEOUT");
         limitsReached.push("PRIVATE_WEB_TOTAL_TIMEOUT_MS");
+        if (documentTrace) {
+          documentTrace.extractionOutcome = "NOT_ATTEMPTED_TOTAL_TIMEOUT";
+          addDocumentRejectReasons(documentTrace, "TOTAL_TIMEOUT");
+        }
         break;
       }
 
@@ -681,19 +917,61 @@ export async function runPrivateWebSearchWithDependencies(
           }),
           totalController.signal,
         );
-      } catch {
+      } catch (error) {
+        const code = totalController.signal.aborted
+          ? "TIMEOUT"
+          : classifyGeminiFailure(error);
+        geminiFailureCounts.set(code, (geminiFailureCounts.get(code) ?? 0) + 1);
         increment(
           discardCounts,
-          totalController.signal.aborted
-            ? "TOTAL_TIMEOUT"
-            : "GEMINI_EXTRACTION_FAILED",
+          code === "TIMEOUT" ? "TOTAL_TIMEOUT" : "GEMINI_EXTRACTION_FAILED",
         );
+        console.error("private_web_gemini_extraction_failed", {
+          executionId: execution.id,
+          documentIndex,
+          code,
+        });
+        if (documentTrace) {
+          documentTrace.extractionOutcome = "GEMINI_FAILED";
+          addDocumentRejectReasons(documentTrace, code);
+        }
         continue;
       }
       geminiInputTokens += extraction.inputTokens;
       geminiOutputTokens += extraction.outputTokens;
       geminiCandidates += extraction.candidates.length;
-      if (extraction.failureKind) increment(discardCounts, extraction.failureKind);
+      const invalidCandidates = extraction.invalidCandidates ?? [];
+      geminiInvalidCandidates.push(...invalidCandidates);
+      if (invalidCandidates.length > 0) {
+        increment(
+          discardCounts,
+          "GEMINI_INVALID_CANDIDATE",
+          invalidCandidates.length,
+        );
+      }
+      if (documentTrace) {
+        documentTrace.candidateCount +=
+          extraction.candidates.length + invalidCandidates.length;
+      }
+      if (extraction.failureKind) {
+        increment(discardCounts, extraction.failureKind);
+        geminiFailureCounts.set(
+          "INVALID_RESPONSE",
+          (geminiFailureCounts.get("INVALID_RESPONSE") ?? 0) + 1,
+        );
+        console.warn("private_web_gemini_invalid_response", {
+          executionId: execution.id,
+          documentIndex,
+          code: "INVALID_RESPONSE",
+        });
+        if (documentTrace) {
+          documentTrace.extractionOutcome = "INVALID_RESPONSE";
+          addDocumentRejectReasons(documentTrace, "INVALID_RESPONSE");
+        }
+      } else {
+        geminiSuccesses += 1;
+      }
+      let verifiedThisDocument = false;
       for (const geminiCandidate of extraction.candidates) {
         const result = verifyPrivateWebCandidate({
           candidate: geminiCandidate,
@@ -701,21 +979,77 @@ export async function runPrivateWebSearchWithDependencies(
           query: input.query,
           now: deps.now(),
           minQueryCoverage: config.queryMinCoverage,
+          braveResult: {
+            title: item.provenance.title,
+            url: item.provenance.url,
+          },
         });
         if ("verificationStatus" in result) {
+          verifiedThisDocument = true;
           verified.push({ candidate: result, provenance: item.provenance });
           countryDecisions.push({
             decision: result.countryEvidence.decision,
             confidence: result.countryEvidence.confidence,
           });
         } else {
+          documentRejectReasons.push(
+            result.primaryRejectReason,
+            ...result.secondaryRejectReasons,
+          );
           increment(discardCounts, result.reasonCode);
+          increment(candidateRejectReason, result.reasonCode);
+          for (const reason of result.secondaryRejectReasons) {
+            increment(candidateSecondaryRejectReason, reason);
+          }
+          traces.push({
+            temporaryId: `gemini-${documentIndex + 1}-${geminiCandidate.title.slice(0, 40)}`,
+            title: geminiCandidate.title,
+            titleSource: geminiCandidate.titleSource,
+            braveTitle: boundedTraceText(item.provenance.title, 500),
+            organizationName: geminiCandidate.organizationName,
+            summary: boundedTraceText(geminiCandidate.description, 500),
+            officialSourceUrl: item.document.canonicalUrl ?? item.document.finalUrl,
+            sourceDomain: item.provenance.domain,
+            deadlineAt: geminiCandidate.deadlineAt,
+            category: geminiCandidate.category,
+            stage: "VERIFICATION",
+            outcome: "REJECTED",
+            reasonCode: result.reasonCode,
+            primaryRejectReason: result.primaryRejectReason,
+            secondaryRejectReasons: result.secondaryRejectReasons,
+            reason: result.reason,
+            retrievalScore: item.provenance.retrievalScore,
+            discoveredByQueries: item.provenance.discoveredByQueries,
+            discoveredByFamilies: item.provenance.discoveredByFamilies,
+          });
           if (result.countryEvidence) {
             countryDecisions.push({
               decision: result.countryEvidence.decision,
               confidence: result.countryEvidence.confidence,
             });
           }
+        }
+      }
+      if (documentTrace && !extraction.failureKind) {
+        if (verifiedThisDocument) {
+          documentTrace.extractionOutcome = "VERIFIED";
+          documentTrace.primaryRejectReason = null;
+          documentTrace.secondaryRejectReasons = [];
+        } else {
+          documentTrace.extractionOutcome =
+            extraction.candidates.length > 0 || invalidCandidates.length > 0
+              ? "NO_VERIFIED_CANDIDATE"
+              : "NO_CANDIDATE";
+          const primary =
+            documentRejectReasons[0] ??
+            (invalidCandidates.length > 0
+              ? "GEMINI_INVALID_CANDIDATE"
+              : "NO_CANDIDATE");
+          addDocumentRejectReasons(
+            documentTrace,
+            primary,
+            documentRejectReasons.slice(1),
+          );
         }
       }
     }
@@ -756,12 +1090,14 @@ export async function runPrivateWebSearchWithDependencies(
     let updated = 0;
     let unchanged = 0;
     let partialCandidates = 0;
+    let persistenceAttempts = 0;
     for (const [index, item] of candidates.entries()) {
       if (totalController.signal.aborted) {
         increment(discardCounts, "TOTAL_TIMEOUT");
         break;
       }
       let persistence: PrivateWebPersistenceOutcome;
+      persistenceAttempts += 1;
       try {
         persistence = await deps.repository.persistCandidate({
           userId: input.userId,
@@ -813,22 +1149,130 @@ export async function runPrivateWebSearchWithDependencies(
         ...(totalController.signal.aborted ? ["PRIVATE_WEB_TOTAL_TIMEOUT_MS"] : []),
       ]),
     ];
+    const geminiFailures: GeminiFailureMetric[] = [...geminiFailureCounts]
+      .map(([code, count]) => ({ code, count }))
+      .sort((left, right) => left.code.localeCompare(right.code));
+    const extractionFailures = geminiFailures.reduce(
+      (sum, failure) => sum + failure.count,
+      0,
+    );
+    const technicalFailures: Record<string, number> = {};
+    if (discovery.partial) technicalFailures.BRAVE_PARTIAL = 1;
+    if (discardCounts.TOTAL_TIMEOUT) {
+      technicalFailures.TOTAL_TIMEOUT = discardCounts.TOTAL_TIMEOUT;
+    }
+    if (geminiFailures.length > 0) {
+      technicalFailures.GEMINI_EXTRACTION_FAILED = geminiFailures.reduce(
+        (sum, failure) => sum + failure.count,
+        0,
+      );
+    }
+    if (discardCounts.PERSIST_ERROR) {
+      technicalFailures.PERSIST_ERROR = discardCounts.PERSIST_ERROR;
+    }
+    if (discardCounts.NETWORK_ERROR) {
+      technicalFailures.DOCUMENT_NETWORK_ERROR = discardCounts.NETWORK_ERROR;
+    }
+    if (discardCounts.TIMEOUT) {
+      technicalFailures.DOCUMENT_TIMEOUT = discardCounts.TIMEOUT;
+    }
+    if (discardCounts.ROBOTS_UNAVAILABLE) {
+      technicalFailures.ROBOTS_UNAVAILABLE = discardCounts.ROBOTS_UNAVAILABLE;
+    }
+    if (discardCounts.PDF_PARSE_FAILED) {
+      technicalFailures.PDF_PARSE_FAILED = discardCounts.PDF_PARSE_FAILED;
+    }
+    if (discardCounts.PDF_PASSWORD_PROTECTED) {
+      technicalFailures.PDF_PASSWORD_PROTECTED =
+        discardCounts.PDF_PASSWORD_PROTECTED;
+    }
+    if (discardCounts.PDF_TRUNCATED) {
+      technicalFailures.PDF_TRUNCATED = discardCounts.PDF_TRUNCATED;
+    }
+    if (discardCounts.PDF_UNSUPPORTED) {
+      technicalFailures.PDF_UNSUPPORTED = discardCounts.PDF_UNSUPPORTED;
+    }
+    if (discardCounts.PDF_TOO_LARGE) {
+      technicalFailures.PDF_TOO_LARGE = discardCounts.PDF_TOO_LARGE;
+    }
+    if (discardCounts.PDF_INVALID_SIGNATURE) {
+      technicalFailures.PDF_INVALID_SIGNATURE =
+        discardCounts.PDF_INVALID_SIGNATURE;
+    }
+    if (discardCounts.DOCUMENT_TOO_LARGE) {
+      technicalFailures.DOCUMENT_TOO_LARGE = discardCounts.DOCUMENT_TOO_LARGE;
+    }
+    if (discardCounts.UNSUPPORTED_CONTENT_ENCODING) {
+      technicalFailures.UNSUPPORTED_CONTENT_ENCODING =
+        discardCounts.UNSUPPORTED_CONTENT_ENCODING;
+    }
+    if (discardCounts.HTTP_ERROR) {
+      technicalFailures.DOCUMENT_HTTP_ERROR = discardCounts.HTTP_ERROR;
+    }
+    if (discardCounts.DNS_FAILED) {
+      technicalFailures.DOCUMENT_DNS_FAILED = discardCounts.DNS_FAILED;
+    }
+    if (discardCounts.TOO_MANY_REDIRECTS) {
+      technicalFailures.DOCUMENT_REDIRECT_FAILED =
+        discardCounts.TOO_MANY_REDIRECTS;
+    }
+    const fetchesNotAttempted = Math.max(0, selected.length - documentFetchAttempts);
+    if (fetchesNotAttempted > 0) {
+      technicalFailures.DOCUMENT_FETCH_NOT_ATTEMPTED = fetchesNotAttempted;
+    }
     const technicalPartialReasons = [
       ...(discovery.partial ? ["BRAVE_PARTIAL"] : []),
       ...(discardCounts.TOTAL_TIMEOUT ? ["TOTAL_TIMEOUT"] : []),
-      ...(discardCounts.GEMINI_EXTRACTION_FAILED ? ["GEMINI_EXTRACTION_FAILED"] : []),
+      ...(geminiFailures.length > 0 ? ["GEMINI_EXTRACTION_FAILED"] : []),
       ...(discardCounts.PERSIST_ERROR ? ["PERSIST_ERROR"] : []),
       ...(discardCounts.NETWORK_ERROR ? ["DOCUMENT_NETWORK_ERROR"] : []),
       ...(discardCounts.TIMEOUT ? ["DOCUMENT_TIMEOUT"] : []),
       ...(discardCounts.ROBOTS_UNAVAILABLE ? ["ROBOTS_UNAVAILABLE"] : []),
+      ...(discardCounts.PDF_PARSE_FAILED ? ["PDF_PARSE_FAILED"] : []),
+      ...(discardCounts.PDF_PASSWORD_PROTECTED
+        ? ["PDF_PASSWORD_PROTECTED"]
+        : []),
+      ...(discardCounts.PDF_TRUNCATED ? ["PDF_TRUNCATED"] : []),
+      ...(discardCounts.PDF_UNSUPPORTED ? ["PDF_UNSUPPORTED"] : []),
+      ...(discardCounts.PDF_TOO_LARGE ? ["PDF_TOO_LARGE"] : []),
+      ...(discardCounts.PDF_INVALID_SIGNATURE ? ["PDF_INVALID_SIGNATURE"] : []),
+      ...(discardCounts.DOCUMENT_TOO_LARGE ? ["DOCUMENT_TOO_LARGE"] : []),
+      ...(discardCounts.UNSUPPORTED_CONTENT_ENCODING
+        ? ["UNSUPPORTED_CONTENT_ENCODING"]
+        : []),
+      ...(discardCounts.HTTP_ERROR ? ["DOCUMENT_HTTP_ERROR"] : []),
+      ...(discardCounts.DNS_FAILED ? ["DOCUMENT_DNS_FAILED"] : []),
+      ...(discardCounts.TOO_MANY_REDIRECTS
+        ? ["DOCUMENT_REDIRECT_FAILED"]
+        : []),
+      ...(fetchesNotAttempted > 0 ? ["DOCUMENT_FETCH_NOT_ATTEMPTED"] : []),
     ];
-    const partialReasons = [...new Set([...limitKinds, ...technicalPartialReasons])];
-    const materiallyIncomplete = partialReasons.length > 0;
-    const status: PrivateWebSearchResult["status"] = materiallyIncomplete
-      ? persisted > 0
-        ? "PARTIALLY_COMPLETED"
-        : "FAILED"
-      : "COMPLETED";
+    // Budget and selection caps remain observable in `limitKinds`; only
+    // technical failures make an execution partial.
+    const partialReasons = [...new Set(technicalPartialReasons)];
+    const status = determinePrivateWebStatus({
+      technicalFailureCount: Object.values(technicalFailures).reduce(
+        (sum, count) => sum + count,
+        0,
+      ),
+      fetchAttempted: documentFetchAttempts,
+      fetchSucceeded: successfulFetches,
+      extractionAttempted: geminiCalls,
+      extractionSucceeded: geminiSuccesses,
+      persistenceAttempted: persistenceAttempts,
+      persistenceFailures: discardCounts.PERSIST_ERROR ?? 0,
+      persisted,
+      timedOut: Boolean(
+        totalController.signal.aborted || discardCounts.TOTAL_TIMEOUT,
+      ),
+    });
+    const resultDisposition = determinePrivateWebResultDisposition({
+      status,
+      discoveryResults: discovery.results.length,
+      documentsProcessed: documentsExtracted,
+      extractedCandidates: deterministicCandidates + geminiCandidates,
+      persisted,
+    });
     const braveEstimatedCost =
       discovery.metrics.totalRequests * config.braveCostPerRequest;
     const geminiEstimatedCost =
@@ -836,7 +1280,8 @@ export async function runPrivateWebSearchWithDependencies(
     const metrics = {
       ...baseMetrics,
       ...discovery.metrics,
-      outcome: pipelineOutcome({ status, persisted, rejected }),
+      outcome: status,
+      resultDisposition,
       searchProviderResults: discovery.metrics.providerResults,
       searchProviderUniqueUrls: discovery.metrics.urlsAfterDedupe,
       searchProviderUniqueDomains: new Set(discovery.results.map((item) => item.domain)).size,
@@ -844,6 +1289,18 @@ export async function runPrivateWebSearchWithDependencies(
       canonicalDedupe:
         discovery.metrics.canonicalDedupe +
         Math.max(0, verified.length - bestByUrl.size),
+      plannedDocuments,
+      selectedDocuments: selected.length,
+      selectionMode,
+      qualifiedDocuments,
+      fallbackDocuments,
+      attemptedDocuments: documentFetchAttempts,
+      successfulFetches,
+      fetchAttempted: documentFetchAttempts,
+      fetchSucceeded: successfulFetches,
+      fetchFailed: Math.max(0, documentFetchAttempts - successfulFetches),
+      pdfParseFailed: discardCounts.PDF_PARSE_FAILED ?? 0,
+      pdfNoText: discardCounts.PDF_NO_EXTRACTABLE_TEXT ?? 0,
       documentsSelected: selected.length,
       documentsFetchSucceeded,
       documentsExtracted,
@@ -861,7 +1318,22 @@ export async function runPrivateWebSearchWithDependencies(
         geminiCandidates,
       },
       geminiCalls,
+      extractionAttempts: geminiCalls,
+      extractionSuccesses: geminiSuccesses,
+      extractionFailures,
+      extractionAttempted: geminiCalls,
+      extractionSucceeded: geminiSuccesses,
+      geminiFailures,
+      geminiInvalidCandidates,
+      technicalFailures,
       candidatesFound: candidates.length,
+      candidateExtracted: deterministicCandidates + geminiCandidates,
+      candidateRejected: Object.values(candidateRejectReason).reduce(
+        (sum, count) => sum + count,
+        0,
+      ),
+      candidateRejectReason,
+      candidateSecondaryRejectReason,
       candidatesVerified: candidates.filter(
         (item) => item.candidate.verificationStatus === "VERIFIED",
       ).length,
@@ -884,8 +1356,8 @@ export async function runPrivateWebSearchWithDependencies(
       partialReasons,
       completedWork: {
         braveRequests: discovery.metrics.totalRequests,
-        documentFetches: selected.length,
-        documentsFetched: documentsFetchSucceeded,
+        documentFetches: documentFetchAttempts,
+        documentsFetched: successfulFetches,
         geminiExtractions: geminiCalls,
         resultsPersisted: persisted,
       },
@@ -893,6 +1365,7 @@ export async function runPrivateWebSearchWithDependencies(
         brave: braveEstimatedCost.toFixed(6),
         gemini: geminiEstimatedCost.toFixed(6),
       },
+      selectedDocumentTraces,
       executionCandidates: traces.slice(0, 100),
     };
     await closeExecution({
@@ -914,15 +1387,18 @@ export async function runPrivateWebSearchWithDependencies(
       candidatesVerified: candidates.length - partialCandidates,
       candidatesPartiallyVerified: partialCandidates,
       candidatesPersisted: persisted,
+      resultDisposition,
     };
   } catch {
     const metrics = {
       ...baseMetrics,
       outcome: "FAILED",
+      resultDisposition: null,
       terminationCause: "PIPELINE_FAILED",
       discardCounts,
       durationMs: Date.now() - pipelineStartedAt,
       limitsReached,
+      selectedDocumentTraces,
       executionCandidates: traces.slice(0, 100),
     };
     await closeExecution({
@@ -941,6 +1417,7 @@ export async function runPrivateWebSearchWithDependencies(
       candidatesVerified: 0,
       candidatesPartiallyVerified: 0,
       candidatesPersisted: 0,
+      resultDisposition: null,
       errorCode: "PIPELINE_FAILED",
       message: "No se pudo completar la búsqueda privada.",
     };

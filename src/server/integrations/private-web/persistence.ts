@@ -15,6 +15,7 @@ import {
 import { transactionDb } from "@/server/db/transaction";
 
 import type { VerifiedPrivateWebCandidate } from "./contracts";
+import { PRIVATE_WEB_PLANNER_VERSION } from "./query-planner";
 
 const PRIVATE_WEB_PROFILE_KEY = "PRIVATE_WEB_BRAVE_V1";
 const PRIVATE_WEB_PROFILE_NAME = "Sector privado — Brave Search";
@@ -131,6 +132,7 @@ function canonicalValues(candidate: VerifiedPrivateWebCandidate) {
       opportunityKind: candidate.opportunityKind,
       countryEvidence: candidate.countryEvidence,
       extractionMethod: candidate.extractionMethod,
+      titleSource: candidate.titleSource,
       applicationInstructions: candidate.applicationInstructions,
       canonicalUrl: candidate.normalizedUrl,
       stableDocumentId: stableId,
@@ -259,7 +261,7 @@ export const databasePrivateWebRepository: PrivateWebRepository = {
             searchMode: "PRIVATE_WEB_BRAVE",
             discoveryMode: "BRAVE_ONLY",
             searchProvider: "BRAVE",
-            plannerVersion: "private-web-brave-v1",
+            plannerVersion: PRIVATE_WEB_PLANNER_VERSION,
           },
         })
         .returning({ id: searchExecutions.id });

@@ -56,8 +56,19 @@ export type PrivateOpportunityKind =
   | "LICENSES"
   | "OTHER";
 
+export const PRIVATE_WEB_TITLE_SOURCES = [
+  "DOCUMENT_HEADING",
+  "HTML_TITLE",
+  "BRAVE_RESULT",
+  "DOCUMENT_TEXT",
+] as const;
+
+export type PrivateWebTitleSource =
+  (typeof PRIVATE_WEB_TITLE_SOURCES)[number];
+
 export type PrivateWebCandidate = {
   title: string;
+  titleSource: PrivateWebTitleSource;
   description: string | null;
   organizationName: string;
   organizationType: PrivateOrganizationType;
@@ -91,7 +102,8 @@ export type VerifiedPrivateWebCandidate = PrivateWebCandidate & {
 export type PrivateWebCandidateRejection = {
   status: "REJECTED";
   reasonCode: string;
+  primaryRejectReason: string;
+  secondaryRejectReasons: string[];
   reason: string;
   countryEvidence?: CountryEvidence;
 };
-

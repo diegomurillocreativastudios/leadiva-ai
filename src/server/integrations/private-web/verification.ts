@@ -9,6 +9,7 @@ import {
   type PrivateWebCandidateRejection,
   type PrivateWebEvidence,
   type PrivateWebEvidenceField,
+  type PrivateWebTitleSource,
   type VerifiedPrivateWebCandidate,
 } from "./contracts";
 import {
@@ -54,9 +55,11 @@ function normalized(value: string): string {
 function evidenceOccursInDocument(
   evidence: PrivateWebEvidence,
   document: FetchedDocument,
+  braveTitleConfirmed = false,
 ): boolean {
   const needle = normalized(evidence.text);
   if (needle.length < 3) return false;
+  if (evidence.field === "TITLE" && braveTitleConfirmed) return true;
   return (
     normalized(document.text).includes(needle) ||
     normalized(document.title ?? "").includes(needle)
@@ -66,14 +69,104 @@ function evidenceOccursInDocument(
 function confirmedEvidence(
   candidate: PrivateWebCandidate,
   document: FetchedDocument,
+  braveTitleConfirmed = false,
 ): PrivateWebEvidence[] {
   return candidate.evidence
     .map((evidence) => ({
       ...evidence,
       url: candidate.sourceUrl,
-      confirmed: evidenceOccursInDocument(evidence, document),
+      confirmed: evidenceOccursInDocument(
+        evidence,
+        document,
+        braveTitleConfirmed && evidence.field === "TITLE",
+      ),
     }))
     .filter((evidence) => evidence.confirmed);
+}
+
+type BraveTitleContext = {
+  title: string | null;
+  url: string;
+};
+
+function safeNormalizedUrl(value: string): string | null {
+  try {
+    return normalizeUrl(value);
+  } catch {
+    return null;
+  }
+}
+
+function isGenericTitle(value: string): boolean {
+  const title = normalized(value).replace(/\.[a-z0-9]{2,5}$/i, "");
+  return (
+    title.length < 8 ||
+    /^(?:pdf|documento|archivo|descarga|download|inicio|home|untitled|sin titulo|tdr|rfp|rfq)$/i.test(
+      title,
+    ) ||
+    /^(?:documento|archivo|pdf|tdr|rfp|rfq)\s*[-|:]\s*\d*$/i.test(title)
+  );
+}
+
+function braveTitleMatchesDocument(title: string, document: FetchedDocument): boolean {
+  const titleTerms = normalized(title)
+    .split(/[^a-z0-9]+/)
+    .filter(
+      (term) =>
+        term.length >= 4 &&
+        !["para", "como", "desde", "hasta", "sobre", "documento"].includes(term),
+    );
+  if (titleTerms.length === 0) return false;
+  const documentText = normalized(document.text);
+  const matches = titleTerms.filter((term) => documentText.includes(term)).length;
+  return matches >= Math.min(2, titleTerms.length);
+}
+
+function trustedBraveTitle(
+  context: BraveTitleContext | undefined,
+  document: FetchedDocument,
+): string | null {
+  const title = context?.title?.replace(/\s+/g, " ").trim().slice(0, 500) ?? "";
+  if (!title || isGenericTitle(title)) return null;
+  const braveUrl = safeNormalizedUrl(context?.url ?? "");
+  const sourceUrls = [document.finalUrl, document.canonicalUrl]
+    .filter((value): value is string => Boolean(value))
+    .map(safeNormalizedUrl);
+  if (!braveUrl || !sourceUrls.includes(braveUrl)) return null;
+  return braveTitleMatchesDocument(title, document) ? title : null;
+}
+
+function resolveCandidateTitle(input: {
+  candidate: PrivateWebCandidate;
+  document: FetchedDocument;
+  braveResult?: BraveTitleContext;
+}): { title: string; titleSource: PrivateWebTitleSource } | null {
+  const documentTitle = input.document.title?.replace(/\s+/g, " ").trim() ?? "";
+  if (documentTitle && !isGenericTitle(documentTitle)) {
+    return {
+      title: documentTitle.slice(0, 500),
+      titleSource: input.document.titleSource ?? "DOCUMENT_HEADING",
+    };
+  }
+  const braveTitle = trustedBraveTitle(input.braveResult, input.document);
+  if (braveTitle) {
+    return { title: braveTitle, titleSource: "BRAVE_RESULT" };
+  }
+  const candidateTitle = input.candidate.title.replace(/\s+/g, " ").trim();
+  const titleEvidence = input.candidate.evidence.filter(
+    (item) => item.field === "TITLE",
+  );
+  if (
+    candidateTitle &&
+    !isGenericTitle(candidateTitle) &&
+    titleEvidence.some((item) =>
+      normalized(item.text).includes(normalized(candidateTitle)),
+    ) &&
+    normalized(input.document.text).includes(normalized(candidateTitle))
+  ) {
+    return { title: candidateTitle, titleSource: "DOCUMENT_TEXT" };
+  }
+  return null;
 }
 
 function hasField(
@@ -197,18 +290,30 @@ function hasExpiredContradiction(text: string): boolean {
   );
 }
 
-function isPublicBuyer(candidate: PrivateWebCandidate, text: string): boolean {
+function publicBuyerReason(
+  candidate: PrivateWebCandidate,
+  text: string,
+): "PUBLIC_SECTOR" | "INTERGOVERNMENTAL" | "FOREIGN_PUBLIC_SECTOR" | null {
   const buyer = normalized(candidate.organizationName);
   if (
-    /\b(ministerio|alcaldia|municipalidad|gobierno|embajada|consulado|universidad de el salvador|instituto salvadoreno del seguro social|\bisss\b|\banda\b|\bmop\b|\bminsal\b)\b/.test(
+    /\b(naciones unidas|banco mundial|banco interamericano de desarrollo|fondo monetario internacional|organizacion de los estados americanos|sistema de la integracion centroamericana|pnud|undp|bid)\b/.test(
       buyer,
     )
   ) {
-    return true;
+    return "INTERGOVERNMENTAL";
   }
-  return /(?:instituci[oó]n|entidad|sector) p[uú]blic[oa][^\n]{0,120}(?:solicita|convoca|contrata)/i.test(
-    text,
-  );
+  if (/\b(embajada|consulado)\b/.test(buyer)) return "FOREIGN_PUBLIC_SECTOR";
+  if (
+    /\b(ministerio|alcaldia|municipalidad|gobierno|universidad de el salvador|instituto salvadoreno del seguro social|isss|anda|mop|minsal)\b/.test(
+      buyer,
+    ) ||
+    /(?:instituci[oó]n|entidad|sector) p[uú]blic[oa][^\n]{0,120}(?:solicita|convoca|contrata)/i.test(
+      text,
+    )
+  ) {
+    return "PUBLIC_SECTOR";
+  }
+  return null;
 }
 
 function rejection(
@@ -216,7 +321,32 @@ function rejection(
   reason: string,
   extras: Partial<PrivateWebCandidateRejection> = {},
 ): PrivateWebCandidateRejection {
-  return { status: "REJECTED", reasonCode, reason, ...extras };
+  return {
+    status: "REJECTED",
+    reasonCode,
+    primaryRejectReason: reasonCode,
+    secondaryRejectReasons: [],
+    reason,
+    ...extras,
+  };
+}
+
+type GateFailure = { code: string; reason: string };
+
+function rejectionFromFailures(
+  failures: GateFailure[],
+  extras: Partial<PrivateWebCandidateRejection> = {},
+): PrivateWebCandidateRejection {
+  const unique = failures.filter(
+    (failure, index) =>
+      failures.findIndex((candidate) => candidate.code === failure.code) === index,
+  );
+  const primary = unique[0];
+  if (!primary) throw new Error("PRIVATE_WEB_REJECTION_WITHOUT_REASON");
+  return rejection(primary.code, primary.reason, {
+    ...extras,
+    secondaryRejectReasons: unique.slice(1).map((failure) => failure.code),
+  });
 }
 
 function scoreCandidate(input: {
@@ -244,6 +374,7 @@ export function verifyPrivateWebCandidate(input: {
   query: string;
   now?: Date;
   minQueryCoverage?: number;
+  braveResult?: BraveTitleContext;
 }): VerifiedPrivateWebCandidate | PrivateWebCandidateRejection {
   const { candidate, document, query } = input;
   const now = input.now ?? new Date();
@@ -259,25 +390,45 @@ export function verifyPrivateWebCandidate(input: {
     return rejection(sourcePolicy.reason, "La fuente final no cumple la política privada.");
   }
 
-  const evidence = confirmedEvidence(candidate, document);
-  const titleEvidence = evidenceFor(evidence, "TITLE");
-  const sourceBackedTitle = candidate.title.replace(/\s+/g, " ").trim();
-  if (
-    !sourceBackedTitle ||
-    titleEvidence.length === 0 ||
-    !titleEvidence.some((item) => normalized(item.text).includes(normalized(sourceBackedTitle))) ||
-    !normalized(`${document.title ?? ""} ${document.text}`).includes(
-      normalized(sourceBackedTitle),
-    )
-  ) {
-    return rejection("MISSING_TITLE", "No se confirmó un título literal de la fuente.");
+  const resolvedTitle = resolveCandidateTitle({
+    candidate,
+    document,
+    braveResult: input.braveResult,
+  });
+  const candidateWithTitle: PrivateWebCandidate = resolvedTitle
+    ? {
+        ...candidate,
+        ...resolvedTitle,
+        evidence: [
+          ...candidate.evidence.filter((item) => item.field !== "TITLE"),
+          {
+            field: "TITLE",
+            text: resolvedTitle.title,
+            url: candidate.sourceUrl,
+            confirmed: true,
+          },
+        ],
+      }
+    : candidate;
+  const evidence = confirmedEvidence(
+    candidateWithTitle,
+    document,
+    resolvedTitle?.titleSource === "BRAVE_RESULT",
+  );
+  const sourceBackedTitle = resolvedTitle?.title ?? candidate.title;
+  const failures: GateFailure[] = [];
+  if (!resolvedTitle) {
+    failures.push({
+      code: "MISSING_TITLE",
+      reason: "No se confirmó un título literal de la fuente.",
+    });
   }
   const role = classifyOpportunityRole(document.text);
   if (role !== "BUYER") {
-    return rejection(
-      role === "SELLER" ? "SELLER_PAGE" : "BUYER_ROLE_AMBIGUOUS",
-      "La fuente no confirma que la organización actúe como compradora.",
-    );
+    failures.push({
+      code: role === "SELLER" ? "SELLER_PAGE" : "BUYER_ROLE_AMBIGUOUS",
+      reason: "La fuente no confirma que la organización actúe como compradora.",
+    });
   }
   const buyerEvidence = evidenceFor(evidence, "BUYER");
   if (
@@ -290,30 +441,43 @@ export function verifyPrivateWebCandidate(input: {
       normalized(item.text).includes(normalized(candidate.organizationName)),
     )
   ) {
-    return rejection("MISSING_BUYER", "No se confirmó la organización compradora.");
+    failures.push({
+      code: "MISSING_BUYER",
+      reason: "No se confirmó la organización compradora.",
+    });
   }
   const scopeEvidence = evidenceFor(evidence, "SCOPE")[0] ?? null;
   if (!scopeEvidence) {
-    return rejection("MISSING_SCOPE", "No se confirmó la necesidad o el alcance.");
+    failures.push({
+      code: "MISSING_SCOPE",
+      reason: "No se confirmó la necesidad o el alcance.",
+    });
   }
   if (!hasField(evidence, "EXTERNAL_INTENT")) {
-    return rejection(
-      "MISSING_EXTERNAL_INTENT",
-      "No se confirmó la intención de contratar un proveedor externo.",
-    );
+    failures.push({
+      code: "MISSING_EXTERNAL_INTENT",
+      reason: "No se confirmó la intención de contratar un proveedor externo.",
+    });
   }
-  if (!hasField(evidence, "PRIVATE_SECTOR") || isPublicBuyer(candidate, document.text)) {
-    return rejection("PUBLIC_OR_UNKNOWN_SECTOR", "No se confirmó un comprador privado.");
+  const sectorReason = publicBuyerReason(candidate, document.text);
+  if (!hasField(evidence, "PRIVATE_SECTOR") || sectorReason) {
+    failures.push({
+      code: sectorReason ?? "PUBLIC_OR_UNKNOWN_SECTOR",
+      reason: "No se confirmó un comprador privado.",
+    });
   }
   const relation = evaluateQueryRelation({
     query,
     title: sourceBackedTitle,
-    scope: scopeEvidence.text,
+    scope: scopeEvidence?.text ?? candidate.description ?? "",
     documentText: document.text,
     minCoverage: input.minQueryCoverage ?? 0.6,
   });
   if (!relation.related) {
-    return rejection("QUERY_MISMATCH", "La fuente no se relaciona con la consulta.");
+    failures.push({
+      code: "QUERY_MISMATCH",
+      reason: "La fuente no se relaciona con la consulta.",
+    });
   }
 
   const countryEvidence = evaluateElSalvadorEvidence({
@@ -325,11 +489,10 @@ export function verifyPrivateWebCandidate(input: {
     countryEvidence.decision !== "CONFIRMED" &&
     countryEvidence.decision !== "SUPPORTED"
   ) {
-    return rejection(
-      "COUNTRY_NOT_CONFIRMED",
-      "No se confirmó que la oportunidad corresponda a El Salvador.",
-      { countryEvidence },
-    );
+    failures.push({
+      code: "COUNTRY_NOT_CONFIRMED",
+      reason: "No se confirmó que la oportunidad corresponda a El Salvador.",
+    });
   }
   const countryEvidenceRows: PrivateWebEvidence[] = countryEvidence.signals
     .filter(
@@ -343,23 +506,24 @@ export function verifyPrivateWebCandidate(input: {
     }));
 
   if (hasExpiredContradiction(document.text)) {
-    return rejection("EXPIRED", "La fuente indica que el proceso ya cerró.", {
-      countryEvidence,
+    failures.push({
+      code: "EXPIRED",
+      reason: "La fuente indica que el proceso ya cerró.",
     });
   }
   const deadlineScan = scanDeadlineDates(document.text);
   if (deadlineScan.status === "AMBIGUOUS") {
-    return rejection(
-      "TEMPORAL_AMBIGUOUS",
-      "La fuente contiene fechas de cierre contradictorias.",
-      { countryEvidence },
-    );
+    failures.push({
+      code: "TEMPORAL_AMBIGUOUS",
+      reason: "La fuente contiene fechas de cierre contradictorias.",
+    });
   }
   const deadlineAt =
     deadlineScan.status === "SINGLE" ? deadlineScan.deadlines[0].iso : null;
   if (deadlineAt && new Date(deadlineAt).getTime() <= now.getTime()) {
-    return rejection("EXPIRED", "La fecha límite de la oportunidad ya venció.", {
-      countryEvidence,
+    failures.push({
+      code: "EXPIRED",
+      reason: "La fecha límite de la oportunidad ya venció.",
     });
   }
   const publishedAt = dateIsSupported(candidate.publishedAt, evidence, "PUBLISHED")
@@ -368,12 +532,20 @@ export function verifyPrivateWebCandidate(input: {
   const hasTemporalEvidence = hasField(evidence, "TEMPORAL");
   const canBeVerified = Boolean(deadlineAt && hasTemporalEvidence);
   const canBePartial = !deadlineAt && activeLanguage(document.text) && hasTemporalEvidence;
-  if (!canBeVerified && !canBePartial) {
-    return rejection(
-      "TEMPORAL_STATUS_UNKNOWN",
-      "No se pudo confirmar que la convocatoria siga vigente.",
-      { countryEvidence },
-    );
+  if (
+    !canBeVerified &&
+    !canBePartial &&
+    !failures.some((failure) =>
+      ["EXPIRED", "TEMPORAL_AMBIGUOUS"].includes(failure.code),
+    )
+  ) {
+    failures.push({
+      code: "TEMPORAL_STATUS_UNKNOWN",
+      reason: "No se pudo confirmar que la convocatoria siga vigente.",
+    });
+  }
+  if (failures.length > 0) {
+    return rejectionFromFailures(failures, { countryEvidence });
   }
 
   const contractAmount = extractContractAmount(document.text);
@@ -392,7 +564,7 @@ export function verifyPrivateWebCandidate(input: {
   const currency = estimatedAmount ? contractAmount!.currency : null;
   const relationEvidence: PrivateWebEvidence = {
     field: "QUERY_RELATION",
-    text: scopeEvidence.text,
+    text: scopeEvidence!.text,
     url: normalizedUrl,
     confirmed: true,
   };
@@ -417,13 +589,13 @@ export function verifyPrivateWebCandidate(input: {
     .digest("hex");
 
   return {
-    ...candidate,
-    title: sourceBackedTitle,
-    description: scopeEvidence.text,
+    ...candidateWithTitle,
+    title: resolvedTitle!.title,
+    description: scopeEvidence!.text,
     organizationType: classifyPrivateOrganizationType(
       `${buyerEvidence.map((item) => item.text).join(" ")} ${evidenceFor(evidence, "PRIVATE_SECTOR").map((item) => item.text).join(" ")}`,
     ),
-    category: classifyPrivateCategory(`${query} ${scopeEvidence.text}`),
+    category: classifyPrivateCategory(`${query} ${scopeEvidence!.text}`),
     opportunityKind: classifyPrivateOpportunityKind(
       `${document.title ?? ""} ${document.text}`,
     ),

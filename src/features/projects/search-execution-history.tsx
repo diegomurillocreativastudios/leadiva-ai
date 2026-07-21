@@ -61,7 +61,9 @@ export function SearchExecutionHistory({
                 {item.searchProvider ?? "Grounding"}
               </td>
               <td className="max-w-56 truncate px-3 py-2.5">
-                {formatPrivateSearchOutcome(item.outcome) ??
+                {formatPrivateSearchOutcome(
+                  item.resultDisposition ?? item.outcome,
+                ) ??
                   searchStatusLabel(item.status)}
               </td>
               <td className="px-3 py-2.5 text-right tabular-nums">

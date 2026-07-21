@@ -194,6 +194,7 @@ export type SearchExecutionDetail = {
     id: string;
     status: string;
     outcome: string | null;
+    resultDisposition?: string | null;
     query: string | null;
     createdAt: string;
     startedAt: string | null;
@@ -232,6 +233,10 @@ const REASON_LABELS: Record<string, string> = {
   IRRELEVANT: "No parece ser una contratación o convocatoria activa.",
   PUBLIC_SECTOR:
     "Es una contratación del sector público y no pertenece a la búsqueda privada.",
+  INTERGOVERNMENTAL:
+    "La convocatoria pertenece a un organismo intergubernamental.",
+  FOREIGN_PUBLIC_SECTOR:
+    "La convocatoria pertenece a una institución pública extranjera.",
   NO_CONTRACTING_SIGNAL:
     "No se encontró una señal clara de que la organización esté buscando un proveedor.",
   MISSING_DEADLINE: "No se pudo confirmar la fecha límite.",
@@ -250,6 +255,12 @@ const REASON_LABELS: Record<string, string> = {
   HTTP_ERROR: "La fuente respondió con un error al intentar recuperarla.",
   TIMEOUT: "La fuente tardó demasiado en responder.",
   PDF_NO_EXTRACTABLE_TEXT: "El PDF no contiene texto que se pueda analizar.",
+  PDF_PARSE_FAILED: "No fue posible procesar la estructura del PDF.",
+  PDF_PASSWORD_PROTECTED: "El PDF requiere una contraseña para abrirse.",
+  PDF_TRUNCATED: "La descarga del PDF quedó incompleta.",
+  PDF_UNSUPPORTED: "El PDF usa una estructura no compatible.",
+  PDF_INVALID_SIGNATURE: "El archivo recibido no tiene una firma PDF válida.",
+  PDF_TOO_LARGE: "El PDF supera el tamaño máximo permitido.",
   EXTRACTION_FAILED: "No se pudo analizar el documento recuperado.",
   INVALID: "El candidato no contiene los datos mínimos válidos.",
   NOISE: "El resultado parece ser empleo, capacitación o contenido no comercial.",
@@ -478,6 +489,12 @@ export function formatCandidateOutcome(
   }
   if (candidate.reasonCode === "PUBLIC_SECTOR") {
     return "Sector público";
+  }
+  if (candidate.reasonCode === "INTERGOVERNMENTAL") {
+    return "Intergubernamental";
+  }
+  if (candidate.reasonCode === "FOREIGN_PUBLIC_SECTOR") {
+    return "Sector público extranjero";
   }
   return OUTCOME_LABELS[candidate.outcome];
 }

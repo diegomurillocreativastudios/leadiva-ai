@@ -67,14 +67,14 @@ export function HomeSearchResults({
             {detail.execution.status === "FAILED"
               ? "No fue posible completar la búsqueda."
               : detail.execution.status === "PARTIALLY_COMPLETED"
-                ? "No se conservaron oportunidades verificadas."
+                ? "La búsqueda terminó parcialmente, pero no se verificaron oportunidades."
                 : "No encontramos oportunidades verificadas para esta búsqueda."}
           </p>
           <p className="mt-1 max-w-sm text-xs text-text-secondary">
             {detail.execution.status === "FAILED"
               ? "Puedes intentarlo nuevamente más tarde."
               : detail.execution.status === "PARTIALLY_COMPLETED"
-                ? "La búsqueda se detuvo antes de completar todo el trabajo planeado."
+                ? "Algunas fuentes no pudieron procesarse; puedes revisar la actividad de la búsqueda."
                 : "Prueba con otros términos o revisa otra búsqueda del historial."}
           </p>
         </div>

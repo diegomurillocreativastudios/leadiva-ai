@@ -1,11 +1,21 @@
+import { readFile } from "node:fs/promises";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  classifyPdfParserFailure,
   extractHtmlDocument,
   extractPdfText,
   fetchWebDocument,
   HostConcurrencyLimiter,
+  loadPdfDocumentWithPdfJs,
 } from "./web-document-fetcher";
+
+const textualPdfUrl = new URL("../../test/fixtures/text-document.pdf", import.meta.url);
+
+async function textualPdf(): Promise<Buffer> {
+  return readFile(textualPdfUrl);
+}
 
 function deps(fetchImpl: typeof fetch, overrides: Record<string, unknown> = {}) {
   return {
@@ -45,9 +55,91 @@ describe("HTML extraction", () => {
     expect(result.text).not.toContain("alert");
     expect(result.links).toEqual(["https://buyer.example/files/terms.pdf"]);
   });
+
+  it("uses the HTML title when the first heading is generic", () => {
+    const result = extractHtmlDocument(
+      "<html><head><title>Convocatoria para plataforma digital</title></head><body><main><h1>Inicio</h1></main></body></html>",
+      "https://buyer.example/convocatoria",
+    );
+
+    expect(result).toMatchObject({
+      title: "Convocatoria para plataforma digital",
+      titleSource: "HTML_TITLE",
+    });
+  });
 });
 
 describe("PDF extraction", () => {
+  it("opens the repository PDF with real pdfjs and extracts text", async () => {
+    const fixture = await textualPdf();
+    let parserInput: Uint8Array | null = null;
+    const result = await extractPdfText(fixture, 10, async (bytes) => {
+      parserInput = bytes;
+      return loadPdfDocumentWithPdfJs(bytes);
+    });
+
+    expect(result.pagesProcessed).toBeGreaterThanOrEqual(1);
+    expect(result.text).toContain("Leadiva PDF parser fixture");
+    expect(parserInput).toBeInstanceOf(Uint8Array);
+    expect(Buffer.isBuffer(parserInput)).toBe(false);
+    const validatedInput = parserInput as unknown as Uint8Array;
+    expect(validatedInput.byteOffset).toBe(0);
+    expect(validatedInput.byteLength).toBe(validatedInput.buffer.byteLength);
+  });
+
+  it("accepts both Buffer and Uint8Array through the real pdfjs adapter", async () => {
+    const fixture = await textualPdf();
+    const fromBuffer = await extractPdfText(fixture, 10);
+    const fromUint8Array = await extractPdfText(Uint8Array.from(fixture), 10);
+
+    expect(fromBuffer).toEqual(fromUint8Array);
+    expect(fromBuffer.text).toContain("Leadiva PDF parser fixture");
+  });
+
+  it("extracts no text from a real textless PDF", async () => {
+    const fixture = await textualPdf();
+    const textless = Buffer.from(
+      fixture
+        .toString("latin1")
+        .replace("Leadiva PDF parser fixture", " ".repeat(26)),
+      "latin1",
+    );
+    const parsed = await extractPdfText(textless, 10);
+
+    expect(parsed.pagesProcessed).toBe(1);
+    expect(parsed.text).toBe("");
+  });
+
+  it("classifies password and unsupported parser exceptions without messages", () => {
+    expect(
+      classifyPdfParserFailure(
+        Object.assign(new Error("remote protected detail"), {
+          name: "PasswordException",
+          code: 1,
+        }),
+        "OPEN_DOCUMENT",
+      ),
+    ).toEqual({
+      code: "PDF_PASSWORD_PROTECTED",
+      diagnostics: {
+        exceptionName: "PasswordException",
+        exceptionCode: "PASSWORD_REQUIRED",
+        stage: "OPEN_DOCUMENT",
+      },
+    });
+    expect(
+      classifyPdfParserFailure(
+        Object.assign(new Error("remote unsupported detail"), {
+          name: "UnknownErrorException",
+        }),
+        "EXTRACT_TEXT",
+      ),
+    ).toMatchObject({
+      code: "PDF_UNSUPPORTED",
+      diagnostics: { stage: "EXTRACT_TEXT" },
+    });
+  });
+
   it("validates the signature, limits pages and extracts text without OCR", async () => {
     const destroy = vi.fn(async () => undefined);
     const result = await extractPdfText(
@@ -101,6 +193,33 @@ describe("safe document fetching", () => {
         deps(fetchImpl, { lookupImpl }),
       ),
     ).toMatchObject({ ok: false, code: "BLOCKED_IP" });
+  });
+
+  it("retains the sanitized source-policy reason after a redirect", async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/robots.txt")) return new Response(null, { status: 404 });
+      return new Response(null, {
+        status: 301,
+        headers: { location: "https://sv.educo.org/" },
+      });
+    }) as typeof fetch;
+    const result = await fetchWebDocument(
+      "https://educo.org.sv/wp-content/uploads/2021/05/tdr.pdf",
+      deps(fetchImpl, {
+        urlPolicy: (url: string) =>
+          new URL(url).pathname === "/"
+            ? { allowed: false as const, reason: "HOMEPAGE" }
+            : { allowed: true as const },
+      }),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "BLOCKED_HOST",
+      finalUrl: "https://sv.educo.org/",
+      detail: "Política de fuente bloqueó el destino: HOMEPAGE",
+    });
   });
 
   it("blocks simulated DNS rebinding between robots and document fetch", async () => {
@@ -294,7 +413,7 @@ describe("safe document fetching", () => {
 
   it("parses a bounded PDF and reports PDFs without text", async () => {
     const pdfResponse = () =>
-      new Response(new TextEncoder().encode("%PDF-test"), {
+      new Response(new TextEncoder().encode("%PDF-test\n%%EOF"), {
         headers: { "content-type": "application/pdf" },
       });
     const valid = await fetchWebDocument(
@@ -320,6 +439,196 @@ describe("safe document fetching", () => {
       }),
     );
     expect(noText).toMatchObject({ ok: false, code: "PDF_NO_EXTRACTABLE_TEXT" });
+  });
+
+  it("distinguishes PDF parser failures from documents without text", async () => {
+    const result = await fetchWebDocument(
+      "https://buyer.example/broken.pdf",
+      deps(
+        robotsThen(
+          new Response(new TextEncoder().encode("%PDF-test\n%%EOF"), {
+            headers: { "content-type": "application/pdf" },
+          }),
+        ),
+        {
+          loadPdfDocument: async () => {
+            throw new Error("pdfjs internal secret detail");
+          },
+        },
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "PDF_PARSE_FAILED",
+      detail: "No fue posible procesar el PDF",
+      parserFailure: {
+        exceptionName: "Error",
+        exceptionCode: "UNEXPECTED_PARSER_ERROR",
+        stage: "OPEN_DOCUMENT",
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("pdfjs internal secret detail");
+  });
+
+  it("aborts PDF.js while opening and reports the exact parser stage", async () => {
+    const fixture = await textualPdf();
+    const result = await fetchWebDocument(
+      "https://buyer.example/slow.pdf",
+      deps(
+        robotsThen(
+          new Response(Uint8Array.from(fixture), {
+            headers: { "content-type": "application/pdf" },
+          }),
+        ),
+        {
+          timeoutMs: 5,
+          loadPdfDocument: async () =>
+            new Promise(() => {
+              // The fetcher's AbortSignal must settle this parser operation.
+            }),
+        },
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "TIMEOUT",
+      parserFailure: {
+        exceptionName: "AbortException",
+        exceptionCode: "ABORTED",
+        stage: "OPEN_DOCUMENT",
+      },
+    });
+  });
+
+  it("distinguishes invalid PDF signatures and oversized PDFs", async () => {
+    const invalid = await fetchWebDocument(
+      "https://buyer.example/invalid.pdf",
+      deps(
+        robotsThen(
+          new Response(new TextEncoder().encode("not-a-pdf"), {
+            headers: { "content-type": "application/pdf" },
+          }),
+        ),
+      ),
+    );
+    const tooLarge = await fetchWebDocument(
+      "https://buyer.example/large.pdf",
+      deps(
+        robotsThen(
+          new Response(new TextEncoder().encode("%PDF-test\n%%EOF"), {
+            headers: {
+              "content-type": "application/pdf",
+              "content-length": "6000",
+            },
+          }),
+        ),
+      ),
+    );
+
+    expect(invalid).toMatchObject({ ok: false, code: "PDF_INVALID_SIGNATURE" });
+    expect(tooLarge).toMatchObject({ ok: false, code: "PDF_TOO_LARGE" });
+  });
+
+  it("classifies a truncated PDF before invoking pdfjs", async () => {
+    const fixture = await textualPdf();
+    const truncated = fixture.subarray(0, fixture.length - 24);
+    const loadPdfDocument = vi.fn(loadPdfDocumentWithPdfJs);
+    const result = await fetchWebDocument(
+      "https://buyer.example/truncated.pdf",
+      deps(
+        robotsThen(
+          new Response(Uint8Array.from(truncated), {
+            headers: { "content-type": "application/pdf" },
+          }),
+        ),
+        { loadPdfDocument },
+      ),
+    );
+
+    expect(result).toMatchObject({ ok: false, code: "PDF_TRUNCATED" });
+    expect(loadPdfDocument).not.toHaveBeenCalled();
+  });
+
+  it("detects an incomplete PDF stream from Content-Length", async () => {
+    const fixture = await textualPdf();
+    const loadPdfDocument = vi.fn(loadPdfDocumentWithPdfJs);
+    const result = await fetchWebDocument(
+      "https://buyer.example/incomplete.pdf",
+      deps(
+        robotsThen(
+          new Response(Uint8Array.from(fixture), {
+            headers: {
+              "content-type": "application/pdf",
+              "content-length": String(fixture.byteLength + 10),
+            },
+          }),
+        ),
+        { loadPdfDocument },
+      ),
+    );
+
+    expect(result).toMatchObject({ ok: false, code: "PDF_TRUNCATED" });
+    expect(loadPdfDocument).not.toHaveBeenCalled();
+  });
+
+  it("rejects a server that ignores the identity content encoding request", async () => {
+    const fixture = await textualPdf();
+    const loadPdfDocument = vi.fn(loadPdfDocumentWithPdfJs);
+    const result = await fetchWebDocument(
+      "https://buyer.example/encoded.pdf",
+      deps(
+        robotsThen(
+          new Response(Uint8Array.from(fixture), {
+            headers: {
+              "content-type": "application/pdf",
+              "content-encoding": "gzip",
+            },
+          }),
+        ),
+        { loadPdfDocument },
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "UNSUPPORTED_CONTENT_ENCODING",
+    });
+    expect(loadPdfDocument).not.toHaveBeenCalled();
+  });
+
+  it("returns sanitized parser name, code, and exact stage", async () => {
+    const fixture = await textualPdf();
+    const result = await fetchWebDocument(
+      "https://buyer.example/password.pdf",
+      deps(
+        robotsThen(
+          new Response(Uint8Array.from(fixture), {
+            headers: { "content-type": "application/pdf" },
+          }),
+        ),
+        {
+          loadPdfDocument: async () => {
+            throw Object.assign(new Error("password and parser internals"), {
+              name: "PasswordException",
+              code: 1,
+            });
+          },
+        },
+      ),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "PDF_PASSWORD_PROTECTED",
+      parserFailure: {
+        exceptionName: "PasswordException",
+        exceptionCode: "PASSWORD_REQUIRED",
+        stage: "OPEN_DOCUMENT",
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("password and parser internals");
   });
 
   it("enforces per-host concurrency", async () => {

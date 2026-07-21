@@ -57,9 +57,111 @@ const candidateSchema = z.object({
   evidence: z.array(evidenceSchema).max(24),
 });
 
-const responseSchema = z.object({
-  candidates: z.array(candidateSchema).max(5),
-});
+const responseRootSchema = z
+  .object({
+    candidates: z.array(z.unknown()).max(5),
+  })
+  .strict();
+
+export const GEMINI_FAILURE_CODES = [
+  "INVALID_ARGUMENT",
+  "UNAUTHENTICATED",
+  "PERMISSION_DENIED",
+  "RESOURCE_EXHAUSTED",
+  "TIMEOUT",
+  "UNAVAILABLE",
+  "INVALID_RESPONSE",
+  "UNKNOWN",
+] as const;
+
+export type GeminiFailureCode = (typeof GEMINI_FAILURE_CODES)[number];
+
+export type GeminiFailureMetric = {
+  code: GeminiFailureCode;
+  count: number;
+};
+
+type ErrorLike = {
+  status?: unknown;
+  code?: unknown;
+  name?: unknown;
+  message?: unknown;
+  cause?: unknown;
+};
+
+/** Classifies provider failures without retaining remote messages or request data. */
+export function classifyGeminiFailure(error: unknown): GeminiFailureCode {
+  if (error instanceof SyntaxError) return "INVALID_RESPONSE";
+
+  const current =
+    typeof error === "object" && error !== null ? (error as ErrorLike) : {};
+  const cause =
+    typeof current.cause === "object" && current.cause !== null
+      ? (current.cause as ErrorLike)
+      : {};
+  const numericSignals = [current.status, current.code, cause.status, cause.code]
+    .map((value) =>
+      typeof value === "number"
+        ? value
+        : typeof value === "string" && /^\d+$/.test(value)
+          ? Number(value)
+          : null,
+    )
+    .filter((value): value is number => value !== null);
+  const text = [
+    current.name,
+    current.status,
+    current.code,
+    current.message,
+    cause.name,
+    cause.status,
+    cause.code,
+    cause.message,
+  ]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toUpperCase();
+
+  if (
+    current.name === "AbortError" ||
+    cause.name === "AbortError" ||
+    numericSignals.some((value) => value === 408 || value === 504 || value === 4) ||
+    /ABORT|DEADLINE_EXCEEDED|TIMEOUT|TIMED OUT/.test(text)
+  ) {
+    return "TIMEOUT";
+  }
+  if (
+    numericSignals.some((value) => value === 400 || value === 3) ||
+    /INVALID_ARGUMENT/.test(text)
+  ) {
+    return "INVALID_ARGUMENT";
+  }
+  if (
+    numericSignals.some((value) => value === 401 || value === 16) ||
+    /UNAUTHENTICATED/.test(text)
+  ) {
+    return "UNAUTHENTICATED";
+  }
+  if (
+    numericSignals.some((value) => value === 403 || value === 7) ||
+    /PERMISSION_DENIED/.test(text)
+  ) {
+    return "PERMISSION_DENIED";
+  }
+  if (
+    numericSignals.some((value) => value === 429 || value === 8) ||
+    /RESOURCE_EXHAUSTED/.test(text)
+  ) {
+    return "RESOURCE_EXHAUSTED";
+  }
+  if (
+    numericSignals.some((value) => [500, 502, 503, 14].includes(value)) ||
+    /\bUNAVAILABLE\b/.test(text)
+  ) {
+    return "UNAVAILABLE";
+  }
+  return "UNKNOWN";
+}
 
 const RESPONSE_JSON_SCHEMA = {
   type: "object",
@@ -68,7 +170,6 @@ const RESPONSE_JSON_SCHEMA = {
   properties: {
     candidates: {
       type: "array",
-      maxItems: 5,
       items: {
         type: "object",
         additionalProperties: false,
@@ -141,7 +242,6 @@ const RESPONSE_JSON_SCHEMA = {
           applicationInstructions: { type: ["string", "null"] },
           evidence: {
             type: "array",
-            maxItems: 24,
             items: {
               type: "object",
               additionalProperties: false,
@@ -172,8 +272,29 @@ export type GeminiPrivateWebExtractionResult = {
   durationMs: number;
   model: string;
   promptVersion: string;
-  failureKind: "EMPTY_RESPONSE" | "INVALID_JSON" | "INVALID_SCHEMA" | null;
+  failureKind: "EMPTY_RESPONSE" | "INVALID_JSON" | "INVALID_RESPONSE" | null;
+  invalidCandidates?: GeminiInvalidCandidateIssue[];
 };
+
+export type GeminiInvalidCandidateIssue = {
+  issueCode: string;
+  path: string;
+  issueCount: number;
+};
+
+export function sanitizeZodIssuePath(path: PropertyKey[]): string {
+  return path
+    .slice(0, 8)
+    .map((part) => {
+      if (typeof part === "number") return `[${Math.max(0, part)}]`;
+      if (typeof part !== "string") return "";
+      return /^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(part) ? part : "";
+    })
+    .filter(Boolean)
+    .join(".")
+    .replace(/\.\[/g, "[")
+    .slice(0, 120);
+}
 
 function buildPrompt(input: {
   document: FetchedDocument;
@@ -244,35 +365,68 @@ export async function extractPrivateOpportunitiesWithGemini(
     promptVersion: PRIVATE_WEB_GEMINI_PROMPT_VERSION,
   };
   if (!extracted.text) {
-    return { ...base, candidates: [], failureKind: "EMPTY_RESPONSE" };
+    return {
+      ...base,
+      candidates: [],
+      failureKind: "EMPTY_RESPONSE",
+      invalidCandidates: [],
+    };
   }
   let payload: unknown;
   try {
     payload = JSON.parse(extracted.text);
   } catch {
-    return { ...base, candidates: [], failureKind: "INVALID_JSON" };
+    return {
+      ...base,
+      candidates: [],
+      failureKind: "INVALID_JSON",
+      invalidCandidates: [],
+    };
   }
-  const parsed = responseSchema.safeParse(payload);
-  if (!parsed.success) {
-    return { ...base, candidates: [], failureKind: "INVALID_SCHEMA" };
+  const root = responseRootSchema.safeParse(payload);
+  if (!root.success) {
+    return {
+      ...base,
+      candidates: [],
+      failureKind: "INVALID_RESPONSE",
+      invalidCandidates: [],
+    };
   }
 
   const sourceUrl = input.document.canonicalUrl ?? input.document.finalUrl;
   const sourceDomain = new URL(sourceUrl).hostname.toLowerCase();
+  const invalidCandidates: GeminiInvalidCandidateIssue[] = [];
+  const candidates = root.data.candidates.flatMap((candidate) => {
+    const parsed = candidateSchema.safeParse(candidate);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      invalidCandidates.push({
+        issueCode: first?.code ?? "custom",
+        path: sanitizeZodIssuePath(first?.path ?? []),
+        issueCount: parsed.error.issues.length,
+      });
+      return [];
+    }
+    return [
+      {
+        ...parsed.data,
+        titleSource: "DOCUMENT_TEXT" as const,
+        sourceUrl,
+        sourceDomain,
+        evidence: parsed.data.evidence.map((evidence) => ({
+          ...evidence,
+          url: sourceUrl,
+          confirmed: false,
+        })),
+        extractionMethod: "GEMINI" as const,
+      },
+    ];
+  });
   return {
     ...base,
     failureKind: null,
-    candidates: parsed.data.candidates.map((candidate) => ({
-      ...candidate,
-      sourceUrl,
-      sourceDomain,
-      evidence: candidate.evidence.map((evidence) => ({
-        ...evidence,
-        url: sourceUrl,
-        confirmed: false,
-      })),
-      extractionMethod: "GEMINI" as const,
-    })),
+    candidates,
+    invalidCandidates,
   };
 }
 

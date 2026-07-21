@@ -89,6 +89,9 @@ describe("search execution candidate normalization", () => {
       "no permitió recuperar",
     );
     expect(formatCandidateReason("PUBLIC_SECTOR")).toMatch(/sector público/i);
+    expect(formatCandidateReason("PDF_PARSE_FAILED")).toContain("estructura");
+    expect(formatCandidateReason("PDF_INVALID_SIGNATURE")).toContain("firma PDF");
+    expect(formatCandidateReason("PDF_TOO_LARGE")).toContain("tamaño máximo");
     expect(formatCandidateOutcome(candidate())).toBe("Irrelevante");
     expect(
       formatCandidateOutcome(

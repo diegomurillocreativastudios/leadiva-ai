@@ -41,7 +41,11 @@ function SyncChip({ label, sync }: { label: string; sync: SyncSnapshot | null })
   const relative = formatRelativeTime(when);
   const metrics = sync.metrics ?? {};
   const outcome =
-    typeof metrics.outcome === "string" ? metrics.outcome : null;
+    typeof metrics.resultDisposition === "string"
+      ? metrics.resultDisposition
+      : typeof metrics.outcome === "string"
+        ? metrics.outcome
+        : null;
   const outcomeLabel = formatPrivateSearchOutcome(outcome);
 
   return (

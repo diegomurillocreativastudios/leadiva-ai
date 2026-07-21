@@ -263,6 +263,9 @@ export function extractPrivateOpportunityDeterministically(input: {
     .trim()
     .slice(0, 500);
   if (!sourceTitle) return null;
+  const titleSource = document.title
+    ? (document.titleSource ?? "DOCUMENT_HEADING")
+    : "DOCUMENT_TEXT";
 
   const evidence: PrivateWebEvidence[] = [
     {
@@ -315,6 +318,7 @@ export function extractPrivateOpportunityDeterministically(input: {
   );
   return {
     title: sourceTitle,
+    titleSource,
     description: scopeText,
     organizationName: buyer.name,
     organizationType: classifyPrivateOrganizationType(

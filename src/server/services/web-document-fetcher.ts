@@ -21,7 +21,13 @@ export type DocumentFetchFailureCode =
   | "ROBOTS_UNAVAILABLE"
   | "DOCUMENT_TOO_LARGE"
   | "PDF_NO_EXTRACTABLE_TEXT"
-  | "PDF_INVALID"
+  | "PDF_PARSE_FAILED"
+  | "PDF_PASSWORD_PROTECTED"
+  | "PDF_TRUNCATED"
+  | "PDF_UNSUPPORTED"
+  | "PDF_INVALID_SIGNATURE"
+  | "PDF_TOO_LARGE"
+  | "UNSUPPORTED_CONTENT_ENCODING"
   | "UNSUPPORTED_CONTENT_TYPE"
   | "TIMEOUT"
   | "HTTP_ERROR"
@@ -35,11 +41,38 @@ export type FetchedDocument = {
   contentType: string;
   statusCode: number;
   title: string | null;
+  titleSource?: "DOCUMENT_HEADING" | "HTML_TITLE" | null;
   text: string;
   links: string[];
   byteLength: number;
   fetchedAt: string;
   pdfPagesProcessed: number;
+};
+
+export const PDF_PARSER_STAGES = [
+  "INPUT_VALIDATION",
+  "OPEN_DOCUMENT",
+  "LOAD_PAGE",
+  "EXTRACT_TEXT",
+  "DESTROY_DOCUMENT",
+] as const;
+
+export type PdfParserStage = (typeof PDF_PARSER_STAGES)[number];
+
+export type PdfParserFailure = {
+  exceptionName:
+    | "AbortException"
+    | "InvalidPDFException"
+    | "PasswordException"
+    | "UnknownErrorException"
+    | "Error";
+  exceptionCode:
+    | "ABORTED"
+    | "INVALID_DOCUMENT"
+    | "PASSWORD_REQUIRED"
+    | "UNSUPPORTED_DOCUMENT"
+    | "UNEXPECTED_PARSER_ERROR";
+  stage: PdfParserStage;
 };
 
 export type DocumentFetchResult =
@@ -50,6 +83,7 @@ export type DocumentFetchResult =
       detail: string;
       finalUrl?: string;
       statusCode?: number;
+      parserFailure?: PdfParserFailure;
     };
 
 type PdfDocumentLike = {
@@ -73,9 +107,14 @@ export type WebDocumentFetcherDeps = Pick<
   robotsCache?: RobotsPolicyDeps["cache"];
   maxRobotsBytes?: number;
   requestGate?: HostRequestGate;
-  urlPolicy?: (url: string) => boolean;
+  urlPolicy?: (
+    url: string,
+  ) => boolean | { allowed: true } | { allowed: false; reason: string };
   signal?: AbortSignal;
-  loadPdfDocument?: (bytes: Uint8Array) => Promise<PdfDocumentLike>;
+  loadPdfDocument?: (
+    bytes: Uint8Array,
+    signal?: AbortSignal,
+  ) => Promise<PdfDocumentLike>;
 };
 
 /** Per-host semaphore used together with the orchestrator's global limit. */
@@ -145,8 +184,24 @@ function relevantHtmlText(text: string): string {
   return [...new Set(segments)].join("\n\n").slice(0, maxChars);
 }
 
+function isGenericExtractedTitle(value: string): boolean {
+  const title = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\.[a-z0-9]{2,5}$/i, "")
+    .trim()
+    .toLowerCase();
+  return (
+    title.length < 8 ||
+    /^(?:pdf|documento|archivo|descarga|download|inicio|home|untitled|sin titulo|tdr|rfp|rfq)$/i.test(
+      title,
+    )
+  );
+}
+
 export function extractHtmlDocument(html: string, finalUrl: string): {
   title: string | null;
+  titleSource: "DOCUMENT_HEADING" | "HTML_TITLE" | null;
   text: string;
   links: string[];
   canonicalUrl: string | null;
@@ -157,7 +212,13 @@ export function extractHtmlDocument(html: string, finalUrl: string): {
   const htmlTitle = stripMarkup(
     html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "",
   ).slice(0, 500);
-  const title = heading || htmlTitle || null;
+  const descriptiveHeading = heading && !isGenericExtractedTitle(heading);
+  const title = descriptiveHeading ? heading : htmlTitle || heading || null;
+  const titleSource = descriptiveHeading
+    ? ("DOCUMENT_HEADING" as const)
+    : htmlTitle
+      ? ("HTML_TITLE" as const)
+      : null;
   const canonicalHref = html.match(
     /<link\b(?=[^>]*\brel=["'][^"']*canonical[^"']*["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>/i,
   )?.[1];
@@ -205,10 +266,25 @@ export function extractHtmlDocument(html: string, finalUrl: string): {
       .replace(/\n\s*\n+/g, "\n")
       .trim(),
   );
-  return { title, text, links: [...new Set(links)], canonicalUrl };
+  return { title, titleSource, text, links: [...new Set(links)], canonicalUrl };
 }
 
-async function defaultLoadPdfDocument(bytes: Uint8Array): Promise<PdfDocumentLike> {
+export async function loadPdfDocumentWithPdfJs(
+  bytes: Uint8Array,
+  signal?: AbortSignal,
+): Promise<PdfDocumentLike> {
+  // PDF.js loads these Node polyfills through an optional dynamic dependency,
+  // which standalone tracing cannot discover unless the application imports it.
+  if (
+    typeof globalThis.DOMMatrix === "undefined" ||
+    typeof globalThis.ImageData === "undefined" ||
+    typeof globalThis.Path2D === "undefined"
+  ) {
+    const canvas = await import("@napi-rs/canvas");
+    globalThis.DOMMatrix ??= canvas.DOMMatrix as unknown as typeof DOMMatrix;
+    globalThis.ImageData ??= canvas.ImageData as unknown as typeof ImageData;
+    globalThis.Path2D ??= canvas.Path2D as unknown as typeof Path2D;
+  }
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const task = pdfjs.getDocument({
     data: bytes,
@@ -219,7 +295,20 @@ async function defaultLoadPdfDocument(bytes: Uint8Array): Promise<PdfDocumentLik
     isOffscreenCanvasSupported: false,
     isImageDecoderSupported: false,
   });
-  const document = await task.promise;
+  const abort = () => {
+    void task.destroy().catch(() => undefined);
+  };
+  signal?.addEventListener("abort", abort, { once: true });
+  if (signal?.aborted) abort();
+  let document;
+  try {
+    document = await task.promise;
+  } catch (error) {
+    await task.destroy().catch(() => undefined);
+    throw error;
+  } finally {
+    signal?.removeEventListener("abort", abort);
+  }
   return {
     numPages: document.numPages,
     getPage: (pageNumber) => document.getPage(pageNumber),
@@ -227,27 +316,146 @@ async function defaultLoadPdfDocument(bytes: Uint8Array): Promise<PdfDocumentLik
   } as PdfDocumentLike;
 }
 
+type PdfBinaryInput = Uint8Array | ArrayBuffer;
+
+/** PDF.js rejects Node Buffers and takes ownership of the supplied buffer. */
+export function toPdfUint8Array(input: PdfBinaryInput): Uint8Array {
+  const source = input instanceof ArrayBuffer ? new Uint8Array(input) : input;
+  return Uint8Array.from(source);
+}
+
+function pdfExceptionName(error: unknown): PdfParserFailure["exceptionName"] {
+  const name =
+    typeof error === "object" && error !== null && "name" in error
+      ? (error as { name?: unknown }).name
+      : null;
+  return name === "AbortException" ||
+    name === "InvalidPDFException" ||
+    name === "PasswordException" ||
+    name === "UnknownErrorException"
+    ? name
+    : "Error";
+}
+
+export function classifyPdfParserFailure(
+  error: unknown,
+  stage: PdfParserStage,
+): { code: DocumentFetchFailureCode; diagnostics: PdfParserFailure } {
+  const exceptionName = pdfExceptionName(error);
+  const numericCode =
+    typeof error === "object" && error !== null && "code" in error
+      ? (error as { code?: unknown }).code
+      : null;
+  if (
+    exceptionName === "PasswordException" ||
+    numericCode === 1 ||
+    numericCode === 2
+  ) {
+    return {
+      code: "PDF_PASSWORD_PROTECTED",
+      diagnostics: {
+        exceptionName: "PasswordException",
+        exceptionCode: "PASSWORD_REQUIRED",
+        stage,
+      },
+    };
+  }
+  if (exceptionName === "AbortException" || exceptionName === "Error" && (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  )) {
+    return {
+      code: "TIMEOUT",
+      diagnostics: {
+        exceptionName: "AbortException",
+        exceptionCode: "ABORTED",
+        stage,
+      },
+    };
+  }
+  if (exceptionName === "UnknownErrorException") {
+    return {
+      code: "PDF_UNSUPPORTED",
+      diagnostics: {
+        exceptionName,
+        exceptionCode: "UNSUPPORTED_DOCUMENT",
+        stage,
+      },
+    };
+  }
+  if (exceptionName === "InvalidPDFException") {
+    return {
+      code: "PDF_PARSE_FAILED",
+      diagnostics: {
+        exceptionName,
+        exceptionCode: "INVALID_DOCUMENT",
+        stage,
+      },
+    };
+  }
+  return {
+    code: "PDF_PARSE_FAILED",
+    diagnostics: {
+      exceptionName,
+      exceptionCode: "UNEXPECTED_PARSER_ERROR",
+      stage,
+    },
+  };
+}
+
+async function racePdfOperation<T>(
+  operation: Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (!signal) return operation;
+  if (signal.aborted) {
+    throw new DOMException("The operation was aborted", "AbortError");
+  }
+  return new Promise<T>((resolve, reject) => {
+    const abort = () =>
+      reject(new DOMException("The operation was aborted", "AbortError"));
+    signal.addEventListener("abort", abort, { once: true });
+    operation.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", abort);
+    });
+  });
+}
+
 export async function extractPdfText(
-  bytes: Uint8Array,
+  input: PdfBinaryInput,
   maxPages: number,
-  loadPdfDocument: (bytes: Uint8Array) => Promise<PdfDocumentLike> =
-    defaultLoadPdfDocument,
+  loadPdfDocument: (
+    bytes: Uint8Array,
+    signal?: AbortSignal,
+  ) => Promise<PdfDocumentLike> =
+    loadPdfDocumentWithPdfJs,
   signal?: AbortSignal,
 ): Promise<{ text: string; pagesProcessed: number }> {
+  const bytes = toPdfUint8Array(input);
   const signature = new TextDecoder("ascii").decode(bytes.slice(0, 5));
   if (signature !== "%PDF-") {
-    throw new Error("PDF_INVALID");
+    const error = new Error("PDF_INVALID_SIGNATURE");
+    error.name = "InvalidPDFException";
+    throw error;
   }
-  const document = await loadPdfDocument(bytes);
-  const pageCount = Math.min(document.numPages, maxPages);
+  let stage: PdfParserStage = "OPEN_DOCUMENT";
+  let document: PdfDocumentLike | null = null;
+  let failure: ReturnType<typeof classifyPdfParserFailure> | null = null;
+  let pageCount = 0;
   const pages: string[] = [];
   try {
+    document = await racePdfOperation(loadPdfDocument(bytes, signal), signal);
+    pageCount = Math.min(document.numPages, maxPages);
     for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
       if (signal?.aborted) {
         throw new DOMException("The operation was aborted", "AbortError");
       }
-      const page = await document.getPage(pageNumber);
-      const content = await page.getTextContent();
+      stage = "LOAD_PAGE";
+      const page = await racePdfOperation(document.getPage(pageNumber), signal);
+      stage = "EXTRACT_TEXT";
+      const content = await racePdfOperation(page.getTextContent(), signal);
       pages.push(
         content.items
           .map((item) => (typeof item.str === "string" ? item.str : ""))
@@ -255,13 +463,40 @@ export async function extractPdfText(
           .join(" "),
       );
     }
-  } finally {
-    await document.destroy();
+  } catch (error) {
+    failure = classifyPdfParserFailure(error, stage);
+  }
+  if (document) {
+    try {
+      await document.destroy();
+    } catch (error) {
+      failure ??= classifyPdfParserFailure(error, "DESTROY_DOCUMENT");
+    }
+  }
+  if (failure) {
+    const error = new Error(failure.code) as Error & {
+      parserFailure?: PdfParserFailure;
+    };
+    error.name = "PdfParserError";
+    error.parserFailure = failure.diagnostics;
+    throw error;
   }
   return {
     text: relevantHtmlText(pages.join("\n").replace(/\s+/g, " ").trim()),
     pagesProcessed: pageCount,
   };
+}
+
+function hasPdfEofMarker(bytes: Uint8Array): boolean {
+  const start = Math.max(0, bytes.byteLength - 2_048);
+  return new TextDecoder("ascii").decode(bytes.slice(start)).includes("%%EOF");
+}
+
+function contentLength(headers: Headers): number | null {
+  const raw = headers.get("content-length");
+  if (raw === null || !/^\d+$/.test(raw.trim())) return null;
+  const value = Number(raw);
+  return Number.isSafeInteger(value) ? value : null;
 }
 
 function hasCompatibleHtmlStructure(bytes: Uint8Array): boolean {
@@ -357,13 +592,21 @@ export async function fetchWebDocument(
     if (!structural.ok) {
       return { ...mappedStructuralFailure(structural), finalUrl: currentUrl };
     }
-    if (deps.urlPolicy && !deps.urlPolicy(currentUrl)) {
-      return {
-        ok: false,
-        code: "BLOCKED_HOST",
-        detail: "El destino no cumple la política de fuentes permitidas",
-        finalUrl: currentUrl,
-      };
+    if (deps.urlPolicy) {
+      const policy = deps.urlPolicy(currentUrl);
+      const allowed = typeof policy === "boolean" ? policy : policy.allowed;
+      if (!allowed) {
+        const reason =
+          typeof policy === "object" && "reason" in policy
+            ? policy.reason.replace(/[^A-Z0-9_]/g, "").slice(0, 80)
+            : "UNSPECIFIED";
+        return {
+          ok: false,
+          code: "BLOCKED_HOST",
+          detail: `Política de fuente bloqueó el destino: ${reason}`,
+          finalUrl: currentUrl,
+        };
+      }
     }
     const robots = await checkRobotsAllowed(currentUrl, {
       fetchImpl: deps.fetchImpl,
@@ -424,6 +667,7 @@ export async function fetchWebDocument(
         signal: controller.signal,
         headers: {
           Accept: "text/html,application/xhtml+xml,application/pdf",
+          "Accept-Encoding": "identity",
           "User-Agent": deps.userAgent,
         },
       }, deps);
@@ -453,31 +697,88 @@ export async function fetchWebDocument(
       if (!response.ok) {
         return { ok: false, code: "HTTP_ERROR", detail: `La fuente respondió HTTP ${response.status}`, statusCode: response.status, finalUrl: currentUrl };
       }
-      const contentLength = Number(response.headers.get("content-length"));
-      if (Number.isFinite(contentLength) && contentLength > deps.maxDocumentBytes) {
+      const contentType = (response.headers.get("content-type") ?? "")
+        .split(";")[0]
+        ?.trim()
+        .toLowerCase() ?? "";
+      const isPdf = contentType === "application/pdf";
+      const responseContentLength = contentLength(response.headers);
+      if (
+        responseContentLength !== null &&
+        responseContentLength > deps.maxDocumentBytes
+      ) {
         await response.body?.cancel();
-        return { ok: false, code: "DOCUMENT_TOO_LARGE", detail: "El documento supera el límite configurado", statusCode: response.status, finalUrl: currentUrl };
+        return {
+          ok: false,
+          code: isPdf ? "PDF_TOO_LARGE" : "DOCUMENT_TOO_LARGE",
+          detail: isPdf
+            ? "El PDF supera el límite configurado"
+            : "El documento supera el límite configurado",
+          statusCode: response.status,
+          finalUrl: currentUrl,
+        };
       }
       const bytes = await readBytes(response.body, deps.maxDocumentBytes);
       if (!bytes) {
-        return { ok: false, code: "DOCUMENT_TOO_LARGE", detail: "El documento supera el límite configurado", statusCode: response.status, finalUrl: currentUrl };
+        return {
+          ok: false,
+          code: isPdf ? "PDF_TOO_LARGE" : "DOCUMENT_TOO_LARGE",
+          detail: isPdf
+            ? "El PDF supera el límite configurado"
+            : "El documento supera el límite configurado",
+          statusCode: response.status,
+          finalUrl: currentUrl,
+        };
       }
-      const contentType = (response.headers.get("content-type") ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+      const contentEncoding = (
+        response.headers.get("content-encoding") ?? "identity"
+      ).toLowerCase();
+      if (contentEncoding !== "identity") {
+        return {
+          ok: false,
+          code: "UNSUPPORTED_CONTENT_ENCODING",
+          detail: "La fuente ignoró la codificación de transferencia solicitada",
+          statusCode: response.status,
+          finalUrl: currentUrl,
+        };
+      }
+      if (
+        responseContentLength !== null &&
+        responseContentLength !== bytes.byteLength
+      ) {
+        return {
+          ok: false,
+          code: isPdf ? "PDF_TRUNCATED" : "NETWORK_ERROR",
+          detail: isPdf
+            ? "La descarga del PDF quedó incompleta"
+            : "La descarga del documento quedó incompleta",
+          statusCode: response.status,
+          finalUrl: currentUrl,
+        };
+      }
       const signature = new TextDecoder("ascii").decode(bytes.slice(0, 5));
-      const isPdf = contentType === "application/pdf";
       const isHtml = contentType === "text/html" || contentType === "application/xhtml+xml";
       const fetchedAt = (deps.now?.() ?? new Date()).toISOString();
 
       if (isPdf) {
         if (signature !== "%PDF-") {
-          return { ok: false, code: "PDF_INVALID", detail: "La firma del PDF no es válida", finalUrl: currentUrl };
+          return { ok: false, code: "PDF_INVALID_SIGNATURE", detail: "La firma del PDF no es válida", finalUrl: currentUrl };
+        }
+        if (!hasPdfEofMarker(bytes)) {
+          return {
+            ok: false,
+            code: "PDF_TRUNCATED",
+            detail: "El PDF no contiene un cierre completo",
+            statusCode: response.status,
+            finalUrl: currentUrl,
+          };
         }
         try {
           const parsed = await extractPdfText(
             bytes,
             deps.maxPdfPages,
             deps.loadPdfDocument,
-            deps.signal,
+            controller.signal,
           );
           if (!parsed.text) {
             return { ok: false, code: "PDF_NO_EXTRACTABLE_TEXT", detail: "El PDF no contiene texto extraíble", finalUrl: currentUrl };
@@ -492,6 +793,7 @@ export async function fetchWebDocument(
               contentType: "application/pdf",
               statusCode: response.status,
               title: null,
+              titleSource: null,
               text: parsed.text,
               links: [],
               byteLength: bytes.byteLength,
@@ -500,11 +802,34 @@ export async function fetchWebDocument(
             },
           };
         } catch (error) {
+          const parserFailure =
+            error instanceof Error && "parserFailure" in error
+              ? (error as { parserFailure?: PdfParserFailure }).parserFailure
+              : undefined;
+          const code =
+            error instanceof Error &&
+            (error.message === "PDF_INVALID_SIGNATURE" ||
+              error.message === "PDF_PASSWORD_PROTECTED" ||
+              error.message === "PDF_TRUNCATED" ||
+              error.message === "PDF_UNSUPPORTED" ||
+              error.message === "TIMEOUT")
+              ? (error.message as DocumentFetchFailureCode)
+              : "PDF_PARSE_FAILED";
           return {
             ok: false,
-            code: error instanceof Error && error.message === "PDF_INVALID" ? "PDF_INVALID" : "PDF_NO_EXTRACTABLE_TEXT",
-            detail: "No fue posible extraer texto del PDF",
+            code,
+            detail:
+              code === "PDF_INVALID_SIGNATURE"
+                ? "La firma del PDF no es válida"
+                : code === "PDF_PASSWORD_PROTECTED"
+                  ? "El PDF requiere contraseña"
+                  : code === "PDF_UNSUPPORTED"
+                    ? "El PDF usa una estructura no compatible"
+                    : code === "TIMEOUT"
+                      ? "Tiempo de espera agotado"
+                      : "No fue posible procesar el PDF",
             finalUrl: currentUrl,
+            ...(parserFailure ? { parserFailure } : {}),
           };
         }
       }
@@ -525,6 +850,7 @@ export async function fetchWebDocument(
           contentType,
           statusCode: response.status,
           title: extracted.title,
+          titleSource: extracted.titleSource,
           text: extracted.text,
           links: extracted.links,
           byteLength: bytes.byteLength,
