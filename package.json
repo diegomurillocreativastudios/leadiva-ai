@@ -63,7 +63,8 @@
     "onlyBuiltDependencies": [
       "@google/genai",
       "esbuild",
-      "protobufjs"
+      "protobufjs",
+      "sharp"
     ]
   }
 }

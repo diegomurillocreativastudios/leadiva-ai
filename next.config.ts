@@ -2,25 +2,23 @@ import type { NextConfig } from "next";
 
 const isVercel = process.env.VERCEL === "1";
 
-const pdfTracingGlobs = [
-  "node_modules/pdfjs-dist/**/*",
-  "node_modules/@napi-rs/canvas/**/*",
-];
-
 const nextConfig: NextConfig = {
-  // Standalone is for Docker/Cloud Run. On Vercel it packages pnpm symlinks into
-  // Serverless Functions and can fail with an invalid deployment package.
+  // Standalone is for Docker/Cloud Run. On Vercel it packages dependency trees
+  // into Serverless Functions and can fail when native modules are present.
   ...(isVercel ? {} : { output: "standalone" as const }),
-  // PDF.js resolves its Node fake-worker relative to its own ESM module. If
-  // Turbopack bundles it, that relative worker file is not emitted next to the
-  // generated server chunk and every document fails while opening.
+  // Keep PDF.js external so its Node entry and worker stay siblings at runtime.
+  // With pnpm, use node-linker=hoisted so NFT does not copy broken .pnpm symlinks.
   serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas"],
-  // Only the private-web job routes need the full PDF.js package tree.
   outputFileTracingIncludes: {
-    "/api/jobs/search-private-web": pdfTracingGlobs,
-    "/api/jobs/search-grounding": pdfTracingGlobs,
+    "/api/jobs/search-private-web": [
+      "node_modules/pdfjs-dist/**/*",
+      "node_modules/@napi-rs/canvas/**/*",
+    ],
+    "/api/jobs/search-grounding": [
+      "node_modules/pdfjs-dist/**/*",
+      "node_modules/@napi-rs/canvas/**/*",
+    ],
   },
-  // Drop unused native canvas binaries from the function package.
   outputFileTracingExcludes: {
     "*": [
       "node_modules/@napi-rs/canvas-android-*/**",
@@ -28,6 +26,11 @@ const nextConfig: NextConfig = {
       "node_modules/@napi-rs/canvas-win32-*/**",
       "node_modules/@napi-rs/canvas-linux-arm*/**",
       "node_modules/@napi-rs/canvas-linux-riscv64*/**",
+      "node_modules/@napi-rs+canvas-android-*/**",
+      "node_modules/@napi-rs+canvas-darwin-*/**",
+      "node_modules/@napi-rs+canvas-win32-*/**",
+      "node_modules/@napi-rs+canvas-linux-arm*/**",
+      "node_modules/@napi-rs+canvas-linux-riscv64*/**",
     ],
   },
 };

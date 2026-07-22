@@ -2,7 +2,7 @@ onlyBuiltDependencies:
   - '@google/genai'
   - esbuild
   - protobufjs
+  - sharp
 
 ignoredBuiltDependencies:
-  - sharp
   - unrs-resolver
