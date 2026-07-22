@@ -50,7 +50,8 @@ export function HomeSearchResults({
         </p>
       </header>
 
-      {detail.execution.status === "PARTIALLY_COMPLETED" ? (
+      {detail.execution.status === "PARTIALLY_COMPLETED" &&
+      detail.execution.sourceType !== "COMPRASAL" ? (
         <div className="mb-4 rounded-md border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning" role="status">
           La búsqueda terminó parcialmente. Algunos sitios o resultados no
           pudieron procesarse.

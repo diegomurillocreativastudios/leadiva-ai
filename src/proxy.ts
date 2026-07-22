@@ -3,7 +3,15 @@ import type { NextRequest } from "next/server";
 
 import { auth } from "@/server/auth";
 
-const publicPaths = new Set(["/login", "/register"]);
+const publicPaths = new Set([
+  "/login",
+  "/register",
+  "/sitemap.xml",
+]);
+const privacyPolicyPaths = new Set([
+  "/es/politica-de-privacidad",
+  "/en/privacy-policy",
+]);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,6 +21,10 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   ) {
+    return NextResponse.next();
+  }
+
+  if (privacyPolicyPaths.has(pathname)) {
     return NextResponse.next();
   }
 

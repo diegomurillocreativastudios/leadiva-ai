@@ -79,6 +79,82 @@ describe("PRIVATE_WEB home results UI", () => {
     expect(html).toContain("Fundación Ejemplo");
     expect(html).toContain("Fuente: fundacion.org.sv");
     expect(html).toContain("Publicada 20/7/2026");
+    expect(html).toContain(
+      "La búsqueda terminó parcialmente. Algunos sitios o resultados no pudieron procesarse.",
+    );
+  });
+
+  it("hides the partial-completion warning for COMPRASAL searches", () => {
+    const detail: SearchExecutionDetail = {
+      execution: {
+        id: "00000000-0000-4000-8000-000000000202",
+        status: "PARTIALLY_COMPLETED",
+        outcome: "PARTIALLY_COMPLETED",
+        query: "software",
+        createdAt: "2026-07-20T12:00:00.000Z",
+        startedAt: "2026-07-20T12:00:00.000Z",
+        completedAt: "2026-07-20T12:00:05.000Z",
+        sourceType: "COMPRASAL",
+        profileName: "COMPRASAL — búsqueda de oportunidades",
+        discoveryMode: null,
+        searchProvider: "COMPRASAL_AVAILABLE_API",
+        estimatedCost: "0",
+      },
+      summary: {
+        providerResults: 1,
+        uniqueUrls: 1,
+        uniqueDomains: 1,
+        documentsFetched: 0,
+        documentsExtracted: 0,
+        candidatesFound: 1,
+        candidatesFiltered: 0,
+        candidatesVerified: 1,
+        candidatesCreated: 1,
+        candidatesUpdated: 0,
+        candidatesUnchanged: 0,
+        candidatesDiscarded: 0,
+        saved: 1,
+        rawCandidatesFound: 1,
+        schemaValidCandidates: 1,
+        normalizedCandidatesFound: 1,
+      },
+      discardCounts: {},
+      candidates: [
+        {
+          temporaryId: "result-1",
+          executionId: "00000000-0000-4000-8000-000000000202",
+          searchResultId: "00000000-0000-4000-8000-000000000302",
+          title: "Renovación de licenciamiento de software",
+          organizationName: "ISSS",
+          summary: "Proceso COMPRASAL",
+          officialSourceUrl: "https://www.comprasal.gob.sv/proceso/1",
+          applicationUrl: null,
+          sourceDomain: "www.comprasal.gob.sv",
+          publishedAt: "2026-07-20T06:00:00.000Z",
+          deadlineAt: "2026-08-01T06:00:00.000Z",
+          estimatedAmount: null,
+          currency: null,
+          evidence: [],
+          category: "SOFTWARE",
+          stage: "PERSISTENCE",
+          outcome: "CREATED",
+          reasonCode: null,
+          reason: null,
+          retrievalScore: 10,
+          preliminaryScore: 90,
+          verificationStatus: "VERIFIED",
+          discoveredByQueries: [],
+          discoveredByFamilies: [],
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      createElement(HomeSearchResults, { detail }),
+    );
+    expect(html).toContain("Renovación de licenciamiento de software");
+    expect(html).not.toContain(
+      "La búsqueda terminó parcialmente. Algunos sitios o resultados no pudieron procesarse.",
+    );
   });
 
   it.each([

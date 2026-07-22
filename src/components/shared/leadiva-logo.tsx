@@ -1,12 +1,5 @@
 import { cn } from "@/lib/utils";
 
-const sizeMap = {
-  sm: 28,
-  md: 40,
-  lg: 96,
-  xl: 128,
-} as const;
-
 const sizeClassMap = {
   sm: "size-7",
   md: "size-10",
@@ -21,7 +14,7 @@ const wordmarkClassMap = {
   xl: "text-3xl font-bold",
 } as const;
 
-export type LeadivaLogoSize = keyof typeof sizeMap;
+export type LeadivaLogoSize = keyof typeof sizeClassMap;
 
 type LeadivaLogoProps = {
   size?: LeadivaLogoSize;
@@ -33,7 +26,6 @@ type LeadivaLogoProps = {
 export function LeadivaLogo({
   size = "md",
   className,
-  priority: _priority = false,
 }: LeadivaLogoProps) {
   return (
     <span
@@ -88,7 +80,6 @@ export function LeadivaBrand({
   size = "sm",
   className,
   showWordmark = true,
-  priority = false,
   orientation = "horizontal",
 }: LeadivaBrandProps) {
   return (
@@ -101,7 +92,7 @@ export function LeadivaBrand({
         className,
       )}
     >
-      <LeadivaLogo size={size} priority={priority} />
+      <LeadivaLogo size={size} />
       {showWordmark ? <LeadivaWordmark size={size} /> : null}
     </div>
   );
