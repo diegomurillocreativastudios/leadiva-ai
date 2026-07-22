@@ -108,9 +108,10 @@ describe("privacy policy content", () => {
 });
 
 describe("public privacy routes", () => {
-  it("keeps both pages public in the application proxy", () => {
+  it("keeps privacy policy routes public in the application proxy", () => {
     const proxySource = readFileSync(join(process.cwd(), "src/proxy.ts"), "utf8");
 
+    expect(proxySource).toContain('"/privacy-policy"');
     expect(proxySource).toContain('"/es/politica-de-privacidad"');
     expect(proxySource).toContain('"/en/privacy-policy"');
   });

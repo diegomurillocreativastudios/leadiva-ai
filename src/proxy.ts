@@ -7,8 +7,7 @@ const publicPaths = new Set([
   "/login",
   "/register",
   "/sitemap.xml",
-]);
-const privacyPolicyPaths = new Set([
+  "/privacy-policy",
   "/es/politica-de-privacidad",
   "/en/privacy-policy",
 ]);
@@ -24,7 +23,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (privacyPolicyPaths.has(pathname)) {
+  // Privacy Policy stays reachable while logged out and while logged in.
+  if (
+    pathname === "/privacy-policy" ||
+    pathname === "/es/politica-de-privacidad" ||
+    pathname === "/en/privacy-policy"
+  ) {
     return NextResponse.next();
   }
 
